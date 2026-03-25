@@ -338,6 +338,78 @@ async def migrate_entities_from_kits():
     }
 
 
+# ─── Backfill sponsors depuis les kits existants ──────────────────────────────────────────
+
+@router.post("/migrate-sponsors-from-kits")
+async def migrate_sponsors_from_kits():
+    """
+    Backfill : lit le champ 'sponsor' (string) de chaque master_kit existant,
+    crée le document sponsor manquant dans la collection 'sponsors' (upsert par slug),
+    puis écrit sponsor_id sur le kit.
+    Idempotent : peut être relancé sans doublon.
+    """
+    all_kits = await db.master_kits.find(
+        {"sponsor": {"$nin": ["", None]}},
+        {"_id": 0, "kit_id": 1, "sponsor": 1, "sponsor_id": 1}
+    ).to_list(10000)
+
+    now = datetime.now(timezone.utc).isoformat()
+    sponsor_map: Dict[str, str] = {}
+    sponsors_created = 0
+    kits_patched = 0
+
+    for kit in all_kits:
+        raw = _normalize_sponsor(kit.get("sponsor") or "")
+        if not raw:
+            continue
+
+        if raw not in sponsor_map:
+            sl = slugify(raw)
+            new_id = f"sponsor_{uuid.uuid4().hex[:12]}"
+            await db.sponsors.update_one(
+                {"slug": sl},
+                {"$setOnInsert": {
+                    "sponsor_id": new_id,
+                    "name":       raw,
+                    "slug":       sl,
+                    "country":    "",
+                    "logo_url":   "",
+                    "kit_count":  0,
+                    "status":     "approved",
+                    "created_at": now,
+                    "updated_at": now,
+                }},
+                upsert=True,
+            )
+            doc = await db.sponsors.find_one({"slug": sl}, {"_id": 0, "sponsor_id": 1})
+            resolved_id = doc["sponsor_id"] if doc else new_id
+            sponsor_map[raw] = resolved_id
+            # compte les créations réelles (pas les upserts sur existant)
+            if resolved_id == new_id:
+                sponsors_created += 1
+
+        # patch le kit seulement si sponsor_id est absent ou vide
+        if not kit.get("sponsor_id"):
+            await db.master_kits.update_one(
+                {"kit_id": kit["kit_id"]},
+                {"$set": {"sponsor_id": sponsor_map[raw]}}
+            )
+            kits_patched += 1
+
+    logger.info(
+        f"migrate-sponsors-from-kits: {sponsors_created} sponsors créés, "
+        f"{kits_patched} kits patchés, {len(sponsor_map)} sponsors uniques"
+    )
+
+    return {
+        "message": "Backfill sponsors terminé",
+        "sponsors_created":  sponsors_created,
+        "sponsors_total":    len(sponsor_map),
+        "kits_patched":      kits_patched,
+        "kits_scanned":      len(all_kits),
+    }
+
+
 # ─── Reset + Import CSV (admin/moderator only) ────────────────────────────────────────────
 
 @router.post("/admin/reset-and-import-csv")
@@ -456,7 +528,6 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
         doc = await db.brands.find_one({"slug": sl}, {"_id": 0, "brand_id": 1})
         brand_map[name] = doc["brand_id"] if doc else new_id
 
-    # ─── NOUVEAU : création des sponsors ─────────────────────────────────────────────
     for name in all_sponsor_names:
         new_id = f"sponsor_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
@@ -481,7 +552,7 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
         team_id   = team_map.get(r["team"], "")
         league_id = league_map.get(r["league"], "")
         brand_id  = brand_map.get(r["brand"], "")
-        sponsor_id = sponsor_map.get(r["sponsor"], "")  # ← NOUVEAU
+        sponsor_id = sponsor_map.get(r["sponsor"], "")
 
         kits_to_insert.append({
             "kit_id":      kit_id,
@@ -489,7 +560,7 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
             "team_id":     team_id,
             "brand_id":    brand_id,
             "league_id":   league_id,
-            "sponsor_id":  sponsor_id,              # ← NOUVEAU
+            "sponsor_id":  sponsor_id,
             "club":        r["team"],
             "brand":       r["brand"],
             "league":      r["league"],
@@ -545,7 +616,7 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
         "teams_created":     len(team_map),
         "leagues_created":   len(league_map),
         "brands_created":    len(brand_map),
-        "sponsors_created":  len(sponsor_map),          # ← NOUVEAU
+        "sponsors_created":  len(sponsor_map),
         "rows_total":        len(rows),
         "rows_skipped":      skipped,
         "skip_reasons": {
@@ -634,7 +705,6 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
                     "country_or_region": "", "level": "domestic", "organizer": "", "logo_url": "",
                     "kit_count": 0, "status": "approved", "created_at": now, "updated_at": now,
                 })
-            # ─── NOUVEAU : création du sponsor ─────────────────────────────────────────────
             sponsor_id = ""
             if sponsor_name:
                 sponsor_id = await _get_or_create("sponsors", "sponsor_id", slugify(sponsor_name), {
@@ -647,7 +717,7 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
             await db["master_kits"].insert_one({
                 "kit_id": kit_id, "slug": kit_slug,
                 "team_id": team_id, "brand_id": brand_id, "league_id": league_id,
-                "sponsor_id": sponsor_id,              # ← NOUVEAU
+                "sponsor_id": sponsor_id,
                 "club": team_name, "brand": brand_name, "league": league_name,
                 "season": season, "kit_type": kit_type, "type": kit_type,
                 "design":      (r.get("design") or "").strip(),
