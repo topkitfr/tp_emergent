@@ -38,12 +38,12 @@ async def _assert_not_locked(collection: str, id_field: str, entity_id: str):
 # Team Routes
 # ─────────────────────────────────────────────
 
-@router.get("/teams", response_model=List[TeamOut])
+@router.get("/teams")
 async def list_teams(
     search: Optional[str] = None,
     country: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 48
 ):
     query = {}
     if search:
@@ -53,11 +53,12 @@ async def list_teams(
         ]
     if country:
         query["country"] = {"$regex": country, "$options": "i"}
+    total = await db.teams.count_documents(query)
     teams = await db.teams.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for t in teams:
         tid = t.get("team_id", "")
         t["kit_count"] = await db.master_kits.count_documents({"team_id": tid}) if tid else 0
-    return teams
+    return {"results": teams, "total": total}
 
 
 @router.get("/teams/{team_id}")
@@ -152,13 +153,13 @@ async def update_team(team_id: str, team: TeamCreate):
 # League Routes
 # ─────────────────────────────────────────────
 
-@router.get("/leagues", response_model=List[LeagueOut])
+@router.get("/leagues")
 async def list_leagues(
     search: Optional[str] = None,
     country_or_region: Optional[str] = None,
     level: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 48
 ):
     query = {"status": {"$ne": "rejected"}}
     if search:
@@ -167,11 +168,12 @@ async def list_leagues(
         query["country_or_region"] = {"$regex": country_or_region, "$options": "i"}
     if level:
         query["level"] = level
+    total = await db.leagues.count_documents(query)
     leagues = await db.leagues.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for l in leagues:
         lid = l.get("league_id", "")
         l["kit_count"] = await db.master_kits.count_documents({"league_id": lid}) if lid else 0
-    return leagues
+    return {"results": leagues, "total": total}
 
 
 @router.get("/leagues/{league_id}")
@@ -265,23 +267,24 @@ async def update_league(league_id: str, league: LeagueCreate):
 # Brand Routes
 # ─────────────────────────────────────────────
 
-@router.get("/brands", response_model=List[BrandOut])
+@router.get("/brands")
 async def list_brands(
     search: Optional[str] = None,
     country: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 48
 ):
     query = {"status": {"$ne": "rejected"}}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
     if country:
         query["country"] = {"$regex": country, "$options": "i"}
+    total = await db.brands.count_documents(query)
     brands = await db.brands.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for b in brands:
         bid = b.get("brand_id", "")
         b["kit_count"] = await db.master_kits.count_documents({"brand_id": bid}) if bid else 0
-    return brands
+    return {"results": brands, "total": total}
 
 
 @router.get("/brands/{brand_id}")
@@ -373,18 +376,19 @@ async def update_brand(brand_id: str, brand: BrandCreate):
 
 # ── SPONSORS ──────────────────────────────────────────────────────────────────
 
-@router.get("/sponsors", response_model=List[dict])
+@router.get("/sponsors")
 async def list_sponsors(
     search: Optional[str] = None,
     country: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 48
 ):
     query: dict = {"status": {"$ne": "rejected"}}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
     if country:
         query["country"] = {"$regex": country, "$options": "i"}
+    total = await db.sponsors.count_documents(query)
     sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for s in sponsors:
         sid  = s.get("sponsor_id", "")
@@ -397,7 +401,7 @@ async def list_sponsors(
         else:
             count_by_name = 0
         s["kit_count"] = count_by_id or count_by_name
-    return sponsors
+    return {"results": sponsors, "total": total}
 
 
 @router.get("/sponsors/{sponsor_id}")
@@ -410,7 +414,6 @@ async def get_sponsor(sponsor_id: str):
         raise HTTPException(status_code=404, detail="Sponsor not found")
     sid  = sponsor.get("sponsor_id", "")
     name = sponsor.get("name", "")
-    # Cherche les kits par sponsor_id d'abord, fallback sur le champ sponsor (string)
     kits = await db.master_kits.find({"sponsor_id": sid}, {"_id": 0}).sort("season", -1).to_list(200) if sid else []
     if not kits and name:
         kits = await db.master_kits.find(
@@ -494,25 +497,26 @@ async def update_sponsor(sponsor_id: str, sponsor: dict):
 # Player Routes
 # ─────────────────────────────────────────────
 
-@router.get("/players", response_model=List[PlayerOut])
+@router.get("/players")
 async def list_players(
     search: Optional[str] = None,
     nationality: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 48
 ):
     query = {"status": {"$ne": "rejected"}}
     if search:
         query["full_name"] = {"$regex": search, "$options": "i"}
     if nationality:
         query["nationality"] = {"$regex": nationality, "$options": "i"}
+    total = await db.players.count_documents(query)
     players = await db.players.find(query, {"_id": 0}).sort("full_name", 1).skip(skip).limit(limit).to_list(limit)
     for p in players:
         pid = p.get("player_id", "")
         p["kit_count"] = await db.versions.count_documents({"main_player_id": pid}) if pid else 0
         if not isinstance(p.get("positions"), list):
             p["positions"] = []
-    return players
+    return {"results": players, "total": total}
 
 
 @router.get("/players/{player_id}")

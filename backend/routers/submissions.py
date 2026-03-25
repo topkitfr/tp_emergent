@@ -19,13 +19,16 @@ ENTITY_COLLECTIONS = {
     "sponsor": {"collection": "sponsors", "id_field": "sponsor_id", "name_field": "name"},
 }
 
-# ← FIX 1 : mapping entity_type → champ dans master_kit
+# mapping entity_type → champ dans master_kit
 KIT_ID_FIELDS = {
     "team":    "team_id",
     "brand":   "brand_id",
     "league":  "league_id",
     "sponsor": "sponsor_id",
 }
+
+# Champs image : jamais filtrés même si vide string
+IMAGE_FIELDS = {"logo_url", "crest_url", "photo_url"}
 
 SUBMISSION_TYPE_LABELS = {
     "master_kit": "maillot",
@@ -226,7 +229,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     {"_id": 0}
                 ).to_list(50)
 
-                # ← FIX 2 : on récupère le vrai ID retourné par _apply_entity_submission
                 kit_patch = {}
                 for entity_sub in linked_entity_subs:
                     new_entity_id = await _apply_entity_submission(entity_sub)
@@ -238,7 +240,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     if etype in KIT_ID_FIELDS and new_entity_id:
                         kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
 
-                # ← FIX 2 (suite) : on patche le master_kit avec les vrais IDs
                 if kit_patch:
                     await db.master_kits.update_one(
                         {"kit_id": kit_id},
@@ -330,7 +331,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 # Helper interne
 # ─────────────────────────────────────────────
 
-# ← FIX 3 : retourne Optional[str] au lieu de None implicite
 async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
     """
     Applique la soumission d'une entité.
@@ -353,7 +353,7 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
                 {config["id_field"]: entity_id},
                 {"$set": {"status": "approved", "updated_at": now}}
             )
-            return entity_id  # ← retourne l'ID existant
+            return entity_id
         else:
             name = data.get("name") or data.get("full_name", "")
             slug = slugify(name)
@@ -367,21 +367,33 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
             if sub_id:
                 doc["submission_id"] = sub_id
             await db[config["collection"]].insert_one(doc)
-            return new_id  # ← retourne le nouvel ID
+            return new_id
 
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
-        update_fields = {
-            k: v for k, v in data.items()
-            if k not in ("mode", "entity_id", "entity_type", "parent_submission_id")
-            and v is not None and v != "" and v != []
-        }
+        # Les champs image (logo_url, crest_url, photo_url) sont toujours inclus
+        # même s'ils sont vide-string, pour permettre la suppression d'image.
+        # Les autres champs sont filtrés si None ou liste vide.
+        update_fields = {}
+        for k, v in data.items():
+            if k in ("mode", "entity_id", "entity_type", "parent_submission_id"):
+                continue
+            if k in IMAGE_FIELDS:
+                # Inclure si la valeur est une string non-None (même vide)
+                if v is not None:
+                    update_fields[k] = v
+            else:
+                if v is not None and v != [] and (v != "" or k in IMAGE_FIELDS):
+                    update_fields[k] = v
+
         update_fields["updated_at"] = now
         update_fields["status"]     = "approved"
 
         name_key = "full_name" if entity_type == "player" else "name"
         if name_key in update_fields:
             update_fields["slug"] = slugify(update_fields[name_key])
+
+        print(f"[EDIT APPLY] {entity_type} {entity_id} → {update_fields}")
 
         if entity_id:
             await db[config["collection"]].update_one(
