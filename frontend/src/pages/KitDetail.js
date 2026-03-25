@@ -224,11 +224,27 @@ export default function KitDetail() {
                   <h5 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Players who wore this kit</h5>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {players.slice(0, 6).map(player => (
-                      <Link key={player.id} to={`/players/${player.id}`} className="flex-shrink-0 w-16 hover:scale-105 transition-transform">
+                      <Link
+                        key={player.player_id ?? player.id}
+                        to={`/players/${player.slug ?? player.player_id ?? player.id}`}
+                        className="flex-shrink-0 w-16 hover:scale-105 transition-transform"
+                      >
                         <div className="w-16 h-20 bg-secondary rounded overflow-hidden">
-                          <img src={proxyImageUrl(player.photo)} alt={player.name} className="w-full h-full object-cover" />
+                          {player.photo_url ?? player.photo ? (
+                            <img
+                              src={proxyImageUrl(player.photo_url ?? player.photo)}
+                              alt={player.full_name ?? player.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
                         </div>
-                        <p className="text-[11px] text-center mt-1 font-mono truncate">{player.name}</p>
+                        <p className="text-[11px] text-center mt-1 font-mono truncate">
+                          {player.full_name ?? player.name}
+                        </p>
                       </Link>
                     ))}
                   </div>
@@ -250,14 +266,13 @@ export default function KitDetail() {
                 </div>
               )}
 
-              {/* ── Report Form (Master Kit) ── */}
+              {/* ── Report Form ── */}
               {showReport && user && (
                 <div className="border border-destructive/30 p-4 space-y-4" data-testid="kit-report-form">
                   <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-                    {/* Club — autocomplete team */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
                       <EntityAutocomplete
@@ -271,7 +286,6 @@ export default function KitDetail() {
                       />
                     </div>
 
-                    {/* Season — Input libre */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
                       <Input
@@ -282,7 +296,6 @@ export default function KitDetail() {
                       />
                     </div>
 
-                    {/* Kit Type — Select */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
                       <Select value={reportCorrections.kit_type || ''} onValueChange={set('kit_type')}>
@@ -295,7 +308,6 @@ export default function KitDetail() {
                       </Select>
                     </div>
 
-                    {/* Brand — autocomplete */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
                       <EntityAutocomplete
@@ -309,7 +321,6 @@ export default function KitDetail() {
                       />
                     </div>
 
-                    {/* League — autocomplete */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
                       <EntityAutocomplete
@@ -323,7 +334,6 @@ export default function KitDetail() {
                       />
                     </div>
 
-                    {/* Gender — Select */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
                       <Select value={reportCorrections.gender || ''} onValueChange={set('gender')}>
@@ -336,7 +346,6 @@ export default function KitDetail() {
                       </Select>
                     </div>
 
-                    {/* Design — Input libre */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
                       <Input
@@ -347,7 +356,6 @@ export default function KitDetail() {
                       />
                     </div>
 
-                    {/* Sponsor — Input libre */}
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
                       <Input
@@ -358,12 +366,12 @@ export default function KitDetail() {
                       />
                     </div>
 
-                    {/* Front Photo */}
                     <div className="space-y-1 col-span-full">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
                       <ImageUpload
                         value={reportCorrections.front_photo || ''}
                         onChange={set('front_photo')}
+                        folder="master_kit"
                         testId="kit-report-front-photo"
                       />
                     </div>

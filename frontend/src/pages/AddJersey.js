@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {  createMasterKit, createVersion, getMasterKits, createTeamPending, createLeaguePending, createBrandPending } from '@/lib/api';
+import { createMasterKit, createVersion, getMasterKits, createTeamPending, createLeaguePending, createBrandPending } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,43 +12,45 @@ import ImageUpload from '@/components/ImageUpload';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 
-const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const MODELS = ['Authentic', 'Replica', 'Other'];
-const GENDERS = ['Man', 'Woman', 'Kid'];
+const KIT_TYPES    = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
+const MODELS       = ['Authentic', 'Replica', 'Other'];
+const GENDERS      = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
-const fieldLabel = "text-xs uppercase tracking-wider";
+const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
-const inputClass = "bg-card border-border rounded-none";
+const inputClass = 'bg-card border-border rounded-none';
 
 export default function AddJersey() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [existingKits, setExistingKits] = useState([]);
+  const [step, setStep]                         = useState(1);
+  const [existingKits, setExistingKits]         = useState([]);
   const [selectedExistingKit, setSelectedExistingKit] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting]             = useState(false);
 
-  const [club, setClub] = useState('');
-  const [teamId, setTeamId] = useState('');
-  const [season, setSeason] = useState('');
-  const [kitType, setKitType] = useState('');
-  const [brand, setBrand] = useState('');
-  const [brandId, setBrandId] = useState('');
-  const [design, setDesign] = useState('');
-  const [sponsor, setSponsor] = useState('');
+  // Step 1 — Master Kit
+  const [club, setClub]           = useState('');
+  const [teamId, setTeamId]       = useState('');
+  const [season, setSeason]       = useState('');
+  const [kitType, setKitType]     = useState('');
+  const [brand, setBrand]         = useState('');
+  const [brandId, setBrandId]     = useState('');
+  const [design, setDesign]       = useState('');
+  const [sponsor, setSponsor]     = useState('');
   const [sponsorId, setSponsorId] = useState('');
-  const [gender, setGender] = useState('');
-  const [league, setLeague] = useState('');
-  const [leagueId, setLeagueId] = useState('');
+  const [gender, setGender]       = useState('');
+  const [league, setLeague]       = useState('');
+  const [leagueId, setLeagueId]   = useState('');
   const [frontPhoto, setFrontPhoto] = useState('');
 
-  const [competition, setCompetition] = useState('');
-  const [model, setModel] = useState('');
-  const [skuCode, setSkuCode] = useState('');
-  const [eanCode, setEanCode] = useState('');
+  // Step 2 — Version
+  const [competition, setCompetition]   = useState('');
+  const [model, setModel]               = useState('');
+  const [skuCode, setSkuCode]           = useState('');
+  const [eanCode, setEanCode]           = useState('');
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
-  const [verBackPhoto, setVerBackPhoto] = useState('');
-  const [createdKitId, setCreatedKitId] = useState('');
+  const [verBackPhoto, setVerBackPhoto]   = useState('');
+  const [createdKitId, setCreatedKitId]   = useState('');
 
   useEffect(() => {
     getMasterKits({}).then(r => setExistingKits(r.data)).catch(() => {});
@@ -61,31 +63,50 @@ export default function AddJersey() {
     }
     setSubmitting(true);
     try {
-      let resolvedTeamId = teamId;
+      let resolvedTeamId  = teamId;
       let resolvedBrandId = brandId;
       let resolvedLeagueId = leagueId;
 
-      if (club && !teamId) {
-  try {
-    const res = await createTeamPending({ name: club });
-    resolvedTeamId = res.data?.team_id;
-    toast.info(`Équipe "${club}" créée — en attente de validation`);
-  } catch (e) { console.warn('createTeamPending failed:', e); }
-}
+      // Auto-create pending team if typed but not selected from autocomplete
+      if (club && !resolvedTeamId) {
+        try {
+          const res = await createTeamPending({ name: club });
+          resolvedTeamId = res.data?.team_id;
+          toast.info(`Team "${club}" submitted — pending validation`);
+        } catch (e) { console.warn('createTeamPending failed:', e); }
+      }
+
+      // Auto-create pending brand if typed but not selected
+      if (brand && !resolvedBrandId) {
+        try {
+          const res = await createBrandPending({ name: brand });
+          resolvedBrandId = res.data?.brand_id;
+          toast.info(`Brand "${brand}" submitted — pending validation`);
+        } catch (e) { console.warn('createBrandPending failed:', e); }
+      }
+
+      // Auto-create pending league if typed but not selected
+      if (league && !resolvedLeagueId) {
+        try {
+          const res = await createLeaguePending({ name: league });
+          resolvedLeagueId = res.data?.league_id;
+          toast.info(`League "${league}" submitted — pending validation`);
+        } catch (e) { console.warn('createLeaguePending failed:', e); }
+      }
 
       const res = await createMasterKit({
         club,
         season,
-        kit_type: kitType,
+        kit_type:  kitType,
         brand,
         front_photo: frontPhoto,
         design,
         sponsor,
-        sponsor_id: sponsorId || undefined,
+        sponsor_id:  sponsorId  || undefined,
         gender,
         league,
-        team_id: resolvedTeamId || undefined,
-        brand_id: resolvedBrandId || undefined,
+        team_id:   resolvedTeamId   || undefined,
+        brand_id:  resolvedBrandId  || undefined,
         league_id: resolvedLeagueId || undefined,
       });
 
@@ -112,13 +133,13 @@ export default function AddJersey() {
     setSubmitting(true);
     try {
       const res = await createVersion({
-        kit_id: kitId,
+        kit_id:      kitId,
         competition,
         model,
-        sku_code: skuCode,
-        ean_code: eanCode,
+        sku_code:    skuCode,
+        ean_code:    eanCode,
         front_photo: verFrontPhoto,
-        back_photo: verBackPhoto,
+        back_photo:  verBackPhoto,
       });
       toast.success('Version created');
       navigate(`/version/${res.data.version_id}`);
@@ -141,29 +162,33 @@ export default function AddJersey() {
 
         {/* Step indicator */}
         <div className="flex items-center gap-3 mb-8">
-          <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${step > 1 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+          <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${
+            step > 1 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
+          }`}>
             {step > 1 ? <Check className="w-4 h-4" /> : '1'}
           </div>
-          <span className={`text-xs uppercase tracking-wider ${step === 1 ? 'text-foreground' : 'text-muted-foreground'}`} style={fieldStyle}>
-            MASTER KIT
-          </span>
+          <span className={`text-xs uppercase tracking-wider ${
+            step === 1 ? 'text-foreground' : 'text-muted-foreground'
+          }`} style={fieldStyle}>MASTER KIT</span>
           <ArrowRight className="w-4 h-4 text-muted-foreground" />
-          <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${step === 2 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}`}>
-            2
-          </div>
-          <span className={`text-xs uppercase tracking-wider ${step === 2 ? 'text-foreground' : 'text-muted-foreground'}`} style={fieldStyle}>
-            VERSION
-          </span>
+          <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${
+            step === 2 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
+          }`}>2</div>
+          <span className={`text-xs uppercase tracking-wider ${
+            step === 2 ? 'text-foreground' : 'text-muted-foreground'
+          }`} style={fieldStyle}>VERSION</span>
         </div>
 
+        {/* ── STEP 1 : Master Kit ── */}
         {step === 1 && (
           <div className="space-y-6">
+
             {/* Use existing kit */}
             <div className="border border-border p-4 bg-card">
               <h3 className="text-xs uppercase tracking-wider font-bold mb-4" style={fieldStyle}>
                 USE EXISTING KIT
               </h3>
-              <Select value={selectedExistingKit} onValueChange={(v) => setSelectedExistingKit(v)}>
+              <Select value={selectedExistingKit} onValueChange={setSelectedExistingKit}>
                 <SelectTrigger className={inputClass} data-testid="select-existing-kit">
                   <SelectValue placeholder="Select an existing Master Kit" />
                 </SelectTrigger>
@@ -192,20 +217,19 @@ export default function AddJersey() {
               <div className="flex-1 border-t border-border" />
             </div>
 
-            {/* Create new kit form */}
+            {/* Create new kit */}
             <div className="space-y-4">
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Team *</Label>
-               <EntityAutocomplete
-  entityType="team"
-  value={club}
-  onChange={(val) => { setClub(val); setTeamId(''); }}
-  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
-  placeholder="e.g., FC Barcelona"
-  className={inputClass}
-  testId="input-club"
-/>
-
+                <EntityAutocomplete
+                  entityType="team"
+                  value={club}
+                  onChange={(val) => { setClub(val); setTeamId(''); }}
+                  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
+                  placeholder="e.g., FC Barcelona"
+                  className={inputClass}
+                  testId="input-club"
+                />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Season *</Label>
@@ -225,14 +249,14 @@ export default function AddJersey() {
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Brand *</Label>
                 <EntityAutocomplete
-  entityType="brand"
-  value={brand}
-  onChange={(val) => { setBrand(val); setBrandId(''); }}
-  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
-  placeholder="e.g., Nike"
-  className={inputClass}
-  testId="input-brand"
-/>
+                  entityType="brand"
+                  value={brand}
+                  onChange={(val) => { setBrand(val); setBrandId(''); }}
+                  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
+                  placeholder="e.g., Nike"
+                  className={inputClass}
+                  testId="input-brand"
+                />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Design</Label>
@@ -264,18 +288,23 @@ export default function AddJersey() {
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>League</Label>
                 <EntityAutocomplete
-  entityType="league"
-  value={league}
-  onChange={(val) => { setLeague(val); setLeagueId(''); }}
-  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
-  placeholder="e.g., Ligue 1"
-  className={inputClass}
-  testId="input-league"
-/>
+                  entityType="league"
+                  value={league}
+                  onChange={(val) => { setLeague(val); setLeagueId(''); }}
+                  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
+                  placeholder="e.g., Ligue 1"
+                  className={inputClass}
+                  testId="input-league"
+                />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Front Photo *</Label>
-                <ImageUpload onUpload={setFrontPhoto} testId="upload-front-photo" />
+                <ImageUpload
+                  value={frontPhoto}
+                  onChange={setFrontPhoto}
+                  folder="master_kit"
+                  testId="upload-front-photo"
+                />
               </div>
               <Button
                 onClick={handleCreateKit}
@@ -289,6 +318,7 @@ export default function AddJersey() {
           </div>
         )}
 
+        {/* ── STEP 2 : Version ── */}
         {step === 2 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
@@ -296,7 +326,10 @@ export default function AddJersey() {
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <span className="text-xs uppercase tracking-wider" style={fieldStyle}>
-                ADDING VERSION {createdKitId ? 'TO NEW KIT' : `TO ${existingKits.find(k => k.kit_id === selectedExistingKit)?.club || 'SELECTED KIT'}`}
+                ADDING VERSION {createdKitId
+                  ? 'TO NEW KIT'
+                  : `TO ${existingKits.find(k => k.kit_id === selectedExistingKit)?.club || 'SELECTED KIT'}`
+                }
               </span>
             </div>
 
@@ -332,11 +365,21 @@ export default function AddJersey() {
             </div>
             <div>
               <Label className={fieldLabel} style={fieldStyle}>Front Photo</Label>
-              <ImageUpload onUpload={setVerFrontPhoto} testId="upload-ver-front-photo" />
+              <ImageUpload
+                value={verFrontPhoto}
+                onChange={setVerFrontPhoto}
+                folder="version"
+                testId="upload-ver-front-photo"
+              />
             </div>
             <div>
               <Label className={fieldLabel} style={fieldStyle}>Back Photo</Label>
-              <ImageUpload onUpload={setVerBackPhoto} testId="upload-ver-back-photo" />
+              <ImageUpload
+                value={verBackPhoto}
+                onChange={setVerBackPhoto}
+                folder="version"
+                testId="upload-ver-back-photo"
+              />
             </div>
             <Button
               onClick={handleCreateVersion}
