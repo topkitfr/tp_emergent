@@ -6,9 +6,11 @@ const API = `${BACKEND_URL}/api`;
 
 export const proxyImageUrl = (url) => {
   if (!url) return '';
-  // Images NAS Freebox via proxy backend
-  if (url.startsWith('/api/uploads/')) return `${BACKEND_URL}${url}`;
-  // Images CDN externes : chargées directement (pas de proxy)
+  // Images NAS Freebox via proxy backend (deux préfixes possibles)
+  if (url.startsWith('/api/uploads/') || url.startsWith('/api/images/')) {
+    return `${BACKEND_URL}${url}`;
+  }
+  // Images CDN externes : chargées directement
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return url;
 };
@@ -19,7 +21,7 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ─── Intercepteur de réponse — gestion globale des erreurs ─────────────────────
+// ─── Intercepteur de réponse — gestion globale des erreurs ──────────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -99,7 +101,7 @@ export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/
 export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
 export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
 
-// ── Listes personnalisées ──────────────────────────────────────────────────
+// ── Listes personnalisées ──────────────────────────────────────────
 export const getUserLists       = ()                      => api.get('/lists');
 export const getListDetail      = (listId)                => api.get(`/lists/${listId}`);
 export const createList         = (data)                  => api.post('/lists', data);

@@ -16,7 +16,10 @@ export default function ImageUpload({ value, onChange, label, testId, folder = '
 
   const resolveUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('/api/uploads/')) return `${BACKEND_URL}${url}`;
+    // Proxy Freebox via backend Render (deux préfixes possibles)
+    if (url.startsWith('/api/uploads/') || url.startsWith('/api/images/')) {
+      return `${BACKEND_URL}${url}`;
+    }
     return url;
   };
 
