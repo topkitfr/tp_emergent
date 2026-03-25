@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException, Response, UploadFile, File
 from typing import List
 from pathlib import Path
 import os
+import re
 import httpx
 from ..utils import ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 # URL du serveur récepteur sur la Freebox VM
 RECEIVER_URL = os.getenv("RECEIVER_URL", "http://82.67.103.45:8001/receive-upload")
 RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
+MEDIA_BASE_URL = os.getenv("MEDIA_BASE_URL", "http://82.67.103.45")
 
 router = APIRouter(prefix="/api", tags=["uploads"])
 
@@ -24,8 +26,27 @@ FOLDER_MAP = {
 }
 
 
+def _to_relative_path(public_url: str) -> str:
+    """
+    Convertit l'URL absolue retournée par le receiver Freebox
+    (ex: http://82.67.103.45/brands/logos/abc.jpg)
+    en chemin relatif utilisable par le proxy backend
+    (ex: /api/uploads/brands/logos/abc.jpg).
+
+    Si la conversion échoue (URL externe inconnue), on retourne l'URL telle quelle.
+    """
+    # Supprimer la base IP (avec ou sans port)
+    # ex: http://82.67.103.45   ou  http://82.67.103.45:8080
+    pattern = re.compile(r'^https?://[^/]+')
+    match = pattern.match(public_url)
+    if not match:
+        return public_url
+    relative = public_url[match.end():]  # ex: /brands/logos/abc.jpg
+    return f"/api/uploads{relative}"
+
+
 async def _forward_to_receiver(contents: bytes, filename: str, folder: str) -> str:
-    """Envoie le fichier au récepteur Freebox et retourne l'URL publique."""
+    """Envoie le fichier au récepteur Freebox et retourne le chemin relatif /api/uploads/..."""
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             RECEIVER_URL,
@@ -35,7 +56,8 @@ async def _forward_to_receiver(contents: bytes, filename: str, folder: str) -> s
         )
         if resp.status_code != 200:
             raise HTTPException(status_code=500, detail=f"Receiver error: {resp.text}")
-        return resp.json()["url"]
+        raw_url = resp.json()["url"]
+        return _to_relative_path(raw_url)
 
 
 @router.post("/upload")
@@ -51,8 +73,8 @@ async def upload_image(file: UploadFile = File(...), folder: str = "master_kit")
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
     folder = FOLDER_MAP.get(folder, "master_kit")
-    public_url = await _forward_to_receiver(contents, file.filename, folder)
-    return {"filename": file.filename, "url": public_url}
+    relative_url = await _forward_to_receiver(contents, file.filename, folder)
+    return {"filename": file.filename, "url": relative_url}
 
 
 @router.post("/upload/multiple")
@@ -67,8 +89,8 @@ async def upload_multiple_images(files: List[UploadFile] = File(...), folder: st
         if len(contents) > MAX_FILE_SIZE:
             continue
         try:
-            public_url = await _forward_to_receiver(contents, file.filename, folder)
-            results.append({"filename": file.filename, "url": public_url})
+            relative_url = await _forward_to_receiver(contents, file.filename, folder)
+            results.append({"filename": file.filename, "url": relative_url})
         except Exception:
             continue
     return results
