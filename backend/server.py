@@ -27,8 +27,7 @@ from .routers.user_lists import router as user_lists_router
 
 
 ROOT_DIR = Path(__file__).parent
-UPLOAD_DIR = ROOT_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
+UPLOAD_DIR = Path("/mnt/Freebox-1/topkit-media")
 
 
 logging.basicConfig(
