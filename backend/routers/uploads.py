@@ -1,27 +1,45 @@
 from fastapi import APIRouter, HTTPException, Response, UploadFile, File
 from typing import List
 from pathlib import Path
-import uuid
 import os
-import aiofiles
 import httpx
 from ..utils import ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
-# Dossier de destination : Freebox NAS en prod, dossier local en dev
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(Path(__file__).parent.parent / "uploads")))
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-# URL publique de base pour construire l'URL retournée après upload
-MEDIA_BASE_URL = os.getenv(
-    "MEDIA_BASE_URL",
-    "https://917824d5-a03a-481d-8a97-36ccc4c108c6.cfargotunnel.com"
-)
+# URL du serveur récepteur sur la Freebox VM
+RECEIVER_URL = os.getenv("RECEIVER_URL", "http://82.67.103.45:8001/receive-upload")
+RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 
 router = APIRouter(prefix="/api", tags=["uploads"])
 
 
+FOLDER_MAP = {
+    "master_kit": "master_kit",
+    "version":    "version",
+    "profile":    "profile",
+    "brand":      "brand",
+    "team":       "team",
+    "league":     "league",
+    "sponsor":    "sponsor",
+    "player":     "player",
+}
+
+
+async def _forward_to_receiver(contents: bytes, filename: str, folder: str) -> str:
+    """Envoie le fichier au récepteur Freebox et retourne l'URL publique."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            RECEIVER_URL,
+            headers={"x-secret": RECEIVER_SECRET},
+            files={"file": (filename, contents)},
+            data={"folder": folder},
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Receiver error: {resp.text}")
+        return resp.json()["url"]
+
+
 @router.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), folder: str = "master_kit"):
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -32,18 +50,15 @@ async def upload_image(file: UploadFile = File(...)):
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
-    filename = f"{uuid.uuid4().hex[:16]}{ext}"
-    filepath = UPLOAD_DIR / filename
-    async with aiofiles.open(filepath, "wb") as f:
-        await f.write(contents)
-
-    public_url = f"{MEDIA_BASE_URL}/images/master_kits/photos/{filename}"
-    return {"filename": filename, "url": public_url}
+    folder = FOLDER_MAP.get(folder, "master_kit")
+    public_url = await _forward_to_receiver(contents, file.filename, folder)
+    return {"filename": file.filename, "url": public_url}
 
 
 @router.post("/upload/multiple")
-async def upload_multiple_images(files: List[UploadFile] = File(...)):
+async def upload_multiple_images(files: List[UploadFile] = File(...), folder: str = "master_kit"):
     results = []
+    folder = FOLDER_MAP.get(folder, "master_kit")
     for file in files:
         ext = Path(file.filename).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
@@ -51,12 +66,11 @@ async def upload_multiple_images(files: List[UploadFile] = File(...)):
         contents = await file.read()
         if len(contents) > MAX_FILE_SIZE:
             continue
-        filename = f"{uuid.uuid4().hex[:16]}{ext}"
-        filepath = UPLOAD_DIR / filename
-        async with aiofiles.open(filepath, "wb") as f:
-            await f.write(contents)
-        public_url = f"{MEDIA_BASE_URL}/images/master_kits/photos/{filename}"
-        results.append({"filename": filename, "url": public_url})
+        try:
+            public_url = await _forward_to_receiver(contents, file.filename, folder)
+            results.append({"filename": file.filename, "url": public_url})
+        except Exception:
+            continue
     return results
 
 
