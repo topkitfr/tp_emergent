@@ -5,17 +5,16 @@ import os
 
 router = APIRouter(prefix="/api", tags=["images"])
 
-# URL de base pour les médias — Cloudflare tunnel en prod, IP locale en dev
+# URL de base Cloudflare tunnel (prod) ou IP directe (dev)
 MEDIA_BASE_URL = os.getenv(
     "MEDIA_BASE_URL",
     "https://917824d5-a03a-481d-8a97-36ccc4c108c6.cfargotunnel.com"
 )
-FREEBOX_BASE = f"{MEDIA_BASE_URL}/images/master_kits/photos"
 
 
-@router.get("/images/{filename}")
-async def proxy_image(filename: str):
-    url = f"{FREEBOX_BASE}/{filename}"
+@router.get("/images/{full_path:path}")
+async def proxy_image(full_path: str):
+    url = f"{MEDIA_BASE_URL}/{full_path}"
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             r = await client.get(url)
