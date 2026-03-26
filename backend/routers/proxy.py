@@ -13,11 +13,11 @@ ALLOWED_DOMAINS = [
 ]
 
 # IP publique Freebox — racine des médias
-FREEBOX_BASE = "http://82.67.103.45"
+FREEBOX_BASE = os.getenv("FREEBOX_BASE_URL", "http://82.67.103.45")
 
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:3000",
+    "http://localhost:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
 ).split(",")
 
 
@@ -38,7 +38,7 @@ async def image_proxy(url: str, request: Request):
     if not any(domain.endswith(d) for d in ALLOWED_DOMAINS):
         raise HTTPException(status_code=403, detail=f"Domain not allowed: {domain}")
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=5) as client:
             resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
             resp.raise_for_status()
         return StreamingResponse(
@@ -52,7 +52,8 @@ async def image_proxy(url: str, request: Request):
 
 @router.get("/images/{filepath:path}")
 async def freebox_image_proxy(filepath: str, request: Request):
-    """Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content.
+    """
+    Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content.
     Supporte tous les types de médias :
       /api/images/master_kits/photos/abc.jpg
       /api/images/brands/logos/abc.jpg
@@ -71,7 +72,7 @@ async def freebox_image_proxy(filepath: str, request: Request):
 
     url = f"{FREEBOX_BASE}/{filepath}"
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=3) as client:
             r = await client.get(url)
             if r.status_code != 200:
                 return Response(status_code=404)

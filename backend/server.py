@@ -61,7 +61,7 @@ async def health():
 # ─── CORS en PREMIER ──────────────────────────────────────────────────────────
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000",
+    "http://localhost:3000,http://127.0.0.1:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
 ).split(",")
 
 app.add_middleware(
