@@ -1,16 +1,12 @@
 # backend/routers/admin_panel.py
 """
-Routes réservées aux admins :
+Routes réservées aux admins/modérateurs :
   GET  /api/admin/stats
   GET  /api/admin/users
-  POST /api/admin/users/{user_id}/ban
-  POST /api/admin/users/{user_id}/unban
-  POST /api/admin/users/{user_id}/promote
-  POST /api/admin/users/{user_id}/demote
-  POST /api/admin/submissions/{submission_id}/approve
-  POST /api/admin/submissions/{submission_id}/reject
-  POST /api/admin/maintenance          (toggle)
+  POST /api/admin/users/{user_id}/ban|unban|promote|demote
+  POST /api/admin/submissions/{submission_id}/approve|reject
   GET  /api/admin/maintenance
+  POST /api/admin/maintenance
 """
 from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime, timezone, timedelta
@@ -20,8 +16,16 @@ from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin-panel"])
 
+ADMIN_ROLES = {"admin", "moderator"}
+
 
 def _require_admin(user: dict):
+    if user.get("role") not in ADMIN_ROLES:
+        raise HTTPException(status_code=403, detail="Rôle admin ou modérateur requis.")
+
+
+def _require_superadmin(user: dict):
+    """Actions sensibles réservées aux admins uniquement (promote/demote/maintenance)."""
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Rôle admin requis.")
 
@@ -36,36 +40,20 @@ async def admin_stats(request: Request):
     since_24h = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
     since_7d  = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
 
-    kits              = await db.master_kits.count_documents({})
-    versions          = await db.versions.count_documents({})
-    total_users       = await db.users.count_documents({})
-    banned_users      = await db.users.count_documents({"is_banned": True})
-    moderators        = await db.users.count_documents({"role": "moderator"})
-    admins            = await db.users.count_documents({"role": "admin"})
-    pending_subs      = await db.submissions.count_documents({"status": "pending"})
-    pending_reports   = await db.reports.count_documents({"status": "pending"})
-    subs_today        = await db.submissions.count_documents({"created_at": {"$gte": since_24h}})
-    subs_7d           = await db.submissions.count_documents({"created_at": {"$gte": since_7d}})
-    new_users_7d      = await db.users.count_documents({"created_at": {"$gte": since_7d}})
-
     return {
-        "kits":            kits,
-        "versions":        versions,
-        "users": {
-            "total":    total_users,
-            "banned":   banned_users,
-            "moderators": moderators,
-            "admins":   admins,
-            "new_7d":   new_users_7d,
-        },
-        "submissions": {
-            "pending":  pending_subs,
-            "today":    subs_today,
-            "last_7d":  subs_7d,
-        },
-        "reports": {
-            "pending":  pending_reports,
-        }
+        "kits_total":            await db.master_kits.count_documents({}),
+        "versions_total":        await db.versions.count_documents({}),
+        "users_total":           await db.users.count_documents({}),
+        "users_banned":          await db.users.count_documents({"is_banned": True}),
+        "moderators_count":      await db.users.count_documents({"role": "moderator"}),
+        "admins_count":          await db.users.count_documents({"role": "admin"}),
+        "users_new_7d":          await db.users.count_documents({"created_at": {"$gte": since_7d}}),
+        "submissions_total":     await db.submissions.count_documents({}),
+        "submissions_pending":   await db.submissions.count_documents({"status": "pending"}),
+        "submissions_today":     await db.submissions.count_documents({"created_at": {"$gte": since_24h}}),
+        "submissions_last_7d":   await db.submissions.count_documents({"created_at": {"$gte": since_7d}}),
+        "reports_total":         await db.reports.count_documents({}),
+        "reports_pending":       await db.reports.count_documents({"status": "pending"}),
     }
 
 
@@ -75,7 +63,7 @@ async def admin_stats(request: Request):
 async def list_users(
     request: Request,
     page: int = 1,
-    per_page: int = 30,
+    per_page: int = 20,
     search: Optional[str] = None,
     role: Optional[str] = None,
     banned: Optional[bool] = None,
@@ -98,9 +86,12 @@ async def list_users(
     skip = (page - 1) * per_page
     total = await db.users.count_documents(query)
     users = await db.users.find(
-        query,
-        {"_id": 0, "password_hash": 0}
+        query, {"password_hash": 0}
     ).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+
+    # Sérialiser _id en string
+    for u in users:
+        u["_id"] = str(u["_id"])
 
     return {"total": total, "page": page, "per_page": per_page, "users": users}
 
@@ -121,7 +112,6 @@ async def ban_user(user_id: str, request: Request):
         {"user_id": user_id},
         {"$set": {"is_banned": True, "banned_at": now, "banned_by": admin["user_id"]}}
     )
-    # Invalider toutes les sessions de l'utilisateur
     await db.user_sessions.delete_many({"user_id": user_id})
     return {"message": "Utilisateur banni.", "user_id": user_id}
 
@@ -140,33 +130,25 @@ async def unban_user(user_id: str, request: Request):
 
 @router.post("/users/{user_id}/promote")
 async def promote_user(user_id: str, request: Request):
-    """Passe un user en modérateur."""
     admin = await get_current_user(request)
-    _require_admin(admin)
+    _require_superadmin(admin)  # seul un admin peut promouvoir
 
     target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "role": 1})
     if not target:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable.")
-    if target.get("role") == "admin":
-        raise HTTPException(status_code=400, detail="L'utilisateur est déjà admin.")
+    if target.get("role") in ("admin", "moderator"):
+        raise HTTPException(status_code=400, detail="L'utilisateur est déjà admin ou modérateur.")
 
-    await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": {"role": "moderator"}}
-    )
+    await db.users.update_one({"user_id": user_id}, {"$set": {"role": "moderator"}})
     return {"message": "Utilisateur promu modérateur.", "user_id": user_id}
 
 
 @router.post("/users/{user_id}/demote")
 async def demote_user(user_id: str, request: Request):
-    """Repasse un modérateur en user."""
     admin = await get_current_user(request)
-    _require_admin(admin)
+    _require_superadmin(admin)  # seul un admin peut rétrograder
 
-    await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": {"role": "user"}}
-    )
+    await db.users.update_one({"user_id": user_id}, {"$set": {"role": "user"}})
     return {"message": "Modérateur rétrogradé en user.", "user_id": user_id}
 
 
@@ -183,7 +165,6 @@ async def admin_approve_submission(submission_id: str, request: Request):
     if sub["status"] != "pending":
         raise HTTPException(status_code=400, detail="La soumission n'est plus en attente.")
 
-    # On force le threshold pour déclencher l'approbation via le vote handler
     from ..utils import APPROVAL_THRESHOLD
     now = datetime.now(timezone.utc).isoformat()
     await db.submissions.update_one(
@@ -193,16 +174,7 @@ async def admin_approve_submission(submission_id: str, request: Request):
             "$push": {"voters": admin["user_id"]},
         }
     )
-    # Réutilise la logique d'approbation existante
-    from .submissions import vote_on_submission
-    from ..models import VoteCreate
 
-    class FakeRequest:
-        cookies = {}
-        headers = {}
-
-    fake_vote = VoteCreate(vote="up")
-    # Direct DB path : on appelle _apply depuis submissions
     from .submissions import _apply_entity_submission
     import uuid
 
@@ -312,15 +284,15 @@ async def admin_reject_submission(submission_id: str, request: Request):
 
 @router.get("/maintenance")
 async def get_maintenance(request: Request):
-    # Route publique pour que le front sache si on est en maintenance
     flag = await db.config.find_one({"key": "maintenance_mode"}, {"_id": 0})
-    return {"maintenance": flag.get("value", False) if flag else False}
+    enabled = flag.get("value", False) if flag else False
+    return {"maintenance_mode": enabled}
 
 
 @router.post("/maintenance")
 async def toggle_maintenance(request: Request):
     admin = await get_current_user(request)
-    _require_admin(admin)
+    _require_superadmin(admin)
 
     flag = await db.config.find_one({"key": "maintenance_mode"}, {"_id": 0})
     current = flag.get("value", False) if flag else False
@@ -332,4 +304,7 @@ async def toggle_maintenance(request: Request):
                   "updated_by": admin["user_id"]}},
         upsert=True,
     )
-    return {"maintenance": new_val, "message": "Mode maintenance activé." if new_val else "Mode maintenance désactivé."}
+    return {
+        "maintenance_mode": new_val,
+        "message": "Mode maintenance activé." if new_val else "Mode maintenance désactivé."
+    }
