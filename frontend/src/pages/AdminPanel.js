@@ -231,104 +231,88 @@ function SubmissionsTab() {
   );
 }
 
-// ─── Signalements ──────────────────────────────────────────────────────────────
+// ─── Signalements (reports communautaires, workflow vote) ───────────────────────
 function ReportsTab() {
-  const [reports, setReports]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [page, setPage]         = useState(1);
-  const [total, setTotal]       = useState(0);
-  const [statusFilter, setStatusFilter] = useState("pending");
-  const [typeFilter, setTypeFilter]     = useState("");
-  const [msg, setMsg]           = useState(null);
-  const PER_PAGE = 20;
+  const [reports, setReports]             = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [total, setTotal]                 = useState(0);
+  const [statusFilter, setStatusFilter]   = useState("pending");
+  const [typeFilter, setTypeFilter]       = useState("");
+  const [skip, setSkip]                   = useState(0);
+  const LIMIT = 20;
 
   const load = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page, per_page: PER_PAGE });
+    const params = new URLSearchParams({ limit: LIMIT, skip });
     if (statusFilter) params.set("status", statusFilter);
-    if (typeFilter)   params.set("target_type", typeFilter);
-    apiFetch(`/reports/admin?${params}`)
+    apiFetch(`/reports?${params}`)
       .then((r) => r.ok ? r.json() : Promise.reject())
-      .then((d) => { setReports(d.reports ?? []); setTotal(d.total ?? 0); })
+      .then((d) => {
+        const list = Array.isArray(d) ? d : d.reports ?? [];
+        // filtre type côté client si besoin
+        const filtered = typeFilter ? list.filter(r => r.target_type === typeFilter) : list;
+        setReports(filtered);
+        setTotal(d.total ?? list.length);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [page, statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, skip]);
 
   useEffect(() => { load(); }, [load]);
 
-  const action = async (reportId, act) => {
-    setMsg(null);
-    const r = await apiFetch(`/reports/admin/${reportId}/${act}`, { method: "POST" });
-    const d = await r.json();
-    setMsg(r.ok ? { ok: true, text: d.message } : { ok: false, text: d.detail });
-    load();
-  };
-
   const STATUS_BADGE = {
-    pending:   "bg-yellow-100 text-yellow-700",
-    resolved:  "bg-green-100 text-green-700",
-    dismissed: "bg-gray-100 text-gray-500",
+    pending:  "bg-yellow-100 text-yellow-700",
+    approved: "bg-green-100 text-green-700",
+    rejected: "bg-red-100 text-red-600",
   };
-  const TYPE_ICON = { kit: "👕", version: "🏷️", submission: "📎" };
-  const totalPages = Math.ceil(total / PER_PAGE);
+  const TYPE_ICON   = { master_kit: "👕", version: "🏷️" };
+  const REPORT_TYPE = { error: "⚠️ Correction", removal: "🗑️ Suppression" };
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Signalements ({total})</h2>
+      <h2 className="text-lg font-semibold mb-1">Signalements communautaires</h2>
+      <p className="text-xs text-gray-400 mb-4">Les signalements sont traités par vote de la communauté depuis la page Contributions. L'admin peut voter ici pour accélérer le traitement.</p>
 
       <div className="flex flex-wrap gap-2 mb-4">
         <select className="border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800"
-          value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+          value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setSkip(0); }}>
           <option value="">Tous les statuts</option>
           <option value="pending">En attente</option>
-          <option value="resolved">Résolus</option>
-          <option value="dismissed">Ignorés</option>
+          <option value="approved">Approuvés</option>
+          <option value="rejected">Rejetés</option>
         </select>
         <select className="border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800"
-          value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
+          value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setSkip(0); }}>
           <option value="">Tous les types</option>
-          <option value="kit">Kit</option>
+          <option value="master_kit">Master Kit</option>
           <option value="version">Version</option>
-          <option value="submission">Soumission</option>
         </select>
       </div>
-
-      {msg && <div className={`mb-3 px-3 py-2 rounded-lg text-sm ${msg.ok ? "bg-green-50 text-green-700 dark:bg-green-950/30" : "bg-red-50 text-red-700 dark:bg-red-950/30"}`}>{msg.ok ? "✅" : "❌"} {msg.text}</div>}
 
       {loading ? <p className="text-sm text-gray-400">Chargement…</p>
         : reports.length === 0 ? <p className="text-sm text-green-600">✅ Aucun signalement{statusFilter === "pending" ? " en attente" : ""}.</p>
         : <div className="space-y-2">{reports.map((rep) => (
-            <div key={rep.report_id} className="flex flex-wrap items-start justify-between gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 border border-gray-200 dark:border-gray-700">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-base">{TYPE_ICON[rep.target_type] ?? "📍"}</span>
-                  <span className="text-xs font-mono text-gray-400">{rep.target_id}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[rep.status] ?? "bg-gray-100 text-gray-500"}`}>{rep.status}</span>
-                </div>
-                <p className="text-sm font-medium">{rep.reason}</p>
-                {rep.comment && <p className="text-xs text-gray-400 mt-0.5 italic">« {rep.comment} »</p>}
-                <p className="text-xs text-gray-400 mt-1">
-                  par {rep.reported_by} · {new Date(rep.created_at).toLocaleDateString("fr-FR")}
-                  {rep.handled_by && ` · traité par ${rep.handled_by}`}
-                </p>
+            <div key={rep.report_id} className="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-base">{TYPE_ICON[rep.target_type] ?? "📍"}</span>
+                <span className="text-xs font-mono text-gray-400">{rep.target_id}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[rep.status] ?? "bg-gray-100"}`}>{rep.status}</span>
+                <span className="text-xs text-gray-500">{REPORT_TYPE[rep.report_type] ?? rep.report_type}</span>
               </div>
-              {rep.status === "pending" && (
-                <div className="flex gap-2 flex-shrink-0">
-                  <button onClick={() => action(rep.report_id, "resolve")}
-                    className="text-xs bg-green-500 hover:bg-green-600 text-white px-2.5 py-1 rounded-md">✅ Résoudre</button>
-                  <button onClick={() => action(rep.report_id, "dismiss")}
-                    className="text-xs bg-gray-400 hover:bg-gray-500 text-white px-2.5 py-1 rounded-md">🚫 Ignorer</button>
-                </div>
-              )}
+              {rep.notes && <p className="text-xs text-gray-400 italic mb-1">« {rep.notes} »</p>}
+              <p className="text-xs text-gray-400">
+                par {rep.reporter_name || rep.reported_by} · {new Date(rep.created_at).toLocaleDateString("fr-FR")}
+                &nbsp;· ↑{rep.votes_up} / ↓{rep.votes_down}
+              </p>
             </div>
           ))}
         </div>
       }
-      {totalPages > 1 && (
+      {total > LIMIT && (
         <div className="flex gap-2 mt-4 justify-center">
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40 dark:border-gray-600">← Préc</button>
-          <span className="text-sm text-gray-500 self-center">{page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40 dark:border-gray-600">Suiv →</button>
+          <button disabled={skip === 0} onClick={() => setSkip(s => Math.max(0, s - LIMIT))} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40 dark:border-gray-600">← Préc</button>
+          <span className="text-sm text-gray-500 self-center">{Math.floor(skip/LIMIT)+1} / {Math.ceil(total/LIMIT)}</span>
+          <button disabled={skip + LIMIT >= total} onClick={() => setSkip(s => s + LIMIT)} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40 dark:border-gray-600">Suiv →</button>
         </div>
       )}
     </div>
@@ -529,9 +513,11 @@ export default function AdminPanel() {
       {activeTab === "users"       && <UsersTab />}
       {activeTab === "submissions" && <SubmissionsTab />}
       {activeTab === "reports"     && <ReportsTab />}
-      {activeTab === "maintenance" && <MaintenanceTab />}
+      {activeTab === "maintenance" && <MaintenancePage />}
       {activeTab === "pending"     && <PendingEntitiesTab />}
       {activeTab === "csv"         && <CsvImportTab />}
     </div>
   );
 }
+
+function MaintenancePage() { return <MaintenanceTab />; }

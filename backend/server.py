@@ -25,7 +25,6 @@ from .routers.proxy import router as proxy_router
 from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
-from .routers.reports import router as reports_router
 from .middleware import maintenance_middleware
 
 
@@ -168,7 +167,6 @@ app.include_router(entities_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(admin_panel_router)
-app.include_router(reports_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 
@@ -218,7 +216,6 @@ async def create_indexes():
     await db.user_sessions.create_index("user_id")
     await db.user_sessions.create_index("expires_at")
 
-    # Index reports
     await db.reports.create_index([("reported_by", 1), ("target_id", 1), ("status", 1)])
     await db.reports.create_index("status")
     await db.reports.create_index("created_at")
