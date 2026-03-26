@@ -28,15 +28,15 @@ FOLDER_MAP = {
 def _to_relative_path(public_url: str) -> str:
     """
     Convertit l'URL absolue retournée par le receiver Freebox
-    (ex: http://82.67.103.45/versions/photos/version_abc_front_xxx.jpg)
+    (ex: http://82.67.103.45/brands/logos/abc.jpg)
     en chemin relatif via le proxy backend existant
-    (ex: /api/images/versions/photos/version_abc_front_xxx.jpg).
+    (ex: /api/images/brands/logos/abc.jpg).
     """
     pattern = re.compile(r'^https?://[^/]+')
     match = pattern.match(public_url)
     if not match:
         return public_url
-    relative = public_url[match.end():]  # ex: /versions/photos/...
+    relative = public_url[match.end():]  # ex: /brands/logos/abc.jpg
     return f"/api/images{relative}"
 
 

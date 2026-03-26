@@ -29,7 +29,7 @@ async def receive_upload(
     file: UploadFile = File(...),
     folder: str = Query("master_kit"),
     entity_id: str = Query(None),
-    side: str = Query(None),  # "front" | "back" | None
+    side: str = Query(None),       # "front" | "back" | None
     x_secret: str = Header(...)
 ):
     if x_secret != SECRET:
@@ -44,18 +44,15 @@ async def receive_upload(
     ext = Path(file.filename).suffix.lower() or ".jpg"
     uid = uuid.uuid4().hex[:12]
 
-    # Naming : {folder}_{entity_id}_{side}_{uid}{ext}
-    # Exemples :
-    #   version_abc123_front_d4e5f6789abc.webp
-    #   master_kit_abc123def456.webp  (pas de side pour master)
+    # Naming: {folder}_{entity_id}_{side}_{uid}{ext}  (entity_id et side optionnels)
     parts = [folder]
     if entity_id:
         parts.append(entity_id)
     if side in ("front", "back"):
         parts.append(side)
     parts.append(uid)
-
     filename = "_".join(parts) + ext
+
     filepath = dest / filename
 
     contents = await file.read()
@@ -83,7 +80,6 @@ async def delete_file(
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Fichier introuvable")
 
-    # Sécurité : s'assurer qu'on reste dans MEDIA_ROOT
     if not filepath.resolve().is_relative_to(MEDIA_ROOT.resolve()):
         raise HTTPException(status_code=400, detail="Chemin invalide")
 
