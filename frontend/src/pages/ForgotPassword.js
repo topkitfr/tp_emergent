@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { API_BASE } from '@/lib/api';
+import { BACKEND_URL } from '@/lib/api';
 
 export default function ForgotPassword() {
   const [email, setEmail]     = useState('');
@@ -16,12 +16,11 @@ export default function ForgotPassword() {
     setError('');
     setLoading(true);
     try {
-      await fetch(`${API_BASE}/api/auth/forgot-password`, {
+      await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      // Toujours afficher le message de succès (anti-enumeration)
       setSent(true);
     } catch {
       setError('Une erreur est survenue. Réessaie.');

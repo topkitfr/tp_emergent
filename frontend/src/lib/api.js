@@ -1,7 +1,7 @@
 // frontend/src/lib/api.js
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export const proxyImageUrl = (url) => {
@@ -14,7 +14,6 @@ export const proxyImageUrl = (url) => {
 
   // URL absolue Render stockée en base (legacy) :
   // ex: https://tp-emergent.onrender.com/api/images/versions/photos/abc.webp
-  // On extrait le chemin relatif et on le remappe proprement
   const apiImagesPattern = /^https?:\/\/[^/]+(\/api\/images\/.+)$/;
   const match = url.match(apiImagesPattern);
   if (match) {
@@ -33,7 +32,7 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ─── Intercepteur de réponse — gestion globale des erreurs ───────────────────────────────────────────────────────────
+// ─── Intercepteur de réponse — gestion globale des erreurs ───────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -93,7 +92,6 @@ export const getStats = () => api.get('/stats');
 export const seedData = () => api.post('/seed');
 
 // Upload
-// side: "front" | "back" | null  — utilisé pour les photos de version
 export const uploadImage = (file, folder = 'master_kit', entityId = null, side = null) => {
   const formData = new FormData();
   formData.append('file', file);
@@ -119,7 +117,7 @@ export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/
 export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
 export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
 
-// ── Listes personnalisées ───────────────────────────────────────────────────────────────────────────────
+// ── Listes personnalisées ────────────────────────────────────────────────────
 export const getUserLists       = ()                      => api.get('/lists');
 export const getListDetail      = (listId)                => api.get(`/lists/${listId}`);
 export const createList         = (data)                  => api.post('/lists', data);

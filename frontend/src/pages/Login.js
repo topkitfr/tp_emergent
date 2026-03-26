@@ -45,13 +45,17 @@ export default function Login() {
 
         <div className="flex mb-6 border border-border">
           <button
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              mode === 'login' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => { setMode('login'); setError(''); }}
           >
             Sign in
           </button>
           <button
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              mode === 'register' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => { setMode('register'); setError(''); }}
           >
             Create account
@@ -77,15 +81,27 @@ export default function Login() {
             className="rounded-none"
             required
           />
-          <Input
-            type="password"
-            placeholder="Password (8 chars min)"
-            value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })}
-            className="rounded-none"
-            required
-            minLength={8}
-          />
+          <div className="space-y-1">
+            <Input
+              type="password"
+              placeholder="Password (8 chars min)"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              className="rounded-none"
+              required
+              minLength={8}
+            />
+            {mode === 'login' && (
+              <div className="text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+            )}
+          </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
