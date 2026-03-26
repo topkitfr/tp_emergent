@@ -20,16 +20,15 @@ from .routers.wishlist import router as wishlist_router
 from .routers.entities import router as entities_router
 from .routers.uploads import router as uploads_router
 from .routers.admin import router as admin_router
+from .routers.admin_panel import router as admin_panel_router
 from .routers.proxy import router as proxy_router
 from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
+from .middleware import maintenance_middleware
 
 
 ROOT_DIR = Path(__file__).parent
-# MEDIA_ROOT peut être surchargé via variable d'environnement
-# Sur la VM Freebox : MEDIA_ROOT=/mnt/Freebox-1/topkit-media
-# Sur Render : non défini → fallback local backend/uploads/
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT")
 if MEDIA_ROOT:
     UPLOAD_DIR = Path(MEDIA_ROOT)
@@ -73,13 +72,17 @@ app.add_middleware(
 )
 
 
+# ─── Maintenance Middleware ────────────────────────────────────────────────────
+app.middleware("http")(maintenance_middleware)
+
+
 # ─── Rate Limiting (simple in-memory) ─────────────────────────────────────────
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
     "/api/auth/login":            (10, 60),
     "/api/auth/register":         (5,  60),
-    "/api/auth/forgot-password":  (3,  60),   # anti-spam email
+    "/api/auth/forgot-password":  (3,  60),
     "/api/auth/reset-password":   (5,  60),
     "/api/submissions":           (30, 60),
     "/api/upload":                (20, 60),
@@ -162,6 +165,7 @@ app.include_router(wishlist_router)
 app.include_router(entities_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
+app.include_router(admin_panel_router)   # ← nouveau
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 
@@ -198,11 +202,18 @@ async def create_indexes():
     await db.notifications.create_index([("user_id", 1), ("read", 1)])
     await db.notifications.create_index("created_at")
 
+    # ─── Submissions : index sur submitted_by + type + created_at (pour quotas)
+    await db.submissions.create_index([("submitted_by", 1), ("submission_type", 1), ("created_at", 1)])
+
+    # ─── Users : index sur is_banned + role (pour les filtres admin)
+    await db.users.create_index("is_banned")
+    await db.users.create_index("role")
+
     # ─── password_resets ──────────────────────────────────────────────────────
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("email")
     await db.password_resets.create_index("user_id")
-    await db.password_resets.create_index("expires_at")  # utile pour cleanup futur
+    await db.password_resets.create_index("expires_at")
 
     # ─── user_sessions ────────────────────────────────────────────────────────
     await db.user_sessions.create_index("session_token", unique=True, sparse=True)
