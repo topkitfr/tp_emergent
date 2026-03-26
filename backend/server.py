@@ -25,6 +25,7 @@ from .routers.proxy import router as proxy_router
 from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
+from .routers.reports import router as reports_router
 from .middleware import maintenance_middleware
 
 
@@ -57,7 +58,7 @@ async def health():
     return {"status": "ok"}
 
 
-# ─── CORS en PREMIER ──────────────────────────────────────────────────────────
+# ─── CORS en PREMIER ──────────────────────────────────────────────────────────────
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
     "http://localhost:3000,http://127.0.0.1:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
@@ -72,11 +73,11 @@ app.add_middleware(
 )
 
 
-# ─── Maintenance Middleware ────────────────────────────────────────────────────
+# ─── Maintenance Middleware ──────────────────────────────────────────────────────────
 app.middleware("http")(maintenance_middleware)
 
 
-# ─── Rate Limiting (simple in-memory) ─────────────────────────────────────────
+# ─── Rate Limiting (simple in-memory) ───────────────────────────────────────────────
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
@@ -86,6 +87,7 @@ RATE_LIMITS = {
     "/api/auth/reset-password":   (5,  60),
     "/api/submissions":           (30, 60),
     "/api/upload":                (20, 60),
+    "/api/reports":               (10, 60),
 }
 DEFAULT_RATE_LIMIT = (200, 60)
 
@@ -118,7 +120,7 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# ─── Security Headers + CORS sur erreurs 500 ─────────────────────────────────
+# ─── Security Headers + CORS sur erreurs 500 ────────────────────────────────────
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
     try:
@@ -165,7 +167,8 @@ app.include_router(wishlist_router)
 app.include_router(entities_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
-app.include_router(admin_panel_router)   # ← nouveau
+app.include_router(admin_panel_router)
+app.include_router(reports_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 
@@ -202,25 +205,24 @@ async def create_indexes():
     await db.notifications.create_index([("user_id", 1), ("read", 1)])
     await db.notifications.create_index("created_at")
 
-    # ─── Submissions : index sur submitted_by + type + created_at (pour quotas)
     await db.submissions.create_index([("submitted_by", 1), ("submission_type", 1), ("created_at", 1)])
-
-    # ─── Users : index sur is_banned + role (pour les filtres admin)
     await db.users.create_index("is_banned")
     await db.users.create_index("role")
 
-    # ─── password_resets ──────────────────────────────────────────────────────
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("email")
     await db.password_resets.create_index("user_id")
     await db.password_resets.create_index("expires_at")
 
-    # ─── user_sessions ────────────────────────────────────────────────────────
     await db.user_sessions.create_index("session_token", unique=True, sparse=True)
     await db.user_sessions.create_index("user_id")
     await db.user_sessions.create_index("expires_at")
 
-    # Nettoyage des sessions et tokens expirés au démarrage
+    # Index reports
+    await db.reports.create_index([("reported_by", 1), ("target_id", 1), ("status", 1)])
+    await db.reports.create_index("status")
+    await db.reports.create_index("created_at")
+
     from datetime import datetime, timezone
     now_iso = datetime.now(timezone.utc).isoformat()
     deleted_sessions = await db.user_sessions.delete_many({"expires_at": {"$lt": now_iso}})
