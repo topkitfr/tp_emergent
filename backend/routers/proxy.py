@@ -20,6 +20,28 @@ CORS_ORIGINS = os.environ.get(
     "http://localhost:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
 ).split(",")
 
+# Mapping préfixe filename → sous-dossier Freebox (legacy : filename seul en base)
+LEGACY_PREFIX_MAP = {
+    "version_": "versions/photos",
+    "ver_":     "versions/photos",
+    "kit_":     "master_kits/photos",
+    "brand_":   "brands/logos",
+    "team_":    "teams/logos",
+    "league_":  "leagues/logos",
+    "sponsor_": "sponsors/logos",
+    "player_":  "players/photos",
+    "user_":    "users/photos",
+}
+
+
+def _resolve_legacy_filepath(filename: str) -> str:
+    """Déduit le sous-dossier Freebox depuis le préfixe du filename."""
+    for prefix, folder in LEGACY_PREFIX_MAP.items():
+        if filename.startswith(prefix):
+            return f"{folder}/{filename}"
+    # fallback générique
+    return f"master_kits/photos/{filename}"
+
 
 def get_cors_headers(request: Request) -> dict:
     origin = request.headers.get("origin", "")
@@ -54,21 +76,12 @@ async def image_proxy(url: str, request: Request):
 async def freebox_image_proxy(filepath: str, request: Request):
     """
     Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content.
-    Supporte tous les types de médias :
-      /api/images/master_kits/photos/abc.jpg
-      /api/images/brands/logos/abc.jpg
-      /api/images/teams/logos/abc.jpg
-      /api/images/versions/photos/abc.jpg
-      /api/images/players/photos/abc.jpg
-      /api/images/users/photos/abc.jpg
-      /api/images/leagues/logos/abc.jpg
-      /api/images/sponsors/logos/abc.jpg
-      # Legacy : juste le filename (anciens kits importés)
-      /api/images/abc.jpg  → fallback master_kits/photos/
+    Cas gérés :
+      - chemin complet : versions/photos/abc.webp
+      - filename seul (legacy) : version_abc.webp → déduit versions/photos/
     """
-    # Legacy : filename seul sans sous-dossier → fallback master_kits/photos
     if "/" not in filepath:
-        filepath = f"master_kits/photos/{filepath}"
+        filepath = _resolve_legacy_filepath(filepath)
 
     url = f"{FREEBOX_BASE}/{filepath}"
     try:
