@@ -38,7 +38,7 @@ async def image_proxy(url: str, request: Request):
     if not any(domain.endswith(d) for d in ALLOWED_DOMAINS):
         raise HTTPException(status_code=403, detail=f"Domain not allowed: {domain}")
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=5) as client:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
             resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
             resp.raise_for_status()
         return StreamingResponse(
@@ -72,7 +72,7 @@ async def freebox_image_proxy(filepath: str, request: Request):
 
     url = f"{FREEBOX_BASE}/{filepath}"
     try:
-        async with httpx.AsyncClient(timeout=3) as client:
+        async with httpx.AsyncClient(timeout=10) as client:
             r = await client.get(url)
             if r.status_code != 200:
                 return Response(status_code=404)
@@ -81,5 +81,7 @@ async def freebox_image_proxy(filepath: str, request: Request):
                 media_type=r.headers.get("content-type", "image/jpeg"),
                 headers=get_cors_headers(request),
             )
+    except httpx.TimeoutException:
+        return Response(status_code=504)
     except Exception:
-        return Response(status_code=404)
+        return Response(status_code=502)
