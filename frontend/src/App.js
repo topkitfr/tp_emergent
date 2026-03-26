@@ -68,8 +68,11 @@ function App() {
                 <Route path="/players/:id" element={<PlayerDetail />} />
 
                 {/* ── Database — Sponsors ── */}
-                <Route path="/database/sponsors" element={<Sponsors />} />
-                <Route path="/database/sponsors/:id" element={<SponsorDetail />} />
+                <Route path="/sponsors" element={<Sponsors />} />
+                <Route path="/sponsors/:id" element={<SponsorDetail />} />
+                {/* Redirects pour compatibilité avec anciens liens /database/sponsors */}
+                <Route path="/database/sponsors" element={<Navigate to="/sponsors" replace />} />
+                <Route path="/database/sponsors/:id" element={<Navigate to="/sponsors/:id" replace />} />
 
                 {/* ── Pages protégées ── */}
                 <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
