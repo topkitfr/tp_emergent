@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Browse from "@/pages/Browse";
 import KitDetail from "@/pages/KitDetail";
 import VersionDetail from "@/pages/VersionDetail";
@@ -38,6 +40,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               <Route element={<Layout />}>
                 {/* ── Navigation principale ── */}
@@ -52,14 +56,12 @@ function App() {
                 {/* ── Database — Leagues ── */}
                 <Route path="/leagues" element={<Leagues />} />
                 <Route path="/leagues/:id" element={<LeagueDetail />} />
-                {/* Redirects pour compatibilité avec anciens liens /database/leagues */}
                 <Route path="/database/leagues" element={<Navigate to="/leagues" replace />} />
                 <Route path="/database/leagues/:id" element={<Navigate to="/leagues/:id" replace />} />
 
                 {/* ── Database — Brands ── */}
                 <Route path="/brands" element={<Brands />} />
                 <Route path="/brands/:id" element={<BrandDetail />} />
-                {/* Redirects pour compatibilité */}
                 <Route path="/database/brands" element={<Navigate to="/brands" replace />} />
                 <Route path="/database/brands/:id" element={<Navigate to="/brands/:id" replace />} />
 
@@ -70,7 +72,6 @@ function App() {
                 {/* ── Database — Sponsors ── */}
                 <Route path="/sponsors" element={<Sponsors />} />
                 <Route path="/sponsors/:id" element={<SponsorDetail />} />
-                {/* Redirects pour compatibilité avec anciens liens /database/sponsors */}
                 <Route path="/database/sponsors" element={<Navigate to="/sponsors" replace />} />
                 <Route path="/database/sponsors/:id" element={<Navigate to="/sponsors/:id" replace />} />
 
