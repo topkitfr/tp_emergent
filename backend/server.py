@@ -77,10 +77,12 @@ app.add_middleware(
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
-    "/api/auth/login":    (10, 60),
-    "/api/auth/register": (5, 60),
-    "/api/submissions":   (30, 60),
-    "/api/upload":        (20, 60),
+    "/api/auth/login":            (10, 60),
+    "/api/auth/register":         (5,  60),
+    "/api/auth/forgot-password":  (3,  60),   # anti-spam email
+    "/api/auth/reset-password":   (5,  60),
+    "/api/submissions":           (30, 60),
+    "/api/upload":                (20, 60),
 }
 DEFAULT_RATE_LIMIT = (200, 60)
 
@@ -195,5 +197,26 @@ async def create_indexes():
     await db.notifications.create_index("user_id")
     await db.notifications.create_index([("user_id", 1), ("read", 1)])
     await db.notifications.create_index("created_at")
+
+    # ─── password_resets ──────────────────────────────────────────────────────
+    await db.password_resets.create_index("token", unique=True)
+    await db.password_resets.create_index("email")
+    await db.password_resets.create_index("user_id")
+    await db.password_resets.create_index("expires_at")  # utile pour cleanup futur
+
+    # ─── user_sessions ────────────────────────────────────────────────────────
+    await db.user_sessions.create_index("session_token", unique=True, sparse=True)
+    await db.user_sessions.create_index("user_id")
+    await db.user_sessions.create_index("expires_at")
+
+    # Nettoyage des sessions et tokens expirés au démarrage
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
+    deleted_sessions = await db.user_sessions.delete_many({"expires_at": {"$lt": now_iso}})
+    deleted_resets   = await db.password_resets.delete_many({"expires_at": {"$lt": now_iso}})
+    logger.info(
+        f"Startup cleanup: {deleted_sessions.deleted_count} sessions expirées, "
+        f"{deleted_resets.deleted_count} reset tokens expirés supprimés"
+    )
 
     logger.info("Indexes created successfully")
