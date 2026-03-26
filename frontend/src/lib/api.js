@@ -6,12 +6,24 @@ const API = `${BACKEND_URL}/api`;
 
 export const proxyImageUrl = (url) => {
   if (!url) return '';
-  // Images NAS Freebox via proxy backend (deux préfixes possibles)
+
+  // Chemin relatif → préfixe BACKEND_URL
   if (url.startsWith('/api/uploads/') || url.startsWith('/api/images/')) {
     return `${BACKEND_URL}${url}`;
   }
+
+  // URL absolue Render stockée en base (legacy) :
+  // ex: https://tp-emergent.onrender.com/api/images/versions/photos/abc.webp
+  // On extrait le chemin relatif et on le remappe proprement
+  const apiImagesPattern = /^https?:\/\/[^/]+(\/api\/images\/.+)$/;
+  const match = url.match(apiImagesPattern);
+  if (match) {
+    return `${BACKEND_URL}${match[1]}`;
+  }
+
   // Images CDN externes : chargées directement
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
+
   return url;
 };
 
@@ -21,7 +33,7 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ─── Intercepteur de réponse — gestion globale des erreurs ──────────────────────────────────────────
+// ─── Intercepteur de réponse — gestion globale des erreurs ───────────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -107,7 +119,7 @@ export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/
 export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
 export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
 
-// ── Listes personnalisées ──────────────────────────────────────────────────
+// ── Listes personnalisées ───────────────────────────────────────────────────────────────────────────────
 export const getUserLists       = ()                      => api.get('/lists');
 export const getListDetail      = (listId)                => api.get(`/lists/${listId}`);
 export const createList         = (data)                  => api.post('/lists', data);
