@@ -16,7 +16,7 @@ MEDIA_BASE_URL = os.getenv(
 async def proxy_image(full_path: str):
     url = f"{MEDIA_BASE_URL}/{full_path}"
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=3) as client:
             r = await client.get(url)
             if r.status_code != 200:
                 return Response(status_code=404)
