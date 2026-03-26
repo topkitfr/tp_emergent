@@ -1,5 +1,5 @@
 // frontend/src/App.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -28,10 +28,27 @@ import PlayerDetail from "@/pages/PlayerDetail";
 import Sponsors from "@/pages/Sponsors";
 import SponsorDetail from "@/pages/SponsorDetail";
 import AdminPanel from "@/pages/AdminPanel";
+import MaintenancePage from "@/pages/MaintenancePage";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+const API = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
+
 function App() {
+  const [maintenance, setMaintenance] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API}/admin/maintenance`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.maintenance_mode) setMaintenance(true); })
+      .catch(() => {})                  // si l'API est down, on laisse passer
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) return null;            // bref instant de chargement silencieux
+  if (maintenance) return <MaintenancePage />;
+
   return (
     <div className="noise-overlay">
       <BrowserRouter>
