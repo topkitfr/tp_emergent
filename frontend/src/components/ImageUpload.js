@@ -7,7 +7,8 @@ import { Upload, X, Image, Link2, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function ImageUpload({ value, onChange, label, testId, folder = 'master_kit' }) {
+// side: "front" | "back" | null — passé au receiver Freebox pour nommer le fichier
+export default function ImageUpload({ value, onChange, label, testId, folder = 'master_kit', side = null }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [mode, setMode] = useState('upload'); // 'upload' or 'url'
@@ -36,7 +37,7 @@ export default function ImageUpload({ value, onChange, label, testId, folder = '
     }
     setUploading(true);
     try {
-      const res = await uploadImage(file, folder);
+      const res = await uploadImage(file, folder, null, side);
       onChange(res.data.url);
       toast.success('Image uploaded');
     } catch (err) {
@@ -45,7 +46,7 @@ export default function ImageUpload({ value, onChange, label, testId, folder = '
     } finally {
       setUploading(false);
     }
-  }, [onChange, folder]);
+  }, [onChange, folder, side]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();

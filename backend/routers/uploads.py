@@ -28,28 +28,31 @@ FOLDER_MAP = {
 def _to_relative_path(public_url: str) -> str:
     """
     Convertit l'URL absolue retournée par le receiver Freebox
-    (ex: http://82.67.103.45/brands/logos/abc.jpg)
+    (ex: http://82.67.103.45/versions/photos/version_abc_front_xxx.jpg)
     en chemin relatif via le proxy backend existant
-    (ex: /api/images/brands/logos/abc.jpg).
-
-    La route /api/images/{filepath} existe dans proxy.py et sert
-    les fichiers depuis la Freebox en HTTPS via Render.
+    (ex: /api/images/versions/photos/version_abc_front_xxx.jpg).
     """
     pattern = re.compile(r'^https?://[^/]+')
     match = pattern.match(public_url)
     if not match:
         return public_url
-    relative = public_url[match.end():]  # ex: /brands/logos/abc.jpg
+    relative = public_url[match.end():]  # ex: /versions/photos/...
     return f"/api/images{relative}"
 
 
 async def _forward_to_receiver(
-    contents: bytes, filename: str, folder: str, entity_id: Optional[str] = None
+    contents: bytes,
+    filename: str,
+    folder: str,
+    entity_id: Optional[str] = None,
+    side: Optional[str] = None,
 ) -> dict:
     """Envoie le fichier au récepteur Freebox et retourne url + relative_path."""
     params = {"folder": folder}
     if entity_id:
         params["entity_id"] = entity_id
+    if side in ("front", "back"):
+        params["side"] = side
 
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
@@ -72,6 +75,7 @@ async def upload_image(
     file: UploadFile = File(...),
     folder: str = "master_kit",
     entity_id: Optional[str] = None,
+    side: Optional[str] = None,
 ):
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -84,7 +88,7 @@ async def upload_image(
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
     folder = FOLDER_MAP.get(folder, "master_kit")
-    result = await _forward_to_receiver(contents, file.filename, folder, entity_id)
+    result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
     return {"filename": file.filename, **result}
 
 
@@ -93,6 +97,7 @@ async def upload_multiple_images(
     files: List[UploadFile] = File(...),
     folder: str = "master_kit",
     entity_id: Optional[str] = None,
+    side: Optional[str] = None,
 ):
     results = []
     folder = FOLDER_MAP.get(folder, "master_kit")
@@ -104,7 +109,7 @@ async def upload_multiple_images(
         if len(contents) > MAX_FILE_SIZE:
             continue
         try:
-            result = await _forward_to_receiver(contents, file.filename, folder, entity_id)
+            result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
             results.append({"filename": file.filename, **result})
         except Exception:
             continue

@@ -81,11 +81,13 @@ export const getStats = () => api.get('/stats');
 export const seedData = () => api.post('/seed');
 
 // Upload
-export const uploadImage = (file, folder = 'master_kit', entityId = null) => {
+// side: "front" | "back" | null  — utilisé pour les photos de version
+export const uploadImage = (file, folder = 'master_kit', entityId = null, side = null) => {
   const formData = new FormData();
   formData.append('file', file);
   const params = { folder };
   if (entityId) params.entity_id = entityId;
+  if (side) params.side = side;
   return api.post('/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     params,
