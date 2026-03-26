@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request
 from datetime import datetime, timezone
 from .database import db, client
-from .utils import MODERATOR_EMAILS
+from .utils import MODERATOR_EMAILS, ADMIN_EMAILS
 import os
 
 IS_DEV_LOGIN = os.getenv("DEV_LOGIN", "false").lower() == "true"
@@ -14,7 +14,7 @@ async def get_current_user(request: Request) -> dict:
             "email": "dev@topkit.local",
             "name": "Dev User",
             "picture": "",
-            "role": "moderator",
+            "role": "admin",
         }
 
     session_token = request.cookies.get("session_token")
@@ -47,10 +47,18 @@ async def get_current_user(request: Request) -> dict:
     if not user_doc:
         raise HTTPException(status_code=401, detail="User not found")
 
+    # Bannissement
+    if user_doc.get("is_banned"):
+        raise HTTPException(status_code=403, detail="Votre compte a été suspendu.")
+
+    # Attribution du rôle si absent
     if "role" not in user_doc:
-        user_doc["role"] = (
-            "moderator" if user_doc.get("email") in MODERATOR_EMAILS else "user"
-        )
+        if user_doc.get("email") in ADMIN_EMAILS:
+            user_doc["role"] = "admin"
+        elif user_doc.get("email") in MODERATOR_EMAILS:
+            user_doc["role"] = "moderator"
+        else:
+            user_doc["role"] = "user"
 
     user_doc.pop("password_hash", None)
     return user_doc

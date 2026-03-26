@@ -6,7 +6,7 @@ import uuid
 from ..database import db, client
 from ..models import SubmissionCreate, VoteCreate, ReportCreate
 from ..auth import get_current_user
-from ..utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
+from ..utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name, check_user_quota
 from .notifications import create_notification
 from ..email_service import send_submission_result, send_report_result
 
@@ -20,7 +20,6 @@ ENTITY_COLLECTIONS = {
     "sponsor": {"collection": "sponsors", "id_field": "sponsor_id", "name_field": "name"},
 }
 
-# mapping entity_type → champ dans master_kit
 KIT_ID_FIELDS = {
     "team":    "team_id",
     "brand":   "brand_id",
@@ -28,7 +27,6 @@ KIT_ID_FIELDS = {
     "sponsor": "sponsor_id",
 }
 
-# Champs image : jamais filtrés même si vide string
 IMAGE_FIELDS = {"logo_url", "crest_url", "photo_url"}
 
 SUBMISSION_TYPE_LABELS = {
@@ -53,7 +51,6 @@ def _submission_name(sub: dict) -> str:
 
 
 async def _get_user_email_and_name(user_id: str) -> tuple[str, str]:
-    """Récupère (email, name) d'un user pour les emails transactionnels."""
     doc = await db.users.find_one(
         {"user_id": user_id},
         {"_id": 0, "email": 1, "name": 1}
@@ -72,6 +69,11 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     user = await get_current_user(request)
     if sub.submission_type not in ("master_kit", "version", "team", "league", "brand", "player", "sponsor"):
         raise HTTPException(status_code=400, detail="Invalid submission type")
+
+    # Quota par user (admins et modérateurs exemptés)
+    if user.get("role", "user") == "user":
+        await check_user_quota(db, user["user_id"], sub.submission_type)
+
     doc = {
         "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
         "submission_type": sub.submission_type,
@@ -178,7 +180,17 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     if vote.vote not in ("up", "down"):
         raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
 
-    vote_weight = APPROVAL_THRESHOLD if is_moderator and vote.vote == "up" else 1
+    # Poids du vote :
+    # - admin/modérateur vote up = APPROVAL_THRESHOLD (approbation directe)
+    # - admin vote down = APPROVAL_THRESHOLD (rejet direct)
+    # - user = 1
+    if is_moderator and vote.vote == "up":
+        vote_weight = APPROVAL_THRESHOLD
+    elif user_role == "admin" and vote.vote == "down":
+        vote_weight = APPROVAL_THRESHOLD
+    else:
+        vote_weight = 1
+
     inc_field = "votes_up" if vote.vote == "up" else "votes_down"
 
     await db.submissions.update_one(
@@ -191,7 +203,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     sub_name = _submission_name(updated_sub)
     sub_type_label = SUBMISSION_TYPE_LABELS.get(updated_sub["submission_type"], updated_sub["submission_type"])
 
-    # ─── APPROBATION ─────────────────────────────────────────────────────────────────────
+    # ─── APPROBATION ─────────────────────────────────────────────────────────
     if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
         try:
             data = updated_sub["data"]
@@ -231,7 +243,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 })
 
                 now_iso = datetime.now(timezone.utc).isoformat()
-
                 linked_entity_subs = await db.submissions.find(
                     {
                         "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
@@ -253,10 +264,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                         kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
 
                 if kit_patch:
-                    await db.master_kits.update_one(
-                        {"kit_id": kit_id},
-                        {"$set": kit_patch}
-                    )
+                    await db.master_kits.update_one({"kit_id": kit_id}, {"$set": kit_patch})
 
                 for cfg in ENTITY_COLLECTIONS.values():
                     await db[cfg["collection"]].update_many(
@@ -297,7 +305,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     target_id=updated_sub.get("data", {}).get("kit_id", ""),
                     submission_id=submission_id,
                 )
-                # Email transactionnel
                 email, name = await _get_user_email_and_name(submitter_id)
                 if email:
                     await send_submission_result(email, name, sub_name, approved=True)
@@ -305,7 +312,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         except Exception as e:
             print(f"[CASCADE ERROR] {e}")
 
-    # ─── REJET ──────────────────────────────────────────────────────────────────────────
+    # ─── REJET ───────────────────────────────────────────────────────────────
     elif updated_sub["votes_down"] >= APPROVAL_THRESHOLD:
         now_iso = datetime.now(timezone.utc).isoformat()
         kit_submission_id = updated_sub["submission_id"]
@@ -339,7 +346,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 target_type=updated_sub["submission_type"],
                 submission_id=submission_id,
             )
-            # Email transactionnel
             email, name = await _get_user_email_and_name(submitter_id)
             if email:
                 await send_submission_result(email, name, sub_name, approved=False)
@@ -352,10 +358,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 # ─────────────────────────────────────────────
 
 async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
-    """
-    Applique la soumission d'une entité.
-    Retourne l'entity_id créé ou résolu (None si removal).
-    """
     entity_type = updated_sub["submission_type"]
     data = updated_sub["data"]
     mode = data.get("mode", "create")
@@ -391,15 +393,11 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
 
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
-        # Les champs image (logo_url, crest_url, photo_url) sont toujours inclus
-        # même s'ils sont vide-string, pour permettre la suppression d'image.
-        # Les autres champs sont filtrés si None ou liste vide.
         update_fields = {}
         for k, v in data.items():
             if k in ("mode", "entity_id", "entity_type", "parent_submission_id"):
                 continue
             if k in IMAGE_FIELDS:
-                # Inclure si la valeur est une string non-None (même vide)
                 if v is not None:
                     update_fields[k] = v
             else:
@@ -412,8 +410,6 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
         name_key = "full_name" if entity_type == "player" else "name"
         if name_key in update_fields:
             update_fields["slug"] = slugify(update_fields[name_key])
-
-        print(f"[EDIT APPLY] {entity_type} {entity_id} → {update_fields}")
 
         if entity_id:
             await db[config["collection"]].update_one(
@@ -504,7 +500,13 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
     if vote.vote not in ("up", "down"):
         raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
 
-    vote_weight = APPROVAL_THRESHOLD if is_moderator and vote.vote == "up" else 1
+    if is_moderator and vote.vote == "up":
+        vote_weight = APPROVAL_THRESHOLD
+    elif user_role == "admin" and vote.vote == "down":
+        vote_weight = APPROVAL_THRESHOLD
+    else:
+        vote_weight = 1
+
     inc_field = "votes_up" if vote.vote == "up" else "votes_down"
 
     await db.reports.update_one(
@@ -528,30 +530,18 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
         else:
             corrections = updated["corrections"]
             if updated["target_type"] == "master_kit":
-                update_fields = {
-                    k: v for k, v in corrections.items()
-                    if k not in ("kit_id", "_id")
-                }
+                update_fields = {k: v for k, v in corrections.items() if k not in ("kit_id", "_id")}
                 new_club = corrections.get("club")
                 if new_club:
                     team_id = await get_or_create_team_by_name(new_club)
                     update_fields["club"]    = new_club
                     update_fields["team_id"] = team_id
                 if update_fields:
-                    await db.master_kits.update_one(
-                        {"kit_id": updated["target_id"]},
-                        {"$set": update_fields}
-                    )
+                    await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
             elif updated["target_type"] == "version":
-                update_fields = {
-                    k: v for k, v in corrections.items()
-                    if k not in ("version_id", "_id")
-                }
+                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
                 if update_fields:
-                    await db.versions.update_one(
-                        {"version_id": updated["target_id"]},
-                        {"$set": update_fields}
-                    )
+                    await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
 
         if reporter_id:
@@ -561,39 +551,25 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 else f"Votre demande de suppression du {target_label} « {target_name} » a été approuvée."
             )
             await create_notification(
-                user_id=reporter_id,
-                notif_type="report_approved",
-                title="Signalement approuvé ✅",
-                message=msg,
-                target_type=updated["target_type"],
-                target_id=updated["target_id"],
+                user_id=reporter_id, notif_type="report_approved",
+                title="Signalement approuvé ✅", message=msg,
+                target_type=updated["target_type"], target_id=updated["target_id"],
             )
-            # Email transactionnel
             email, name = await _get_user_email_and_name(reporter_id)
             if email:
-                await send_report_result(
-                    email, name, target_label, target_name,
-                    approved=True, report_type=report_type
-                )
+                await send_report_result(email, name, target_label, target_name, approved=True, report_type=report_type)
 
     elif updated["votes_down"] >= APPROVAL_THRESHOLD:
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "rejected"}})
-
         if reporter_id:
             await create_notification(
-                user_id=reporter_id,
-                notif_type="report_rejected",
+                user_id=reporter_id, notif_type="report_rejected",
                 title="Signalement rejeté ❌",
                 message=f"Votre signalement sur le {target_label} « {target_name} » a été rejeté par la communauté.",
-                target_type=updated["target_type"],
-                target_id=updated["target_id"],
+                target_type=updated["target_type"], target_id=updated["target_id"],
             )
-            # Email transactionnel
             email, name = await _get_user_email_and_name(reporter_id)
             if email:
-                await send_report_result(
-                    email, name, target_label, target_name,
-                    approved=False, report_type=report_type
-                )
+                await send_report_result(email, name, target_label, target_name, approved=False, report_type=report_type)
 
     return await db.reports.find_one({"report_id": report_id}, {"_id": 0})
