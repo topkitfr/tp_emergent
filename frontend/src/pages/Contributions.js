@@ -169,16 +169,27 @@ function ReportDetail({ rep }) {
         const original = rep.original_data?.[field];
         const proposed = rep.corrections?.[field];
         const changed = proposed !== undefined && String(proposed) !== String(original);
-        const isPhoto = field.includes('photo');
+        const isMediaField =
+          field.includes('photo') ||
+          field === 'logo_url'    ||
+          field === 'crest_url';
         return (
           <div key={field} className={`grid grid-cols-[1fr,1fr,1fr] gap-0 py-2 px-2 border-t border-border/30 ${changed ? 'bg-primary/5' : ''}`}>
             <span className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>
               {FIELD_LABELS[field] || field}
             </span>
-            {isPhoto ? (
+            {isMediaField ? (
               <>
-                <div>{original ? <img src={original} alt="" className="w-12 h-16 object-cover border border-border" /> : <span className="text-xs text-muted-foreground">—</span>}</div>
-                <div>{changed && proposed ? <img src={proposed} alt="" className="w-12 h-16 object-cover border border-primary/30" /> : <span className="text-xs text-muted-foreground">—</span>}</div>
+                <div>
+                  {original
+                    ? <img src={proxyImageUrl(original)} alt="" className="w-12 h-16 object-cover border border-border" />
+                    : <span className="text-xs text-muted-foreground">—</span>}
+                </div>
+                <div>
+                  {changed && proposed
+                    ? <img src={proxyImageUrl(proposed)} alt="" className="w-12 h-16 object-cover border border-primary/30" />
+                    : <span className="text-xs text-muted-foreground">—</span>}
+                </div>
               </>
             ) : (
               <>
@@ -282,7 +293,6 @@ export default function Contributions() {
     if (showAddForm) {
       getMasterKits({ limit: 500 })
         .then(res => {
-          // L'API retourne { items: [...], total: N } ou directement un tableau
           const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
           setExistingKits(kits);
         })
@@ -586,11 +596,11 @@ export default function Contributions() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
-                    <ImageUpload value={verFrontPhoto} onChange={setVerFrontPhoto} testId="add-ver-front-photo" />
+                    <ImageUpload value={verFrontPhoto} onChange={setVerFrontPhoto} folder="version" side="front" testId="add-ver-front-photo" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
-                    <ImageUpload value={verBackPhoto} onChange={setVerBackPhoto} testId="add-ver-back-photo" />
+                    <ImageUpload value={verBackPhoto} onChange={setVerBackPhoto} folder="version" side="back" testId="add-ver-back-photo" />
                   </div>
                 </div>
 
