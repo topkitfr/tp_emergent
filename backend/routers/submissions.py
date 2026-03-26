@@ -8,6 +8,7 @@ from ..models import SubmissionCreate, VoteCreate, ReportCreate
 from ..auth import get_current_user
 from ..utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
 from .notifications import create_notification
+from ..email_service import send_submission_result, send_report_result
 
 router = APIRouter(prefix="/api", tags=["submissions"])
 
@@ -49,6 +50,17 @@ def _submission_name(sub: dict) -> str:
         or data.get("full_name")
         or sub.get("submission_id", "")
     )
+
+
+async def _get_user_email_and_name(user_id: str) -> tuple[str, str]:
+    """Récupère (email, name) d'un user pour les emails transactionnels."""
+    doc = await db.users.find_one(
+        {"user_id": user_id},
+        {"_id": 0, "email": 1, "name": 1}
+    )
+    if doc:
+        return doc.get("email", ""), doc.get("name", "")
+    return "", ""
 
 
 # ─────────────────────────────────────────────
@@ -179,7 +191,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     sub_name = _submission_name(updated_sub)
     sub_type_label = SUBMISSION_TYPE_LABELS.get(updated_sub["submission_type"], updated_sub["submission_type"])
 
-    # ─── APPROBATION ──────────────────────────────────────────────────────────
+    # ─── APPROBATION ─────────────────────────────────────────────────────────────────────
     if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
         try:
             data = updated_sub["data"]
@@ -285,11 +297,15 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     target_id=updated_sub.get("data", {}).get("kit_id", ""),
                     submission_id=submission_id,
                 )
+                # Email transactionnel
+                email, name = await _get_user_email_and_name(submitter_id)
+                if email:
+                    await send_submission_result(email, name, sub_name, approved=True)
 
         except Exception as e:
             print(f"[CASCADE ERROR] {e}")
 
-    # ─── REJET ────────────────────────────────────────────────────────────────
+    # ─── REJET ──────────────────────────────────────────────────────────────────────────
     elif updated_sub["votes_down"] >= APPROVAL_THRESHOLD:
         now_iso = datetime.now(timezone.utc).isoformat()
         kit_submission_id = updated_sub["submission_id"]
@@ -323,6 +339,10 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 target_type=updated_sub["submission_type"],
                 submission_id=submission_id,
             )
+            # Email transactionnel
+            email, name = await _get_user_email_and_name(submitter_id)
+            if email:
+                await send_submission_result(email, name, sub_name, approved=False)
 
     return await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 
@@ -496,9 +516,9 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
 
     target_label = "maillot" if updated["target_type"] == "master_kit" else "version"
     target_name = updated.get("original_data", {}).get("club", updated["target_id"])
+    report_type  = updated.get("report_type", "error")
 
     if updated["votes_up"] >= APPROVAL_THRESHOLD:
-        report_type = updated.get("report_type", "error")
         if report_type == "removal":
             if updated["target_type"] == "master_kit":
                 await db.versions.delete_many({"kit_id": updated["target_id"]})
@@ -548,6 +568,13 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 target_type=updated["target_type"],
                 target_id=updated["target_id"],
             )
+            # Email transactionnel
+            email, name = await _get_user_email_and_name(reporter_id)
+            if email:
+                await send_report_result(
+                    email, name, target_label, target_name,
+                    approved=True, report_type=report_type
+                )
 
     elif updated["votes_down"] >= APPROVAL_THRESHOLD:
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "rejected"}})
@@ -561,5 +588,12 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 target_type=updated["target_type"],
                 target_id=updated["target_id"],
             )
+            # Email transactionnel
+            email, name = await _get_user_email_and_name(reporter_id)
+            if email:
+                await send_report_result(
+                    email, name, target_label, target_name,
+                    approved=False, report_type=report_type
+                )
 
     return await db.reports.find_one({"report_id": report_id}, {"_id": 0})
