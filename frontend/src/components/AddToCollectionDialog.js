@@ -1,5 +1,4 @@
 // src/components/AddToCollectionDialog.js
-// Sheet panel identique au formulaire d'édition de MyCollection
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { proxyImageUrl, addToCollection, createPlayerPending, getPlayerAura } from '@/lib/api';
-import { Check, Trash2, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { calculateEstimation } from '@/utils/estimation';
@@ -20,7 +19,6 @@ const PHYSICAL_STATES  = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs
 const FLOCKING_TYPES   = ['Name+Number', 'Name', 'Number'];
 const FLOCKING_ORIGINS = ['Official', 'Personalized'];
 const SIZES            = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-const CATEGORIES       = ['General', 'Match Worn', 'Signed', 'Display', 'Loan'];
 
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
@@ -37,7 +35,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
   const photo = version?.front_photo || kit?.front_photo;
 
   const [form, setForm] = useState({
-    category:            'General',
     size:                '',
     condition_origin:    '',
     physical_state:      '',
@@ -52,8 +49,8 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     purchase_cost:       '',
     notes:               '',
   });
-  const [loading,              setLoading]              = useState(false);
-  const [error,                setError]                = useState('');
+  const [loading,               setLoading]               = useState(false);
+  const [error,                 setError]                 = useState('');
   const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
@@ -87,7 +84,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
 
       await addToCollection({
         version_id:          version.version_id,
-        category:            form.category,
         size:                form.size                || undefined,
         condition_origin:    form.condition_origin    || undefined,
         physical_state:      form.physical_state      || undefined,
@@ -141,17 +137,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         </div>
 
         <div className="space-y-4">
-
-          {/* Catégorie */}
-          <div className="space-y-1">
-            <Label className={fieldLabel} style={fieldStyle}>Category</Label>
-            <Select value={form.category} onValueChange={v => set('category', v)}>
-              <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
 
           {/* Flocking */}
           <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>FLOCKING</p>
