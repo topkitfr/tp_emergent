@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
-  Check, Trash2, User, Plus, Loader2, Heart, TrendingDown, TrendingUp, Minus,
+  Check, Trash2, User, Plus, Loader2, Heart,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import AddToCollectionDialog from '@/components/AddToCollectionDialog';
@@ -75,81 +75,63 @@ function KitSlider({ photos }) {
 // ── VALUE ESTIMATION bloc ──────────────────────────────────────────────────
 function ValueEstimation({ estimates }) {
   if (!estimates) return null;
-  // L'API retourne { low, average, high, count }
   const { low, average, high, count } = estimates;
   if (!count || count === 0) return null;
 
-  const maxVal = Math.max(low ?? 0, average ?? 0, high ?? 0) || 1;
-
-  const bars = [
-    {
-      label: 'Low',
-      value: low,
-      color: 'bg-red-500',
-      textColor: 'text-red-400',
-      icon: <TrendingDown className="w-4 h-4" />,
-      border: 'border-red-500/40',
-    },
-    {
-      label: 'Average',
-      value: average,
-      color: 'bg-yellow-400',
-      textColor: 'text-yellow-300',
-      icon: <Minus className="w-4 h-4" />,
-      border: 'border-yellow-400/40',
-    },
-    {
-      label: 'High',
-      value: high,
-      color: 'bg-green-500',
-      textColor: 'text-green-400',
-      icon: <TrendingUp className="w-4 h-4" />,
-      border: 'border-green-500/40',
-    },
-  ];
+  // Position du curseur average sur la barre (0-100%)
+  const range = (high ?? 0) - (low ?? 0);
+  const avgPct = range > 0
+    ? Math.round(((average ?? low ?? 0) - (low ?? 0)) / range * 100)
+    : 50;
 
   return (
-    <div className="border border-border bg-card p-4 space-y-4" data-testid="value-estimation">
+    <div className="border border-border bg-card p-4 space-y-3" data-testid="value-estimation">
+
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>VALUE ESTIMATION</h4>
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
+          VALUE ESTIMATION
+        </h4>
         <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-          ({count} estimate{count !== 1 ? 's' : ''})
+          {count} estimate{count !== 1 ? 's' : ''}
         </span>
       </div>
 
-      {/* Cards Low / Average / High */}
-      <div className="grid grid-cols-3 gap-3">
-        {bars.map(({ label, value, textColor, icon, border }) => (
-          <div key={label} className={`border ${border} bg-background p-3 flex flex-col items-center gap-1`}>
-            <span className={textColor}>{icon}</span>
-            <span className={`text-xl font-mono font-bold ${textColor}`}>
-              {value != null ? `${value}€` : '—'}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
-              {label}
-            </span>
-          </div>
-        ))}
+      {/* Prix moyen en grand */}
+      <div className="text-center py-1">
+        <span className="text-3xl font-mono font-bold text-foreground">
+          {average != null ? `${average}€` : '—'}
+        </span>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5" style={{ fontFamily: 'Barlow Condensed' }}>
+          Average
+        </p>
       </div>
 
-      {/* Barres colorées */}
-      <div className="flex items-end justify-center gap-8 pt-2 pb-1">
-        {bars.map(({ label, value, color }) => {
-          const pct = value != null ? Math.max(10, Math.round((value / maxVal) * 100)) : 0;
-          return (
-            <div key={label} className="flex flex-col items-center gap-2">
-              <div className="w-12 bg-border relative" style={{ height: '80px' }}>
-                <div
-                  className={`absolute bottom-0 left-0 right-0 ${color} transition-all duration-500`}
-                  style={{ height: `${pct}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{label}</span>
-            </div>
-          );
-        })}
+      {/* Barre de gradient Low → High */}
+      <div className="space-y-2">
+        <div className="relative h-2 w-full rounded-none" style={{
+          background: 'linear-gradient(to right, #ef4444, #eab308, #22c55e)',
+        }}>
+          {/* Curseur average */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-4 bg-white border-2 border-background shadow"
+            style={{ left: `calc(${avgPct}% - 6px)`, transition: 'left 0.4s ease' }}
+          />
+        </div>
+
+        {/* Labels Low / High */}
+        <div className="flex justify-between">
+          <div className="text-left">
+            <p className="text-[10px] uppercase tracking-wider text-red-400" style={{ fontFamily: 'Barlow Condensed' }}>Low</p>
+            <p className="text-xs font-mono text-red-400">{low != null ? `${low}€` : '—'}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-wider text-green-400" style={{ fontFamily: 'Barlow Condensed' }}>High</p>
+            <p className="text-xs font-mono text-green-400">{high != null ? `${high}€` : '—'}</p>
+          </div>
+        </div>
       </div>
+
     </div>
   );
 }
