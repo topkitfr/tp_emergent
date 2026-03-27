@@ -1,7 +1,7 @@
 // src/pages/VersionDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, getVersionEstimates, getVersionWornBy, getReviews, addToCollection, createReport, proxyImageUrl, addToWishlist, checkWishlist, removeFromWishlist, createReview } from '@/lib/api';
+import { getVersion, getVersionEstimates, getVersionWornBy, getReviews, createReport, proxyImageUrl, addToWishlist, checkWishlist, removeFromWishlist, createReview } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import AddToCollectionDialog from '@/components/AddToCollectionDialog';
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const MODELS       = ['Authentic', 'Replica', 'Other'];
 
-// ── Slider ────────────────────────────────────────────────────────────────────
+// ── Slider ────────────────────────────────────────────────────────────────────────────────
 function KitSlider({ photos }) {
   const [current, setCurrent] = useState(0);
 
@@ -74,7 +74,7 @@ function KitSlider({ photos }) {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────────────
 export default function VersionDetail() {
   const { versionId } = useParams();
   const { user }      = useAuth();
@@ -254,14 +254,15 @@ export default function VersionDetail() {
   const kit    = version.master_kit || {};
   const photos = [version.front_photo, version.back_photo].filter(Boolean);
 
-  // Paths vers les entités
-  const teamPath = kit.team_id ? `/teams/${kit.team_id}` : kit.team_slug ? `/teams/${kit.team_slug}` : null;
+  const teamPath  = kit.team_id  ? `/teams/${kit.team_id}`   : kit.team_slug  ? `/teams/${kit.team_slug}`   : null;
   const brandPath = kit.brand_id ? `/brands/${kit.brand_id}` : kit.brand_slug ? `/brands/${kit.brand_slug}` : null;
+  // Lien vers le master kit
+  const kitPath = kit.kit_id ? `/kit/${kit.kit_id}` : null;
 
   return (
     <div className="animate-fade-in-up">
 
-      {/* ── Add to Collection Dialog ── */}
+      {/* Add to Collection Dialog */}
       {showAddDialog && version && (
         <AddToCollectionDialog
           version={version}
@@ -270,20 +271,24 @@ export default function VersionDetail() {
         />
       )}
 
-      {/* Breadcrumb */}
+      {/* Breadcrumb — Browse > Club > Season (kit_type) > Model · Competition */}
       <div className="border-b border-border px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
           <Link to="/browse" className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>Browse</Link>
           <ChevronRight className="w-3 h-3" />
           {teamPath ? (
-            <Link to={teamPath} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>{kit.club}</Link>
+            <Link to={teamPath} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>{kit.club || '—'}</Link>
           ) : (
             <span>{kit.club || '—'}</span>
           )}
           <ChevronRight className="w-3 h-3" />
-          <Link to={`/kit/${kit.kit_id}`} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>
-            {kit.season}
-          </Link>
+          {kitPath ? (
+            <Link to={kitPath} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>
+              {kit.season}{kit.kit_type ? ` (${kit.kit_type})` : ''}
+            </Link>
+          ) : (
+            <span>{kit.season}{kit.kit_type ? ` (${kit.kit_type})` : ''}</span>
+          )}
           <ChevronRight className="w-3 h-3" />
           <span className="text-foreground truncate">{version.model} · {version.competition}</span>
         </div>
