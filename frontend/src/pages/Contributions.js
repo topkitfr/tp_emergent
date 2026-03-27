@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ThumbsUp, ThumbsDown, Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X, ChevronDown, ChevronUp, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X, ChevronDown, ChevronUp, ArrowRight, ArrowLeft, CheckCircle2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ImageUpload from '@/components/ImageUpload';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
@@ -230,6 +230,125 @@ function ReportDetail({ rep }) {
   );
 }
 
+// ===== COMPOSANT: USE EXISTING KIT (3 filtres) =====
+function UseExistingKitPanel({ onSelect }) {
+  const [filterTeam, setFilterTeam]   = useState('');
+  const [filterSeason, setFilterSeason] = useState('');
+  const [filterType, setFilterType]   = useState('');
+  const [results, setResults]         = useState([]);
+  const [searched, setSearched]       = useState(false);
+  const [loading, setLoading]         = useState(false);
+
+  const handleSearch = async () => {
+    setLoading(true);
+    setSearched(true);
+    try {
+      const params = { limit: 100 };
+      if (filterTeam.trim())   params.club    = filterTeam.trim();
+      if (filterSeason.trim()) params.season  = filterSeason.trim();
+      if (filterType)          params.kit_type = filterType;
+      const res = await getMasterKits(params);
+      const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
+      setResults(kits);
+    } catch (e) {
+      toast.error('Failed to search kits');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canSearch = filterTeam.trim() || filterSeason.trim() || filterType;
+
+  return (
+    <div className="border border-border p-4 mb-4">
+      <h4 className="text-xs uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>Use Existing Kit</h4>
+
+      {/* 3 filtres */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
+          <Input
+            value={filterTeam}
+            onChange={e => setFilterTeam(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && canSearch && handleSearch()}
+            placeholder="e.g. AC Milan"
+            className="bg-card border-border rounded-none text-xs"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
+          <Input
+            value={filterSeason}
+            onChange={e => setFilterSeason(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && canSearch && handleSearch()}
+            placeholder="e.g. 2023/2024"
+            className="bg-card border-border rounded-none text-xs"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="bg-card border-border rounded-none text-xs">
+              <SelectValue placeholder="Any type" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              <SelectItem value="">Any type</SelectItem>
+              {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Button
+        onClick={handleSearch}
+        disabled={!canSearch || loading}
+        size="sm"
+        variant="outline"
+        className="rounded-none mb-4"
+      >
+        <Search className="w-3 h-3 mr-1" />
+        {loading ? 'Searching...' : 'Search'}
+      </Button>
+
+      {/* Résultats */}
+      {searched && !loading && (
+        results.length === 0 ? (
+          <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+            No matching kits found. You can create a new one below.
+          </p>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+            {results.map(k => (
+              <button
+                key={k.kit_id}
+                onClick={() => onSelect(k)}
+                className="w-full flex items-center gap-3 border border-border bg-background hover:border-primary hover:bg-primary/5 p-3 transition-colors text-left"
+              >
+                {k.front_photo ? (
+                  <img src={proxyImageUrl(k.front_photo)} alt="" className="w-10 h-14 object-cover border border-border shrink-0" />
+                ) : (
+                  <div className="w-10 h-14 bg-secondary border border-border flex items-center justify-center shrink-0">
+                    <Shirt className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                    {k.club}
+                  </p>
+                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                    {k.season} · {k.kit_type}{k.brand ? ` · ${k.brand}` : ''}
+                  </p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground ml-auto shrink-0" />
+              </button>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 // ===== COMPOSANT PRINCIPAL: CONTRIBUTIONS =====
 export default function Contributions() {
   const { user } = useAuth();
@@ -247,7 +366,6 @@ export default function Contributions() {
   const [pendingEntities, setPendingEntities] = useState(emptyEntityBuckets());
   const [approvedEntities, setApprovedEntities] = useState(emptyEntityBuckets());
   const [loadingPending, setLoadingPending] = useState(false);
-  const [searchExistingKit, setSearchExistingKit] = useState('');
 
   // Form state - Master Kit
   const [club, setClub] = useState('');
@@ -266,6 +384,7 @@ export default function Contributions() {
 
   // Form state - Version
   const [selectedKit, setSelectedKit] = useState('');
+  const [selectedKitLabel, setSelectedKitLabel] = useState('');
   const [competition, setCompetition] = useState('');
   const [model, setModel] = useState('');
   const [skuCode, setSkuCode] = useState('');
@@ -385,8 +504,15 @@ export default function Contributions() {
     setShowAddForm(false); setAddStep(1); setSubType('master_kit');
     setClub(''); setTeamId(''); setSponsorId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
     setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setLeagueId(''); setGender('');
-    setSelectedKit(''); setCompetition(''); setModel('');
+    setSelectedKit(''); setSelectedKitLabel(''); setCompetition(''); setModel('');
     setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
+  };
+
+  const handleSelectExistingKit = (kit) => {
+    setSelectedKit(kit.kit_id);
+    setSelectedKitLabel(`${kit.club} — ${kit.season} (${kit.kit_type})`);
+    setAddStep(2);
+    setSubType('version');
   };
 
   const hasVoted = (item) => item.voters?.includes(user?.user_id);
@@ -411,11 +537,6 @@ export default function Contributions() {
       toast.error(e.response?.data?.detail || 'Failed to register vote');
     }
   };
-
-  const filteredExistingKits = (existingKits || []).filter(k => {
-    const label = `${k.club ?? ''} ${k.season ?? ''} ${k.kit_type ?? ''}`.toLowerCase();
-    return label.includes(searchExistingKit.toLowerCase());
-  });
 
   const entityEditSubs = submissions.filter(s =>
     ['team', 'league', 'brand', 'player', 'sponsor'].includes(s.submission_type) &&
@@ -471,28 +592,8 @@ export default function Contributions() {
 
             {addStep === 1 && (
               <div>
-                <div className="border border-border p-4 mb-4">
-                  <h4 className="text-xs uppercase tracking-wider mb-3" style={{ fontFamily: 'Barlow Condensed' }}>Use Existing Kit</h4>
-                  <input
-                    type="text" placeholder="Search kits (team, season, type)"
-                    value={searchExistingKit} onChange={(e) => setSearchExistingKit(e.target.value)}
-                    className="w-full mb-2 bg-card border border-border px-3 py-2 text-xs"
-                    style={{ fontFamily: 'Barlow Condensed' }}
-                  />
-                  <Select value={selectedKit} onValueChange={setSelectedKit} data-testid="select-existing-kit">
-                    <SelectTrigger className="bg-card border-border rounded-none"><SelectValue placeholder="Select an existing Master Kit" /></SelectTrigger>
-                    <SelectContent className="bg-card border-border max-h-60">
-                      {filteredExistingKits.map((k) => (
-                        <SelectItem key={k._id} value={k.kit_id}>{k.club} – {k.season} ({k.kit_type})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedKit && (
-                    <Button onClick={() => { setAddStep(2); setSubType('version'); }} className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="use-existing-kit-btn">
-                      Continue with this Kit <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  )}
-                </div>
+                {/* USE EXISTING KIT — 3 filtres */}
+                <UseExistingKitPanel onSelect={handleSelectExistingKit} />
 
                 <div className="text-center text-xs text-muted-foreground tracking-wider my-4" style={{ fontFamily: 'Barlow Condensed' }}>OR CREATE NEW</div>
 
@@ -565,11 +666,14 @@ export default function Contributions() {
             {addStep === 2 && (
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <button onClick={() => setAddStep(1)} className="text-muted-foreground hover:text-foreground" data-testid="back-to-step-1">
+                  <button onClick={() => { setAddStep(1); setSelectedKit(''); setSelectedKitLabel(''); }} className="text-muted-foreground hover:text-foreground" data-testid="back-to-step-1">
                     <ArrowLeft className="w-4 h-4" />
                   </button>
                   <span className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
-                    ADDING VERSION {selectedKit ? `TO ${existingKits.find(k => k.kit_id === selectedKit)?.club || 'SELECTED KIT'}` : 'TO NEW KIT (PENDING)'}
+                    ADDING VERSION TO{' '}
+                    <span className="text-foreground">
+                      {selectedKitLabel || (selectedKit ? existingKits.find(k => k.kit_id === selectedKit)?.club || 'SELECTED KIT' : 'NEW KIT (PENDING)')}
+                    </span>
                   </span>
                 </div>
 
