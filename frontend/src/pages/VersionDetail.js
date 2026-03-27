@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  getVersion, getVersionEstimates, getVersionWornBy, getReviews,
+  getVersion, getMasterKit, getVersionEstimates, getVersionWornBy, getReviews,
   createReport, proxyImageUrl, addToWishlist, checkWishlist,
   removeFromWishlist, createReview,
 } from '@/lib/api';
@@ -78,6 +78,7 @@ export default function VersionDetail() {
   const { user }      = useAuth();
 
   const [version,           setVersion]           = useState(null);
+  const [masterKit,         setMasterKit]         = useState(null);
   const [estimates,         setEstimates]         = useState(null);
   const [reviews,           setReviews]           = useState([]);
   const [loading,           setLoading]           = useState(true);
@@ -118,6 +119,15 @@ export default function VersionDetail() {
         sku_code: v.sku_code || '', ean_code: v.ean_code || '',
         front_photo: v.front_photo || '', back_photo: v.back_photo || '',
       });
+
+      // Charger le master_kit séparément pour le breadcrumb
+      const kitId = v.kit_id || v.master_kit?.kit_id;
+      if (kitId) {
+        getMasterKit(kitId).then(r => setMasterKit(r.data)).catch(() => {});
+      } else if (v.master_kit) {
+        setMasterKit(v.master_kit);
+      }
+
       await fetchReviews();
       try {
         const wRes = await checkWishlist(v.version_id);
@@ -192,13 +202,13 @@ export default function VersionDetail() {
     </div>
   );
 
-  const kit       = version.master_kit || {};
-  const photos    = [version.front_photo, version.back_photo].filter(Boolean);
+  // Données du master kit — priorité à l'appel direct, fallback sur version.master_kit
+  const kit      = masterKit || version.master_kit || {};
+  const photos   = [version.front_photo, version.back_photo].filter(Boolean);
+
   const teamPath  = kit.team_id  ? `/teams/${kit.team_id}`   : null;
   const brandPath = kit.brand_id ? `/brands/${kit.brand_id}` : null;
-  // Lien breadcrumb vers le master kit
   const kitPath   = kit.kit_id   ? `/kit/${kit.kit_id}`      : null;
-  // kit_type est dans master_kit
   const kitType   = kit.kit_type || '';
 
   return (
@@ -213,22 +223,36 @@ export default function VersionDetail() {
         />
       )}
 
-      {/* Breadcrumb — Browse > Club > Season (kit_type) > Model · Competition */}
+      {/* Breadcrumb — Browse > Club > Season (kit_type) > Competition · Model */}
       <div className="border-b border-border px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+
           <Link to="/browse" className="hover:text-foreground transition-colors">Browse</Link>
           <ChevronRight className="w-3 h-3" />
+
+          {/* Team */}
           {teamPath
             ? <Link to={teamPath} className="hover:text-foreground transition-colors">{kit.club || '—'}</Link>
             : <span>{kit.club || '—'}</span>
           }
           <ChevronRight className="w-3 h-3" />
+
+          {/* Season (kit_type) — lien vers la page master kit */}
           {kitPath
-            ? <Link to={kitPath} className="hover:text-foreground transition-colors">{kit.season}{kitType ? ` (${kitType})` : ''}</Link>
-            : <span>{kit.season}{kitType ? ` (${kitType})` : ''}</span>
+            ? <Link to={kitPath} className="hover:text-foreground transition-colors">
+                {kit.season || '—'}{kitType ? ` (${kitType})` : ''}
+              </Link>
+            : <span>{kit.season || '—'}{kitType ? ` (${kitType})` : ''}</span>
           }
           <ChevronRight className="w-3 h-3" />
-          <span className="text-foreground truncate">{version.model} · {version.competition}</span>
+
+          {/* Competition */}
+          <span>{version.competition || '—'}</span>
+          <ChevronRight className="w-3 h-3" />
+
+          {/* Model — segment actif */}
+          <span className="text-foreground">{version.model || '—'}</span>
+
         </div>
       </div>
 
