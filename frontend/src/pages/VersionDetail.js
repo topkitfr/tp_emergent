@@ -75,15 +75,16 @@ function KitSlider({ photos }) {
 // ── VALUE ESTIMATION bloc ──────────────────────────────────────────────────
 function ValueEstimation({ estimates }) {
   if (!estimates) return null;
-  const { min_price, avg_price, max_price, count } = estimates;
-  if (min_price == null && avg_price == null && max_price == null) return null;
+  // L'API retourne { low, average, high, count }
+  const { low, average, high, count } = estimates;
+  if (!count || count === 0) return null;
 
-  const max = Math.max(min_price ?? 0, avg_price ?? 0, max_price ?? 0) || 1;
+  const maxVal = Math.max(low ?? 0, average ?? 0, high ?? 0) || 1;
 
   const bars = [
     {
       label: 'Low',
-      value: min_price,
+      value: low,
       color: 'bg-red-500',
       textColor: 'text-red-400',
       icon: <TrendingDown className="w-4 h-4" />,
@@ -91,7 +92,7 @@ function ValueEstimation({ estimates }) {
     },
     {
       label: 'Average',
-      value: avg_price,
+      value: average,
       color: 'bg-yellow-400',
       textColor: 'text-yellow-300',
       icon: <Minus className="w-4 h-4" />,
@@ -99,7 +100,7 @@ function ValueEstimation({ estimates }) {
     },
     {
       label: 'High',
-      value: max_price,
+      value: high,
       color: 'bg-green-500',
       textColor: 'text-green-400',
       icon: <TrendingUp className="w-4 h-4" />,
@@ -112,11 +113,9 @@ function ValueEstimation({ estimates }) {
       {/* Header */}
       <div className="flex items-center gap-2">
         <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>VALUE ESTIMATION</h4>
-        {count > 0 && (
-          <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-            ({count} estimate{count !== 1 ? 's' : ''})
-          </span>
-        )}
+        <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+          ({count} estimate{count !== 1 ? 's' : ''})
+        </span>
       </div>
 
       {/* Cards Low / Average / High */}
@@ -137,7 +136,7 @@ function ValueEstimation({ estimates }) {
       {/* Barres colorées */}
       <div className="flex items-end justify-center gap-8 pt-2 pb-1">
         {bars.map(({ label, value, color }) => {
-          const pct = value != null ? Math.max(10, Math.round((value / max) * 100)) : 0;
+          const pct = value != null ? Math.max(10, Math.round((value / maxVal) * 100)) : 0;
           return (
             <div key={label} className="flex flex-col items-center gap-2">
               <div className="w-12 bg-border relative" style={{ height: '80px' }}>
