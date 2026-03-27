@@ -553,7 +553,7 @@ useEffect(() => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     {review.user_picture ? (
-                      <img src={review.user_picture} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      <img src={proxyImageUrl(review.user_picture)} alt="" className="w-8 h-8 rounded-full object-cover" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
                         <User className="w-4 h-4 text-muted-foreground" />

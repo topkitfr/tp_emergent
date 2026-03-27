@@ -33,7 +33,7 @@ async def create_review(review: ReviewCreate, request: Request):
         "user_id": user["user_id"],
         "user_name": user.get("name", ""),
         "user_username": user.get("username", ""),
-        "user_picture": user.get("picture", ""),
+        "user_picture": user.get("profile_picture", ""),
         "rating": review.rating,
         "comment": review.comment or "",
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -47,9 +47,9 @@ async def create_review(review: ReviewCreate, request: Request):
 async def get_reviews(version_id: str):
     reviews = await db.reviews.find({"version_id": version_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
     for r in reviews:
-        u = await db.users.find_one({"user_id": r["user_id"]}, {"_id": 0, "name": 1, "picture": 1, "username": 1})
+        u = await db.users.find_one({"user_id": r["user_id"]}, {"_id": 0, "name": 1, "profile_picture": 1, "username": 1})
         if u:
             r["user_name"] = u.get("name", "")
-            r["user_picture"] = u.get("picture", "")
+            r["user_picture"] = u.get("profile_picture", "")
             r["user_username"] = u.get("username", "")
     return reviews

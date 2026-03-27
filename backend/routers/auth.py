@@ -51,8 +51,8 @@ def set_session_cookie(response: Response, session_token: str):
         key="session_token",
         value=session_token,
         httponly=True,
-        secure=True,         # obligatoire avec SameSite=none
-        samesite="none",     # autorise le cross-site (frontend != backend domaine)
+        secure=True,
+        samesite="none",
         path="/",
         max_age=7 * 24 * 60 * 60,
     )
@@ -90,7 +90,7 @@ async def register(body: RegisterBody, response: Response):
             "user_id": user_id,
             "email": body.email,
             "name": body.name.strip(),
-            "picture": "",
+            "profile_picture": "",
             "role": role,
             "username": body.name.replace(" ", "").lower() if body.name else "",
             "description": "",
@@ -116,7 +116,6 @@ async def register(body: RegisterBody, response: Response):
         {"user_id": user_id}, {"_id": 0, "password_hash": 0}
     )
 
-    # Email de bienvenue (non-bloquant)
     await send_welcome(body.email, body.name.strip())
 
     return user_doc
@@ -180,7 +179,6 @@ async def forgot_password(body: ForgotPasswordBody):
     """
     user = await db.users.find_one({"email": body.email})
     if user:
-        # Invalider les anciens tokens non utilisés pour cet email
         await db.password_resets.delete_many({"email": body.email, "used": False})
 
         reset_token = uuid.uuid4().hex
@@ -228,12 +226,10 @@ async def reset_password(body: ResetPasswordBody):
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }}
     )
-    # Invalide le token
     await db.password_resets.update_one(
         {"token": body.token},
         {"$set": {"used": True}}
     )
-    # Invalide toutes les sessions actives par sécurité
     await db.user_sessions.delete_many({"user_id": doc["user_id"]})
 
     return {"message": "Mot de passe réinitialisé. Reconnecte-toi."}

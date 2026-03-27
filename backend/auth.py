@@ -13,7 +13,7 @@ async def get_current_user(request: Request) -> dict:
             "user_id": "dev-user-1",
             "email": "dev@topkit.local",
             "name": "Dev User",
-            "picture": "",
+            "profile_picture": "",
             "role": "admin",
         }
 

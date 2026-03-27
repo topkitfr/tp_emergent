@@ -35,7 +35,6 @@ export default function Profile() {
   const [credForm, setCredForm]             = useState({ current_password: '', new_email: '', new_password: '' });
   const [savingCreds, setSavingCreds]       = useState(false);
 
-  // Données profil tiers
   const [publicCollection, setPublicCollection]   = useState([]);
   const [publicCollectionPrivate, setPublicCollectionPrivate] = useState(false);
   const [publicSubmissions, setPublicSubmissions] = useState([]);
@@ -50,7 +49,6 @@ export default function Profile() {
 
   const isOwnProfile = !urlUsername || (user && profileUser && user.user_id === profileUser.user_id);
 
-  // Chargement du profil
   useEffect(() => {
     if (urlUsername) {
       setLoadingProfile(true);
@@ -62,14 +60,13 @@ export default function Profile() {
     }
   }, [urlUsername, user]);
 
-  // Données propre profil
   useEffect(() => {
     if (profileUser && isOwnProfile) {
       setFormData({
         username: profileUser.username || '',
         description: profileUser.description || '',
         collection_privacy: profileUser.collection_privacy || 'public',
-        profile_picture: profileUser.profile_picture || profileUser.picture || ''
+        profile_picture: profileUser.profile_picture || ''
       });
       getMyCollection({}).then(r => setCollection(r.data)).catch(() => {});
       getCollectionStats().then(r => setStats(r.data)).catch(() => {});
@@ -78,7 +75,6 @@ export default function Profile() {
     }
   }, [profileUser, isOwnProfile]);
 
-  // Données profil tiers
   useEffect(() => {
     if (profileUser && !isOwnProfile) {
       const uid = profileUser.user_id;
@@ -172,7 +168,7 @@ export default function Profile() {
           {/* Profile Header */}
           <div className="flex items-start gap-6 mb-8" data-testid="profile-header">
             <Avatar className="w-20 h-20 border-2 border-border">
-              <AvatarImage src={displayUser.profile_picture || displayUser.picture} alt={displayUser.name} />
+              <AvatarImage src={proxyImageUrl(displayUser.profile_picture)} alt={displayUser.name} />
               <AvatarFallback className="text-2xl bg-secondary">{displayUser.name?.[0]}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -221,7 +217,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Edit Form — propre profil seulement */}
+          {/* Edit Form */}
           {editing && isOwnProfile && (
             <div className="space-y-6 mb-8">
               <div className="border border-primary/30 p-6 space-y-4" data-testid="profile-edit-form">
@@ -406,7 +402,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Following — propre profil */}
+          {/* Following */}
           {isOwnProfile && follows.length > 0 && (
             <div className="mb-8" data-testid="following-section">
               <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -474,11 +470,10 @@ export default function Profile() {
             </div>
           )}
 
-          {/* ─── Section profil tiers ─────────────────────────────── */}
+          {/* Section profil tiers */}
           {!isOwnProfile && (
             <div className="space-y-10">
 
-              {/* Collection publique */}
               <div>
                 <h2 className="text-xl tracking-tight mb-6">COLLECTION</h2>
                 {publicCollectionPrivate ? (
@@ -510,7 +505,6 @@ export default function Profile() {
                 )}
               </div>
 
-              {/* Contributions */}
               {publicSubmissions.length > 0 && (
                 <div>
                   <h2 className="text-xl tracking-tight mb-6">CONTRIBUTIONS ({publicSubmissions.length})</h2>
@@ -529,7 +523,6 @@ export default function Profile() {
                 </div>
               )}
 
-              {/* Follows tiers */}
               {publicFollows.length > 0 && (
                 <div>
                   <h2 className="text-xl tracking-tight mb-6">FOLLOWING ({publicFollows.length})</h2>
