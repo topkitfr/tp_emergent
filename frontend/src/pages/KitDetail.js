@@ -119,10 +119,10 @@ export default function KitDetail() {
     </div>
   );
 
-  // Helpers pour les slugs
-  const teamPath   = kit.team_id   ? `/teams/${kit.team_id}`   : kit.club_slug ? `/teams/${kit.club_slug}`   : null;
-  const brandPath  = kit.brand_id  ? `/brands/${kit.brand_id}` : kit.brand_slug ? `/brands/${kit.brand_slug}` : null;
-  const leaguePath = kit.league_id ? `/leagues/${kit.league_id}` : kit.league_slug ? `/leagues/${kit.league_slug}` : null;
+  const teamPath    = kit.team_id    ? `/teams/${kit.team_id}`              : kit.club_slug    ? `/teams/${kit.club_slug}`    : null;
+  const brandPath   = kit.brand_id   ? `/brands/${kit.brand_id}`            : kit.brand_slug   ? `/brands/${kit.brand_slug}`   : null;
+  const leaguePath  = kit.league_id  ? `/leagues/${kit.league_id}`          : kit.league_slug  ? `/leagues/${kit.league_slug}`  : null;
+  // Fix: sponsor link now uses sponsor_id
   const sponsorPath = kit.sponsor_id ? `/database/sponsors/${kit.sponsor_id}` : null;
 
   return (
@@ -227,6 +227,7 @@ export default function KitDetail() {
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
                   <span className="text-sm">{kit.design || 'None'}</span>
                 </div>
+                {/* Fix: sponsor wrapped in Link when sponsor_id exists */}
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
                   {sponsorPath ? (
@@ -293,7 +294,7 @@ export default function KitDetail() {
                 </div>
               )}
 
-              {/* ── Report Form ── */}
+              {/* Report Form */}
               {showReport && user && (
                 <div className="border border-destructive/30 p-4 space-y-4" data-testid="kit-report-form">
                   <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
@@ -354,7 +355,7 @@ export default function KitDetail() {
                 </div>
               )}
 
-              {/* ── Removal Form ── */}
+              {/* Removal Form */}
               {showRemovalForm && user && (
                 <div className="border border-destructive/50 p-4 space-y-3" data-testid="kit-removal-form">
                   <h4 className="text-sm uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
@@ -376,7 +377,7 @@ export default function KitDetail() {
         </div>
       </div>
 
-      {/* ── Versions ── */}
+      {/* Versions */}
       <div className="border-t border-border" id="versions-section">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
           <h2 className="text-xl tracking-tight mb-6" data-testid="versions-section-title">
@@ -419,10 +420,10 @@ export default function KitDetail() {
               </Link>
             ))}
 
-            {/* ── Add Version card ── */}
+            {/* Add Version → centralized on /contributions */}
             {user && (
               <button
-                onClick={() => navigate(`/add-jersey?kit_id=${kitId}`)}
+                onClick={() => navigate(`/contributions?kit_id=${kitId}`)}
                 className="border border-dashed border-border bg-card p-4 hover:border-primary/50 group flex flex-col items-center justify-center gap-3 min-h-[112px] w-full transition-colors"
                 data-testid="add-version-card"
               >
@@ -445,7 +446,7 @@ export default function KitDetail() {
         </div>
       </div>
 
-      {/* ── Ratings agrégées ── */}
+      {/* Ratings */}
       {(kit.review_count ?? 0) > 0 && (
         <div className="border-t border-border">
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
