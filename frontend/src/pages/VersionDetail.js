@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
-  Check, Trash2, User, Plus, Loader2, Heart,
+  Check, Trash2, User, Plus, Loader2, Heart, TrendingDown, TrendingUp, Minus,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import AddToCollectionDialog from '@/components/AddToCollectionDialog';
@@ -72,66 +72,63 @@ function KitSlider({ photos }) {
   );
 }
 
-// ── VALUE ESTIMATION bloc ──────────────────────────────────────────────────
+// ── VALUE ESTIMATION ─────────────────────────────────────────────────────
 function ValueEstimation({ estimates }) {
   if (!estimates) return null;
   const { low, average, high, count } = estimates;
   if (!count || count === 0) return null;
 
-  // Position du curseur average sur la barre (0-100%)
-  const range = (high ?? 0) - (low ?? 0);
-  const avgPct = range > 0
-    ? Math.round(((average ?? low ?? 0) - (low ?? 0)) / range * 100)
-    : 50;
+  const cards = [
+    {
+      label: 'Low',
+      value: low,
+      icon: <TrendingDown className="w-4 h-4" />,
+      iconColor: 'text-red-400',
+      valueColor: 'text-red-400',
+      borderColor: 'border-red-500/30',
+    },
+    {
+      label: 'Average',
+      value: average,
+      icon: <Minus className="w-4 h-4" />,
+      iconColor: 'text-yellow-300',
+      valueColor: 'text-foreground',
+      borderColor: 'border-yellow-400/30',
+    },
+    {
+      label: 'High',
+      value: high,
+      icon: <TrendingUp className="w-4 h-4" />,
+      iconColor: 'text-green-400',
+      valueColor: 'text-green-400',
+      borderColor: 'border-green-500/30',
+    },
+  ];
 
   return (
     <div className="border border-border bg-card p-4 space-y-3" data-testid="value-estimation">
-
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
-          VALUE ESTIMATION
-        </h4>
+      <div className="flex items-center gap-2">
+        <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>VALUE ESTIMATION</h4>
         <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-          {count} estimate{count !== 1 ? 's' : ''}
+          ({count} estimate{count !== 1 ? 's' : ''})
         </span>
       </div>
 
-      {/* Prix moyen en grand */}
-      <div className="text-center py-1">
-        <span className="text-3xl font-mono font-bold text-foreground">
-          {average != null ? `${average}€` : '—'}
-        </span>
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5" style={{ fontFamily: 'Barlow Condensed' }}>
-          Average
-        </p>
-      </div>
-
-      {/* Barre de gradient Low → High */}
-      <div className="space-y-2">
-        <div className="relative h-2 w-full rounded-none" style={{
-          background: 'linear-gradient(to right, #ef4444, #eab308, #22c55e)',
-        }}>
-          {/* Curseur average */}
-          <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-4 bg-white border-2 border-background shadow"
-            style={{ left: `calc(${avgPct}% - 6px)`, transition: 'left 0.4s ease' }}
-          />
-        </div>
-
-        {/* Labels Low / High */}
-        <div className="flex justify-between">
-          <div className="text-left">
-            <p className="text-[10px] uppercase tracking-wider text-red-400" style={{ fontFamily: 'Barlow Condensed' }}>Low</p>
-            <p className="text-xs font-mono text-red-400">{low != null ? `${low}€` : '—'}</p>
+      {/* 3 cartes */}
+      <div className="grid grid-cols-3 gap-3">
+        {cards.map(({ label, value, icon, iconColor, valueColor, borderColor }) => (
+          <div key={label} className={`border ${borderColor} bg-background p-3 flex flex-col items-center gap-1.5`}>
+            <span className={iconColor}>{icon}</span>
+            <span className={`text-2xl font-mono font-bold ${valueColor}`}>
+              {value != null ? `${value}€` : '—'}
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
+              {label}
+            </span>
           </div>
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider text-green-400" style={{ fontFamily: 'Barlow Condensed' }}>High</p>
-            <p className="text-xs font-mono text-green-400">{high != null ? `${high}€` : '—'}</p>
-          </div>
-        </div>
+        ))}
       </div>
-
     </div>
   );
 }
