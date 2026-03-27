@@ -1,7 +1,11 @@
 // src/pages/VersionDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, getVersionEstimates, getVersionWornBy, getReviews, createReport, proxyImageUrl, addToWishlist, checkWishlist, removeFromWishlist, createReview } from '@/lib/api';
+import {
+  getVersion, getVersionEstimates, getVersionWornBy, getReviews,
+  createReport, proxyImageUrl, addToWishlist, checkWishlist,
+  removeFromWishlist, createReview,
+} from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,7 +25,7 @@ import AddToCollectionDialog from '@/components/AddToCollectionDialog';
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const MODELS       = ['Authentic', 'Replica', 'Other'];
 
-// ── Slider ────────────────────────────────────────────────────────────────────────────────
+// ── Slider ──────────────────────────────────────────────────────────────────
 function KitSlider({ photos }) {
   const [current, setCurrent] = useState(0);
 
@@ -37,19 +41,13 @@ function KitSlider({ photos }) {
   return (
     <div className="space-y-3">
       <div className="relative aspect-[3/4] border border-border bg-card overflow-hidden group">
-        <img
-          src={proxyImageUrl(photos[current])}
-          alt={`Photo ${current + 1}`}
-          className="w-full h-full object-cover transition-opacity duration-300"
-        />
+        <img src={proxyImageUrl(photos[current])} alt={`Photo ${current + 1}`} className="w-full h-full object-cover transition-opacity duration-300" />
         {photos.length > 1 && (
           <>
-            <button onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-background/80 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background">
+            <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-background/80 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-background/80 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background">
+            <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-background/80 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background">
               <ChevronRight className="w-4 h-4" />
             </button>
             <div className="absolute bottom-2 right-2 bg-background/80 border border-border px-2 py-0.5">
@@ -74,13 +72,12 @@ function KitSlider({ photos }) {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────────────
+// ── Page ────────────────────────────────────────────────────────────────────
 export default function VersionDetail() {
   const { versionId } = useParams();
   const { user }      = useAuth();
 
   const [version,           setVersion]           = useState(null);
-  const [wornBy,            setWornBy]            = useState([]);
   const [estimates,         setEstimates]         = useState(null);
   const [reviews,           setReviews]           = useState([]);
   const [loading,           setLoading]           = useState(true);
@@ -97,98 +94,56 @@ export default function VersionDetail() {
   const [submitting,        setSubmitting]        = useState(false);
 
   const [reportCorrections, setReportCorrections] = useState({
-    competition: '',
-    model:       '',
-    sku_code:    '',
-    ean_code:    '',
-    front_photo: '',
-    back_photo:  '',
+    competition: '', model: '', sku_code: '', ean_code: '', front_photo: '', back_photo: '',
   });
   const [reportNotes, setReportNotes] = useState('');
-
   const setField = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
   const fetchReviews = useCallback(async () => {
-    try {
-      const res = await getReviews(versionId);
-      setReviews(Array.isArray(res.data) ? res.data : []);
-    } catch { setReviews([]); }
+    try { const res = await getReviews(versionId); setReviews(Array.isArray(res.data) ? res.data : []); }
+    catch { setReviews([]); }
   }, [versionId]);
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
       getVersion(versionId),
-      getVersionWornBy(versionId).then(r => r.data).catch(() => []),
       getVersionEstimates(versionId).catch(() => null),
-    ]).then(async ([versionRes, wornByData, estimatesRes]) => {
+    ]).then(async ([versionRes, estimatesRes]) => {
       const v = versionRes.data;
       setVersion(v);
-      setWornBy(Array.isArray(wornByData) ? wornByData : []);
       setEstimates(estimatesRes?.data || null);
       setReportCorrections({
-        competition: v.competition || '',
-        model:       v.model       || '',
-        sku_code:    v.sku_code    || '',
-        ean_code:    v.ean_code    || '',
-        front_photo: v.front_photo || '',
-        back_photo:  v.back_photo  || '',
+        competition: v.competition || '', model: v.model || '',
+        sku_code: v.sku_code || '', ean_code: v.ean_code || '',
+        front_photo: v.front_photo || '', back_photo: v.back_photo || '',
       });
       await fetchReviews();
       try {
         const wRes = await checkWishlist(v.version_id);
-        if (wRes.data?.in_wishlist) {
-          setWishStatus('done');
-          setWishlistId(wRes.data.wishlist_id);
-        }
+        if (wRes.data?.in_wishlist) { setWishStatus('done'); setWishlistId(wRes.data.wishlist_id); }
       } catch {}
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [versionId, fetchReviews]);
 
-  const handleAdd = () => {
-    if (addStatus !== 'idle') return;
-    setShowAddDialog(true);
-  };
-
-  const handleAddSuccess = () => {
-    setShowAddDialog(false);
-    setAddStatus('done');
-    toast.success('Added to your collection 🎽');
-  };
+  const handleAdd = () => { if (addStatus !== 'idle') return; setShowAddDialog(true); };
+  const handleAddSuccess = () => { setShowAddDialog(false); setAddStatus('done'); toast.success('Added to your collection 🎽'); };
 
   const handleSubmitReport = async () => {
     try {
-      await createReport({
-        target_type: 'version',
-        target_id:   versionId,
-        corrections: reportCorrections,
-        notes:       reportNotes,
-        report_type: 'error',
-      });
+      await createReport({ target_type: 'version', target_id: versionId, corrections: reportCorrections, notes: reportNotes, report_type: 'error' });
       toast.success('Report submitted for community review');
-      setShowReport(false);
-      setReportNotes('');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit report');
-    }
+      setShowReport(false); setReportNotes('');
+    } catch (err) { toast.error(err.response?.data?.detail || 'Failed to submit report'); }
   };
 
   const handleRequestRemoval = async () => {
     try {
-      await createReport({
-        target_type: 'version',
-        target_id:   versionId,
-        corrections: {},
-        notes:       removalNotes,
-        report_type: 'removal',
-      });
-      toast.success('Removal request submitted for community vote');
-      setShowRemoval(false);
-      setRemovalNotes('');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit removal request');
-    }
+      await createReport({ target_type: 'version', target_id: versionId, corrections: {}, notes: removalNotes, report_type: 'removal' });
+      toast.success('Removal request submitted');
+      setShowRemoval(false); setRemovalNotes('');
+    } catch (err) { toast.error(err.response?.data?.detail || 'Failed'); }
   };
 
   const handleSubmitReview = async () => {
@@ -197,14 +152,10 @@ export default function VersionDetail() {
     try {
       await createReview({ version_id: versionId, rating: reviewRating, comment: reviewComment });
       toast.success('Review submitted!');
-      setReviewRating(0);
-      setReviewComment('');
+      setReviewRating(0); setReviewComment('');
       await fetchReviews();
-    } catch (err) {
-      toast.error(err?.response?.data?.detail || 'Failed to submit review');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { toast.error(err?.response?.data?.detail || 'Failed to submit review'); }
+    finally { setSubmitting(false); }
   };
 
   const handleWishlist = async () => {
@@ -213,33 +164,23 @@ export default function VersionDetail() {
     try {
       if (wishStatus === 'done' && wishlistId) {
         await removeFromWishlist(wishlistId);
-        setWishStatus('idle');
-        setWishlistId(null);
+        setWishStatus('idle'); setWishlistId(null);
         toast.success('Removed from wishlist');
       } else {
         const res = await addToWishlist({ version_id: versionId });
-        setWishStatus('done');
-        setWishlistId(res.data?.wishlist_id || null);
+        setWishStatus('done'); setWishlistId(res.data?.wishlist_id || null);
         toast.success('Added to wishlist ❤️');
       }
     } catch (err) {
-      if (err?.response?.status === 400) {
-        setWishStatus('done');
-        toast.info('Already in your wishlist');
-      } else {
-        setWishStatus('idle');
-        toast.error('Failed to update wishlist');
-      }
+      if (err?.response?.status === 400) { setWishStatus('done'); toast.info('Already in your wishlist'); }
+      else { setWishStatus('idle'); toast.error('Failed to update wishlist'); }
     }
   };
 
   if (loading) return (
     <div className="animate-pulse px-4 lg:px-8 py-8 max-w-7xl mx-auto">
       <div className="h-8 w-32 bg-card mb-8" />
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="aspect-[3/4] bg-card" />
-        <div className="space-y-4"><div className="h-10 w-3/4 bg-card" /><div className="h-6 w-1/2 bg-card" /></div>
-      </div>
+      <div className="grid md:grid-cols-2 gap-8"><div className="aspect-[3/4] bg-card" /><div className="space-y-4"><div className="h-10 w-3/4 bg-card" /></div></div>
     </div>
   );
 
@@ -251,18 +192,19 @@ export default function VersionDetail() {
     </div>
   );
 
-  const kit    = version.master_kit || {};
-  const photos = [version.front_photo, version.back_photo].filter(Boolean);
-
-  const teamPath  = kit.team_id  ? `/teams/${kit.team_id}`   : kit.team_slug  ? `/teams/${kit.team_slug}`   : null;
-  const brandPath = kit.brand_id ? `/brands/${kit.brand_id}` : kit.brand_slug ? `/brands/${kit.brand_slug}` : null;
-  // Lien vers le master kit
-  const kitPath = kit.kit_id ? `/kit/${kit.kit_id}` : null;
+  const kit       = version.master_kit || {};
+  const photos    = [version.front_photo, version.back_photo].filter(Boolean);
+  const teamPath  = kit.team_id  ? `/teams/${kit.team_id}`   : null;
+  const brandPath = kit.brand_id ? `/brands/${kit.brand_id}` : null;
+  // Lien breadcrumb vers le master kit
+  const kitPath   = kit.kit_id   ? `/kit/${kit.kit_id}`      : null;
+  // kit_type est dans master_kit
+  const kitType   = kit.kit_type || '';
 
   return (
     <div className="animate-fade-in-up">
 
-      {/* Add to Collection Dialog */}
+      {/* Sheet Add to Collection */}
       {showAddDialog && version && (
         <AddToCollectionDialog
           version={version}
@@ -274,21 +216,17 @@ export default function VersionDetail() {
       {/* Breadcrumb — Browse > Club > Season (kit_type) > Model · Competition */}
       <div className="border-b border-border px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-          <Link to="/browse" className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>Browse</Link>
+          <Link to="/browse" className="hover:text-foreground transition-colors">Browse</Link>
           <ChevronRight className="w-3 h-3" />
-          {teamPath ? (
-            <Link to={teamPath} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>{kit.club || '—'}</Link>
-          ) : (
-            <span>{kit.club || '—'}</span>
-          )}
+          {teamPath
+            ? <Link to={teamPath} className="hover:text-foreground transition-colors">{kit.club || '—'}</Link>
+            : <span>{kit.club || '—'}</span>
+          }
           <ChevronRight className="w-3 h-3" />
-          {kitPath ? (
-            <Link to={kitPath} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>
-              {kit.season}{kit.kit_type ? ` (${kit.kit_type})` : ''}
-            </Link>
-          ) : (
-            <span>{kit.season}{kit.kit_type ? ` (${kit.kit_type})` : ''}</span>
-          )}
+          {kitPath
+            ? <Link to={kitPath} className="hover:text-foreground transition-colors">{kit.season}{kitType ? ` (${kitType})` : ''}</Link>
+            : <span>{kit.season}{kitType ? ` (${kitType})` : ''}</span>
+          }
           <ChevronRight className="w-3 h-3" />
           <span className="text-foreground truncate">{version.model} · {version.competition}</span>
         </div>
@@ -305,15 +243,13 @@ export default function VersionDetail() {
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  {kit.kit_type && <Badge variant="outline" className="rounded-none text-xs">{kit.kit_type}</Badge>}
+                  {kitType && <Badge variant="outline" className="rounded-none text-xs">{kitType}</Badge>}
                   {version.model && <Badge variant="outline" className="rounded-none text-xs">{version.model}</Badge>}
                 </div>
                 <h1 className="text-4xl sm:text-5xl tracking-tighter leading-none mb-2">
-                  {teamPath ? (
-                    <Link to={teamPath} className="hover:text-primary transition-colors">{kit.club}</Link>
-                  ) : (
-                    <span>{kit.club}</span>
-                  )}
+                  {teamPath
+                    ? <Link to={teamPath} className="hover:text-primary transition-colors">{kit.club}</Link>
+                    : <span>{kit.club}</span>}
                 </h1>
                 <p className="text-lg text-muted-foreground" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
                   {kit.season} Season
@@ -340,33 +276,29 @@ export default function VersionDetail() {
                 {kit.club && (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Team</p>
-                    {teamPath ? (
-                      <Link to={teamPath} className="text-sm hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.club}</Link>
-                    ) : (
-                      <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.club}</p>
-                    )}
+                    {teamPath
+                      ? <Link to={teamPath} className="text-sm hover:text-primary transition-colors">{kit.club}</Link>
+                      : <p className="text-sm">{kit.club}</p>}
                   </div>
                 )}
                 {kit.season && (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Season</p>
-                    <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.season}</p>
+                    <p className="text-sm">{kit.season}</p>
                   </div>
                 )}
                 {version.competition && (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Competition</p>
-                    <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{version.competition}</p>
+                    <p className="text-sm">{version.competition}</p>
                   </div>
                 )}
                 {kit.brand && (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Brand</p>
-                    {brandPath ? (
-                      <Link to={brandPath} className="text-sm hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.brand}</Link>
-                    ) : (
-                      <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.brand}</p>
-                    )}
+                    {brandPath
+                      ? <Link to={brandPath} className="text-sm hover:text-primary transition-colors">{kit.brand}</Link>
+                      : <p className="text-sm">{kit.brand}</p>}
                   </div>
                 )}
                 {version.sku_code && (
@@ -391,30 +323,11 @@ export default function VersionDetail() {
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Price Estimates</p>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    {estimates.min_price != null && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MIN</p>
-                        <p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.min_price}€</p>
-                      </div>
-                    )}
-                    {estimates.avg_price != null && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>AVG</p>
-                        <p className="text-lg font-semibold text-primary" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.avg_price}€</p>
-                      </div>
-                    )}
-                    {estimates.max_price != null && (
-                      <div>
-                        <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MAX</p>
-                        <p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.max_price}€</p>
-                      </div>
-                    )}
+                    {estimates.min_price != null && <div><p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MIN</p><p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.min_price}€</p></div>}
+                    {estimates.avg_price != null && <div><p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>AVG</p><p className="text-lg font-semibold text-primary" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.avg_price}€</p></div>}
+                    {estimates.max_price != null && <div><p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MAX</p><p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.max_price}€</p></div>}
                   </div>
-                  {estimates.count > 0 && (
-                    <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                      Based on {estimates.count} collection entr{estimates.count !== 1 ? 'ies' : 'y'}
-                    </p>
-                  )}
+                  {estimates.count > 0 && <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Based on {estimates.count} collection entr{estimates.count !== 1 ? 'ies' : 'y'}</p>}
                 </div>
               )}
 
@@ -422,28 +335,19 @@ export default function VersionDetail() {
               <div className="flex flex-wrap gap-3">
                 {user && (
                   <>
-                    <Button
-                      onClick={handleAdd}
-                      disabled={addStatus === 'done'}
-                      className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
+                    <Button onClick={handleAdd} disabled={addStatus === 'done'} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">
                       {addStatus === 'done' ? <Check className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
                       {addStatus === 'done' ? 'In Collection' : 'Add to Collection'}
                     </Button>
-                    <Button
-                      onClick={handleWishlist}
-                      variant="outline"
-                      disabled={wishStatus === 'loading'}
+                    <Button onClick={handleWishlist} variant="outline" disabled={wishStatus === 'loading'}
                       className={`rounded-none ${
                         wishStatus === 'done'
                           ? 'border-rose-500 text-rose-500 hover:bg-rose-500/10'
                           : 'border-border hover:border-primary hover:text-primary'
-                      }`}
-                    >
+                      }`}>
                       {wishStatus === 'loading'
                         ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        : <Heart className={`w-4 h-4 mr-2 ${ wishStatus === 'done' ? 'fill-rose-500 text-rose-500' : '' }`} />
-                      }
+                        : <Heart className={`w-4 h-4 mr-2 ${wishStatus === 'done' ? 'fill-rose-500 text-rose-500' : ''}`} />}
                       {wishStatus === 'done' ? 'Wishlisted' : 'Add to Wishlist'}
                     </Button>
                   </>
@@ -453,19 +357,11 @@ export default function VersionDetail() {
               {/* Report / Removal */}
               {user && (
                 <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => { setShowReport(!showReport); setShowRemoval(false); }}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-                  >
+                  <button onClick={() => { setShowReport(!showReport); setShowRemoval(false); }} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                     <AlertTriangle className="w-3 h-3" /> Report an error
                   </button>
                   <span className="text-muted-foreground">·</span>
-                  <button
-                    onClick={() => { setShowRemoval(!showRemoval); setShowReport(false); }}
-                    className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1"
-                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-                  >
+                  <button onClick={() => { setShowRemoval(!showRemoval); setShowReport(false); }} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                     <Trash2 className="w-3 h-3" /> Request removal
                   </button>
                 </div>
@@ -508,7 +404,7 @@ export default function VersionDetail() {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Additional Notes</Label>
+                    <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
                     <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
                   </div>
                   <div className="flex gap-2">
@@ -540,7 +436,6 @@ export default function VersionDetail() {
       {/* Reviews */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
         <h2 className="text-2xl tracking-tighter mb-6">COMMUNITY REVIEWS</h2>
-
         {user && (
           <div className="border border-border p-6 mb-8 space-y-4">
             <p className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Leave a Review</p>
@@ -555,12 +450,10 @@ export default function VersionDetail() {
             </div>
             <Textarea placeholder="Share your thoughts about this jersey..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
             <Button onClick={handleSubmitReview} disabled={submitting} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">
-              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Submit Review
+              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Submit Review
             </Button>
           </div>
         )}
-
         {reviews.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-border">
             <Star className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
@@ -572,33 +465,21 @@ export default function VersionDetail() {
               <div key={review.review_id} className="border border-border p-5 space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    {review.user_picture ? (
-                      <img src={proxyImageUrl(review.user_picture)} alt="" className="w-8 h-8 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    )}
+                    {review.user_picture
+                      ? <img src={proxyImageUrl(review.user_picture)} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      : <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><User className="w-4 h-4 text-muted-foreground" /></div>}
                     <div>
-                      {review.user_username ? (
-                        <Link to={`/profile/${review.user_username}`} className="text-sm font-semibold hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          {review.user_name || review.user_username}
-                        </Link>
-                      ) : (
-                        <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.user_name || 'Anonymous'}</p>
-                      )}
+                      {review.user_username
+                        ? <Link to={`/profile/${review.user_username}`} className="text-sm font-semibold hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.user_name || review.user_username}</Link>
+                        : <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.user_name || 'Anonymous'}</p>}
                       <p className="text-[10px] text-muted-foreground">{review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i <= review.rating ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
-                    ))}
+                    {[1,2,3,4,5].map(i => <Star key={i} className={`w-3.5 h-3.5 ${i <= review.rating ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />)}
                   </div>
                 </div>
-                {review.comment && (
-                  <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.comment}</p>
-                )}
+                {review.comment && <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.comment}</p>}
               </div>
             ))}
           </div>
