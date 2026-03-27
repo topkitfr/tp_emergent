@@ -119,10 +119,9 @@ export default function KitDetail() {
     </div>
   );
 
-  const teamPath    = kit.team_id    ? `/teams/${kit.team_id}`              : kit.club_slug    ? `/teams/${kit.club_slug}`    : null;
-  const brandPath   = kit.brand_id   ? `/brands/${kit.brand_id}`            : kit.brand_slug   ? `/brands/${kit.brand_slug}`   : null;
-  const leaguePath  = kit.league_id  ? `/leagues/${kit.league_id}`          : kit.league_slug  ? `/leagues/${kit.league_slug}`  : null;
-  // Fix: sponsor link now uses sponsor_id
+  const teamPath   = kit.team_id   ? `/teams/${kit.team_id}`   : kit.club_slug ? `/teams/${kit.club_slug}`   : null;
+  const brandPath  = kit.brand_id  ? `/brands/${kit.brand_id}` : kit.brand_slug ? `/brands/${kit.brand_slug}` : null;
+  const leaguePath = kit.league_id ? `/leagues/${kit.league_id}` : kit.league_slug ? `/leagues/${kit.league_slug}` : null;
   const sponsorPath = kit.sponsor_id ? `/database/sponsors/${kit.sponsor_id}` : null;
 
   return (
@@ -227,7 +226,6 @@ export default function KitDetail() {
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
                   <span className="text-sm">{kit.design || 'None'}</span>
                 </div>
-                {/* Fix: sponsor wrapped in Link when sponsor_id exists */}
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
                   {sponsorPath ? (
@@ -420,7 +418,7 @@ export default function KitDetail() {
               </Link>
             ))}
 
-            {/* Add Version → centralized on /contributions */}
+            {/* Add Version — redirige vers /contributions avec kit_id pré-rempli */}
             {user && (
               <button
                 onClick={() => navigate(`/contributions?kit_id=${kitId}`)}
@@ -446,7 +444,7 @@ export default function KitDetail() {
         </div>
       </div>
 
-      {/* Ratings */}
+      {/* Ratings agrégées */}
       {(kit.review_count ?? 0) > 0 && (
         <div className="border-t border-border">
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">

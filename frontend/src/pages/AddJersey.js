@@ -1,7 +1,7 @@
+// AddJersey.js — redirected to /contributions
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-// AddJersey.js is deprecated — all jersey submissions go through /contributions
 export default function AddJersey() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
