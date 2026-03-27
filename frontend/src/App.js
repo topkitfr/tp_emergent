@@ -1,7 +1,7 @@
 // frontend/src/App.js
 import React, { useEffect, useState } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
@@ -34,6 +34,12 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
+// Composants redirect qui lisent le vrai :id depuis useParams
+const RedirectWithId = ({ to }) => {
+  const { id } = useParams();
+  return <Navigate to={`${to}/${id}`} replace />;
+};
+
 function App() {
   const [maintenance, setMaintenance] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -42,11 +48,11 @@ function App() {
     fetch(`${API}/admin/maintenance`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.maintenance_mode) setMaintenance(true); })
-      .catch(() => {})                  // si l'API est down, on laisse passer
+      .catch(() => {})
       .finally(() => setChecking(false));
   }, []);
 
-  if (checking) return null;            // bref instant de chargement silencieux
+  if (checking) return null;
   if (maintenance) return <MaintenancePage />;
 
   return (
@@ -74,13 +80,13 @@ function App() {
                 <Route path="/leagues" element={<Leagues />} />
                 <Route path="/leagues/:id" element={<LeagueDetail />} />
                 <Route path="/database/leagues" element={<Navigate to="/leagues" replace />} />
-                <Route path="/database/leagues/:id" element={<Navigate to="/leagues/:id" replace />} />
+                <Route path="/database/leagues/:id" element={<RedirectWithId to="/leagues" />} />
 
                 {/* ── Database — Brands ── */}
                 <Route path="/brands" element={<Brands />} />
                 <Route path="/brands/:id" element={<BrandDetail />} />
                 <Route path="/database/brands" element={<Navigate to="/brands" replace />} />
-                <Route path="/database/brands/:id" element={<Navigate to="/brands/:id" replace />} />
+                <Route path="/database/brands/:id" element={<RedirectWithId to="/brands" />} />
 
                 {/* ── Database — Players ── */}
                 <Route path="/players" element={<Players />} />
@@ -90,7 +96,7 @@ function App() {
                 <Route path="/sponsors" element={<Sponsors />} />
                 <Route path="/sponsors/:id" element={<SponsorDetail />} />
                 <Route path="/database/sponsors" element={<Navigate to="/sponsors" replace />} />
-                <Route path="/database/sponsors/:id" element={<Navigate to="/sponsors/:id" replace />} />
+                <Route path="/database/sponsors/:id" element={<RedirectWithId to="/sponsors" />} />
 
                 {/* ── Pages protégées ── */}
                 <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
