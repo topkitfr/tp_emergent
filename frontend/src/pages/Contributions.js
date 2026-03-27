@@ -85,6 +85,22 @@ function buildEntityBucketsFromSubmissions(items = []) {
   return buckets;
 }
 
+// ===== COMPOSANT: USERNAME CLIQUABLE =====
+function UserLink({ name, username, className = '' }) {
+  if (username) {
+    return (
+      <Link
+        to={`/profile/${username}`}
+        className={`hover:text-primary transition-colors ${className}`}
+        style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+      >
+        {name || username}
+      </Link>
+    );
+  }
+  return <span className={className} style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{name || 'Unknown'}</span>;
+}
+
 // ===== COMPOSANT: DÉTAILS DE SOUMISSION =====
 function SubmissionDetail({ sub, existingKits }) {
   const isEntity = ['team', 'league', 'brand', 'player', 'sponsor'].includes(sub.submission_type);
@@ -672,8 +688,10 @@ export default function Contributions() {
                             ? (sub.data?.full_name || '?')
                             : (sub.data?.name || '?')}
                         </h4>
-                        <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          by{' '}
+                          <UserLink name={sub.submitter_name} username={sub.submitter_username} />
+                          {' '}—{' '}{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
@@ -734,8 +752,10 @@ export default function Contributions() {
                           <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                             {sub.submission_type === 'player' ? (sub.data?.full_name || '?') : (sub.data?.name || '?')}
                           </h4>
-                          <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                            by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            by{' '}
+                            <UserLink name={sub.submitter_name} username={sub.submitter_username} />
+                            {' '}—{' '}{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
                           </p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
@@ -878,8 +898,10 @@ export default function Contributions() {
                           }`}>{rep.status}</Badge>
                         </div>
                         <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{rep.notes || 'Correction submitted'}</p>
-                        <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          by {rep.reporter_name || 'Unknown'} — {rep.created_at ? new Date(rep.created_at).toLocaleDateString() : ''}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          by{' '}
+                          <UserLink name={rep.reporter_name} username={rep.reporter_username} />
+                          {' '}—{' '}{rep.created_at ? new Date(rep.created_at).toLocaleDateString() : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
@@ -931,8 +953,10 @@ export default function Contributions() {
                         {sub.data?.mode === 'removal' && sub.data?.notes && (
                           <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Reason: {sub.data.notes}</p>
                         )}
-                        <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          by{' '}
+                          <UserLink name={sub.submitter_name} username={sub.submitter_username} />
+                          {' '}—{' '}{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">

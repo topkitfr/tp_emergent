@@ -84,7 +84,7 @@ export default function VersionDetail() {
   const [reviews,       setReviews]       = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [addStatus,     setAddStatus]     = useState('idle');
-  const [wishStatus,    setWishStatus]    = useState('idle'); // 'idle' | 'loading' | 'done'
+  const [wishStatus,    setWishStatus]    = useState('idle');
   const [wishlistId,    setWishlistId]    = useState(null);
   const [showReport,    setShowReport]    = useState(false);
   const [showRemoval,   setShowRemoval]   = useState(false);
@@ -94,7 +94,6 @@ export default function VersionDetail() {
   const [reviewComment, setReviewComment] = useState('');
   const [submitting,    setSubmitting]    = useState(false);
 
-  // ── Report state — uniquement les champs d'une VERSION
   const [reportCorrections, setReportCorrections] = useState({
     competition: '',
     model:       '',
@@ -303,208 +302,201 @@ useEffect(() => {
               {version.avg_rating > 0 && (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-0.5">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-4 h-4 ${s <= Math.round(version.avg_rating) ? 'text-accent fill-accent' : 'text-muted'}`} />
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className={`w-4 h-4 ${
+                        i <= Math.round(version.avg_rating) ? 'fill-primary text-primary' : 'text-muted-foreground'
+                      }`} />
                     ))}
                   </div>
-                  <span className="text-sm font-mono text-accent">{version.avg_rating}</span>
-                  <span className="text-xs text-muted-foreground">({version.review_count} reviews)</span>
+                  <span className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                    {version.avg_rating.toFixed(1)} ({version.review_count} review{version.review_count !== 1 ? 's' : ''})
+                  </span>
                 </div>
               )}
 
-              <Separator className="bg-border" />
-
-              {/* Data Grid */}
-              <div className="grid grid-cols-2 gap-6">
-                {[
-                  { label: 'Brand',          value: kit.brand },
-                  { label: 'Type',           value: kit.kit_type },
-                  { label: 'Competition',    value: version.competition },
-                  { label: 'Model',          value: version.model },
-                  { label: 'SKU',            value: version.sku_code },
-                  { label: 'EAN',            value: version.ean_code },
-                  { label: 'In collections', value: version.collection_count > 0 ? `${version.collection_count} collectors` : null },
-                ].filter(f => f.value).map(({ label, value }) => (
-                  <div key={label}>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>{label}</div>
-                    <span className="text-sm font-mono">{value}</span>
+              {/* Info grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {version.competition && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Competition</p>
+                    <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{version.competition}</p>
                   </div>
-                ))}
+                )}
+                {kit.brand && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Brand</p>
+                    <Link to={`/brands/${kit.brand_slug ?? kit.brand}`} className="text-sm hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                      {kit.brand}
+                    </Link>
+                  </div>
+                )}
+                {version.sku_code && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>SKU</p>
+                    <p className="text-sm font-mono">{version.sku_code}</p>
+                  </div>
+                )}
+                {version.ean_code && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>EAN</p>
+                    <p className="text-sm font-mono">{version.ean_code}</p>
+                  </div>
+                )}
               </div>
 
-              {/* Estimated Value */}
+              {/* Price estimates */}
               {estimates && (
-                <div className="space-y-3">
-                  <h5 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Estimated Value</h5>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[{ label: 'Low', value: estimates.low }, { label: 'Average', value: estimates.average }, { label: 'High', value: estimates.high }].map(({ label, value }) => (
-                      <div key={label} className="border border-border bg-card p-3 text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>{label}</p>
-                        <p className="font-semibold font-mono text-primary">{value != null ? `€${value}` : '—'}</p>
+                <div className="border border-border p-4 space-y-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Price Estimates</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    {estimates.min_price != null && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MIN</p>
+                        <p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.min_price}€</p>
                       </div>
-                    ))}
+                    )}
+                    {estimates.avg_price != null && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>AVG</p>
+                        <p className="text-lg font-semibold text-primary" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.avg_price}€</p>
+                      </div>
+                    )}
+                    {estimates.max_price != null && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MAX</p>
+                        <p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.max_price}€</p>
+                      </div>
+                    )}
                   </div>
+                  {estimates.count > 0 && (
+                    <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                      Based on {estimates.count} collection entr{estimates.count !== 1 ? 'ies' : 'y'}
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* Buttons */}
-              <div className="flex flex-wrap gap-2">
-                {user && (
-                  <Button onClick={handleAdd} size="sm"
-                    className={`rounded-none ${addStatus === 'done' ? 'bg-green-500 hover:bg-green-500' : ''}`}>
-                    {addStatus === 'loading' && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-                    {addStatus === 'done'    && <Check   className="w-4 h-4 mr-1" />}
-                    {addStatus === 'idle'    && <Plus    className="w-4 h-4 mr-1" />}
-                    {addStatus === 'done' ? 'In collection' : 'Add to collection'}
-                  </Button>
-                )}
-                {user && (
-                  <Button
-                    variant="outline" size="sm"
-                    onClick={handleWishlist}
-                    className={`rounded-none border-border transition-colors ${wishStatus === 'done' ? 'border-red-400/60 text-red-400 hover:bg-red-400/10' : 'hover:border-red-400/40 hover:text-red-400'}`}
-                  >
-                    {wishStatus === 'loading'
-                      ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      : <Heart className={`w-4 h-4 mr-1 transition-all ${wishStatus === 'done' ? 'fill-red-400 text-red-400' : ''}`} />
-                    }
-                    {wishStatus === 'done' ? 'In wishlist' : 'Add to wishlist'}
-                  </Button>
-                )}
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-3">
                 {user && (
                   <>
-                    <Button variant="outline" size="sm" onClick={() => setShowReport(!showReport)}
-                      className="rounded-none border-border">
-                      <AlertTriangle className="w-4 h-4 mr-1" /> Report Error
+                    <Button
+                      onClick={handleAdd}
+                      disabled={addStatus === 'loading' || addStatus === 'done'}
+                      className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      {addStatus === 'loading' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
+                       addStatus === 'done'    ? <Check className="w-4 h-4 mr-2" /> :
+                                                <Plus className="w-4 h-4 mr-2" />}
+                      {addStatus === 'done' ? 'In Collection' : 'Add to Collection'}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setShowRemoval(!showRemoval)}
-                      className="rounded-none border-destructive/50 text-destructive hover:bg-destructive/10">
-                      <Trash2 className="w-4 h-4 mr-1" /> Request Removal
+                    <Button
+                      onClick={handleWishlist}
+                      variant="outline"
+                      disabled={wishStatus === 'loading'}
+                      className={`rounded-none ${
+                        wishStatus === 'done'
+                          ? 'border-rose-500 text-rose-500 hover:bg-rose-500/10'
+                          : 'border-border hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      {wishStatus === 'loading'
+                        ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        : <Heart className={`w-4 h-4 mr-2 ${ wishStatus === 'done' ? 'fill-rose-500 text-rose-500' : '' }`} />
+                      }
+                      {wishStatus === 'done' ? 'Wishlisted' : 'Add to Wishlist'}
                     </Button>
                   </>
                 )}
               </div>
 
-              {/* ── Report Form (Version uniquement) ── */}
-              {showReport && user && (
-                <div className="border border-destructive/30 p-4 space-y-4">
-                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
+              {/* Report / Removal */}
+              {user && (
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => { setShowReport(!showReport); setShowRemoval(false); }}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+                  >
+                    <AlertTriangle className="w-3 h-3" /> Report an error
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    onClick={() => { setShowRemoval(!showRemoval); setShowReport(false); }}
+                    className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1"
+                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+                  >
+                    <Trash2 className="w-3 h-3" /> Request removal
+                  </button>
+                </div>
+              )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                    {/* Competition — Select */}
+              {/* Report form */}
+              {showReport && (
+                <div className="border border-border p-4 space-y-4 mt-2">
+                  <p className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Report an Error</p>
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition</Label>
                       <Select value={reportCorrections.competition} onValueChange={setField('competition')}>
-                        <SelectTrigger className="bg-card border-border rounded-none text-sm" data-testid="report-competition">
-                          <SelectValue placeholder="Select competition" />
-                        </SelectTrigger>
+                        <SelectTrigger className="bg-card border-border rounded-none"><SelectValue /></SelectTrigger>
                         <SelectContent className="bg-card border-border">
                           {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
-
-                    {/* Model — Select */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model</Label>
                       <Select value={reportCorrections.model} onValueChange={setField('model')}>
-                        <SelectTrigger className="bg-card border-border rounded-none text-sm" data-testid="report-model">
-                          <SelectValue placeholder="Select model" />
-                        </SelectTrigger>
+                        <SelectTrigger className="bg-card border-border rounded-none"><SelectValue /></SelectTrigger>
                         <SelectContent className="bg-card border-border">
                           {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
-
-                    {/* SKU Code */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
-                      <Input
-                        value={reportCorrections.sku_code}
-                        onChange={e => setField('sku_code')(e.target.value)}
-                        placeholder="Optional"
-                        className="bg-card border-border rounded-none text-sm font-mono"
-                        data-testid="report-sku"
-                      />
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
+                      <Input value={reportCorrections.sku_code} onChange={e => setField('sku_code')(e.target.value)} className="bg-card border-border rounded-none font-mono" />
                     </div>
-
-                    {/* EAN Code */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
-                      <Input
-                        value={reportCorrections.ean_code}
-                        onChange={e => setField('ean_code')(e.target.value)}
-                        placeholder="Optional"
-                        className="bg-card border-border rounded-none text-sm font-mono"
-                        data-testid="report-ean"
-                      />
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
+                      <Input value={reportCorrections.ean_code} onChange={e => setField('ean_code')(e.target.value)} className="bg-card border-border rounded-none font-mono" />
                     </div>
-
-                    {/* Front Photo */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
-                      <ImageUpload
-                        value={reportCorrections.front_photo}
-                        onChange={setField('front_photo')}
-                        folder="version"
-                        testId="report-ver-front-photo"
-                      />
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo URL</Label>
+                      <ImageUpload value={reportCorrections.front_photo} onChange={setField('front_photo')} folder="version" side="front" />
                     </div>
-
-                    {/* Back Photo */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
-                      <ImageUpload
-                        value={reportCorrections.back_photo}
-                        onChange={setField('back_photo')}
-                        folder="version"
-                        testId="report-ver-back-photo"
-                      />
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo URL</Label>
+                      <ImageUpload value={reportCorrections.back_photo} onChange={setField('back_photo')} folder="version" side="back" />
                     </div>
                   </div>
-
-                  {/* Notes */}
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
-                    <Textarea
-                      value={reportNotes}
-                      onChange={e => setReportNotes(e.target.value)}
-                      placeholder="Describe the error..."
-                      className="bg-card border-border rounded-none min-h-[80px] text-sm"
-                    />
+                    <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Additional Notes</Label>
+                    <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
                   </div>
-
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSubmitReport}
-                      className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      <Check className="w-3 h-3 mr-1" /> Submit Report
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
+                    <Button onClick={handleSubmitReport} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">Submit Report</Button>
+                    <Button variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
 
-              {/* ── Removal Form ── */}
-              {showRemoval && user && (
-                <div className="border border-destructive/50 p-4 space-y-3">
-                  <h4 className="text-sm uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Reason</Label>
-                    <Textarea
-                      value={removalNotes}
-                      onChange={e => setRemovalNotes(e.target.value)}
-                      placeholder="Explain why this version should be removed..."
-                      className="bg-card border-border rounded-none min-h-[80px] text-sm"
-                    />
-                  </div>
+              {/* Removal form */}
+              {showRemoval && (
+                <div className="border border-destructive/30 p-4 space-y-3 mt-2">
+                  <p className="text-xs uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>Request Removal</p>
+                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                    This will create a community vote to remove this version.
+                  </p>
+                  <Textarea
+                    placeholder="Reason for removal..."
+                    value={removalNotes} onChange={e => setRemovalNotes(e.target.value)}
+                    className="bg-card border-border rounded-none resize-none" rows={3}
+                  />
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleRequestRemoval} disabled={!removalNotes.trim()}
-                      className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      <Trash2 className="w-3 h-3 mr-1" /> Submit Removal Request
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowRemoval(false)} className="rounded-none">Cancel</Button>
+                    <Button onClick={handleRequestRemoval} variant="destructive" className="rounded-none">Submit Removal Request</Button>
+                    <Button variant="outline" onClick={() => setShowRemoval(false)} className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
@@ -513,114 +505,97 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* ── Players who wore this kit ── */}
-      {wornBy.length > 0 && (
-        <div className="border-t border-border">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-            <h2 className="text-xl tracking-tight mb-6">
-              PLAYERS WHO WORE THIS KIT{' '}
-              <span className="font-mono text-sm text-muted-foreground ml-2">{wornBy.length}</span>
-            </h2>
-            <div className="flex flex-wrap gap-4">
-              {wornBy.map(player => (
-                <Link key={player.player_id} to={`/players/${player.slug ?? player.player_id}`}
-                  className="flex-shrink-0 w-20 hover:scale-105 transition-transform">
-                  <div className="w-20 h-24 bg-secondary overflow-hidden border border-border">
-                    {player.photo_url ? (
-                      <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <User className="w-8 h-8 text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-center mt-1 font-mono truncate leading-tight">{player.full_name}</p>
-                </Link>
+      <Separator />
+
+      {/* Reviews */}
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
+        <h2 className="text-2xl tracking-tighter mb-6">COMMUNITY REVIEWS</h2>
+
+        {user && (
+          <div className="border border-border p-6 mb-8 space-y-4">
+            <p className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Leave a Review</p>
+            <div className="flex items-center gap-1">
+              {[1,2,3,4,5].map(i => (
+                <button
+                  key={i}
+                  onMouseEnter={() => setReviewHover(i)}
+                  onMouseLeave={() => setReviewHover(0)}
+                  onClick={() => setReviewRating(i)}
+                  className="p-1"
+                >
+                  <Star className={`w-6 h-6 transition-colors ${
+                    i <= (reviewHover || reviewRating) ? 'fill-primary text-primary' : 'text-muted-foreground'
+                  }`} />
+                </button>
               ))}
             </div>
+            <Textarea
+              placeholder="Share your thoughts about this jersey..."
+              value={reviewComment} onChange={e => setReviewComment(e.target.value)}
+              className="bg-card border-border rounded-none resize-none" rows={3}
+            />
+            <Button onClick={handleSubmitReview} disabled={submitting} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">
+              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Submit Review
+            </Button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Reviews ── */}
-      <div className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-          <h2 className="text-xl tracking-tight mb-6">
-            REVIEWS{' '}
-            <span className="font-mono text-sm text-muted-foreground ml-2">{reviews.length}</span>
-          </h2>
-
-          {user ? (
-            <div className="border border-border bg-card p-5 mb-6">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Leave a Review</h3>
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="flex items-center gap-1 shrink-0 pt-1">
-                  {[1,2,3,4,5].map(s => (
-                    <button key={s}
-                      onClick={() => setReviewRating(s)}
-                      onMouseEnter={() => setReviewHover(s)}
-                      onMouseLeave={() => setReviewHover(0)}
-                      className="transition-transform hover:scale-110">
-                      <Star className={`w-6 h-6 transition-colors ${s <= (reviewHover || reviewRating) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
-                    </button>
-                  ))}
-                  {reviewRating > 0 && <span className="text-xs font-mono text-accent ml-1">{reviewRating}/5</span>}
-                </div>
-                <Textarea
-                  value={reviewComment}
-                  onChange={e => setReviewComment(e.target.value)}
-                  placeholder="Authentic? Replica? Match worn? Share your thoughts..."
-                  className="bg-background border-border rounded-none min-h-[60px] text-sm resize-none flex-1"
-                  style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-                />
-                <Button size="sm" onClick={handleSubmitReview} disabled={!reviewRating || submitting} className="rounded-none shrink-0 self-end">
-                  {submitting
-                    ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Submitting...</>
-                    : <><Check   className="w-3 h-3 mr-1" /> Submit</>
-                  }
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="border border-dashed border-border p-4 flex items-center gap-3 mb-6">
-              <Star className="w-5 h-5 text-muted-foreground shrink-0" />
-              <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Sign in to leave a review</p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {reviews.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-border">
-                <Star className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>No reviews yet — be the first!</p>
-              </div>
-            ) : reviews.map(review => (
-              <div key={review.review_id} className="border border-border bg-card p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  {review.user_picture ? (
-                    <img src={proxyImageUrl(review.user_picture)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4 text-muted-foreground" />
+        {reviews.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-border">
+            <Star className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No reviews yet. Be the first!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map(review => (
+              <div key={review.review_id} className="border border-border p-5 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {review.user_picture ? (
+                      <img src={review.user_picture} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      {review.user_username ? (
+                        <Link
+                          to={`/profile/${review.user_username}`}
+                          className="text-sm font-semibold hover:text-primary transition-colors"
+                          style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+                        >
+                          {review.user_name || review.user_username}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                          {review.user_name || 'Anonymous'}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">
+                        {review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}
+                      </p>
                     </div>
-                  )}
-                  <span className="font-medium text-sm">{review.user_name || 'Anonymous'}</span>
-                  <div className="flex items-center gap-0.5 ml-auto">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className={`w-3.5 h-3.5 ${
+                        i <= review.rating ? 'fill-primary text-primary' : 'text-muted-foreground'
+                      }`} />
                     ))}
-                    <span className="text-xs font-mono text-accent ml-1">{review.rating}/5</span>
                   </div>
                 </div>
                 {review.comment && (
-                  <p className="text-sm text-muted-foreground pl-11" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.comment}</p>
+                  <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                    {review.comment}
+                  </p>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
-
     </div>
   );
 }
