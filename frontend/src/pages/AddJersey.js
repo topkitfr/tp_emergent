@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createMasterKit, createVersion, getMasterKits, createTeamPending, createLeaguePending, createBrandPending } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Search } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
@@ -23,10 +23,16 @@ const inputClass = 'bg-card border-border rounded-none';
 
 export default function AddJersey() {
   const navigate = useNavigate();
-  const [step, setStep]                         = useState(1);
-  const [existingKits, setExistingKits]         = useState([]);
-  const [selectedExistingKit, setSelectedExistingKit] = useState('');
-  const [submitting, setSubmitting]             = useState(false);
+  const [searchParams] = useSearchParams();
+  const prefillKitId = searchParams.get('kit_id');
+
+  const [step, setStep]                               = useState(prefillKitId ? 2 : 1);
+  const [existingKits, setExistingKits]               = useState([]);
+  const [filteredKits, setFilteredKits]               = useState([]);
+  const [kitSearch, setKitSearch]                     = useState('');
+  const [selectedExistingKit, setSelectedExistingKit] = useState(prefillKitId || '');
+  const [selectedKitInfo, setSelectedKitInfo]         = useState(null);
+  const [submitting, setSubmitting]                   = useState(false);
 
   // Step 1 — Master Kit
   const [club, setClub]           = useState('');
@@ -44,17 +50,48 @@ export default function AddJersey() {
   const [frontPhoto, setFrontPhoto] = useState('');
 
   // Step 2 — Version
-  const [competition, setCompetition]   = useState('');
-  const [model, setModel]               = useState('');
-  const [skuCode, setSkuCode]           = useState('');
-  const [eanCode, setEanCode]           = useState('');
+  const [competition, setCompetition]     = useState('');
+  const [model, setModel]                 = useState('');
+  const [skuCode, setSkuCode]             = useState('');
+  const [eanCode, setEanCode]             = useState('');
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
   const [verBackPhoto, setVerBackPhoto]   = useState('');
   const [createdKitId, setCreatedKitId]   = useState('');
 
   useEffect(() => {
-    getMasterKits({}).then(r => setExistingKits(r.data)).catch(() => {});
-  }, []);
+    getMasterKits({ per_page: 200 })
+      .then(r => {
+        const kits = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+        setExistingKits(kits);
+        setFilteredKits(kits);
+        // Si kit_id en URL, récupérer les infos
+        if (prefillKitId) {
+          const found = kits.find(k => k.kit_id === prefillKitId);
+          if (found) setSelectedKitInfo(found);
+        }
+      })
+      .catch(() => {});
+  }, [prefillKitId]);
+
+  // Filtre live sur la recherche
+  useEffect(() => {
+    if (!kitSearch.trim()) {
+      setFilteredKits(existingKits);
+    } else {
+      const q = kitSearch.toLowerCase();
+      setFilteredKits(existingKits.filter(k =>
+        (k.club || '').toLowerCase().includes(q) ||
+        (k.season || '').toLowerCase().includes(q) ||
+        (k.kit_type || '').toLowerCase().includes(q)
+      ));
+    }
+  }, [kitSearch, existingKits]);
+
+  const handleSelectKit = (kitId) => {
+    setSelectedExistingKit(kitId);
+    const found = existingKits.find(k => k.kit_id === kitId);
+    setSelectedKitInfo(found || null);
+  };
 
   const handleCreateKit = async () => {
     if (!club || !season || !kitType || !brand || !frontPhoto) {
@@ -63,8 +100,8 @@ export default function AddJersey() {
     }
     setSubmitting(true);
     try {
-      let resolvedTeamId  = teamId;
-      let resolvedBrandId = brandId;
+      let resolvedTeamId   = teamId;
+      let resolvedBrandId  = brandId;
       let resolvedLeagueId = leagueId;
 
       if (club && !resolvedTeamId) {
@@ -74,7 +111,6 @@ export default function AddJersey() {
           toast.info(`Team "${club}" submitted — pending validation`);
         } catch (e) { console.warn('createTeamPending failed:', e); }
       }
-
       if (brand && !resolvedBrandId) {
         try {
           const res = await createBrandPending({ name: brand });
@@ -82,7 +118,6 @@ export default function AddJersey() {
           toast.info(`Brand "${brand}" submitted — pending validation`);
         } catch (e) { console.warn('createBrandPending failed:', e); }
       }
-
       if (league && !resolvedLeagueId) {
         try {
           const res = await createLeaguePending({ name: league });
@@ -92,16 +127,8 @@ export default function AddJersey() {
       }
 
       const res = await createMasterKit({
-        club,
-        season,
-        kit_type:  kitType,
-        brand,
-        front_photo: frontPhoto,
-        design,
-        sponsor,
-        sponsor_id:  sponsorId  || undefined,
-        gender,
-        league,
+        club, season, kit_type: kitType, brand, front_photo: frontPhoto,
+        design, sponsor, sponsor_id: sponsorId || undefined, gender, league,
         team_id:   resolvedTeamId   || undefined,
         brand_id:  resolvedBrandId  || undefined,
         league_id: resolvedLeagueId || undefined,
@@ -119,20 +146,12 @@ export default function AddJersey() {
 
   const handleCreateVersion = async () => {
     const kitId = createdKitId || selectedExistingKit;
-    if (!kitId) {
-      toast.error('Please select or create a Master Kit first');
-      return;
-    }
-    if (!competition || !model) {
-      toast.error('Please fill Competition and Model');
-      return;
-    }
+    if (!kitId) { toast.error('Please select or create a Master Kit first'); return; }
+    if (!competition || !model) { toast.error('Please fill Competition and Model'); return; }
     setSubmitting(true);
     try {
       const res = await createVersion({
-        kit_id:      kitId,
-        competition,
-        model,
+        kit_id: kitId, competition, model,
         sku_code:    skuCode,
         ean_code:    eanCode,
         front_photo: verFrontPhoto,
@@ -150,30 +169,20 @@ export default function AddJersey() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-black uppercase mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>
-          ADD JERSEY
-        </h1>
-        <p className="text-sm text-muted-foreground mb-8" style={{ fontFamily: 'DM Sans' }}>
-          Contribute to the catalog by adding new kits and versions
-        </p>
+        <h1 className="text-2xl font-black uppercase mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>ADD JERSEY</h1>
+        <p className="text-sm text-muted-foreground mb-8" style={{ fontFamily: 'DM Sans' }}>Contribute to the catalog by adding new kits and versions</p>
 
         {/* Step indicator */}
         <div className="flex items-center gap-3 mb-8">
           <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${
             step > 1 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
-          }`}>
-            {step > 1 ? <Check className="w-4 h-4" /> : '1'}
-          </div>
-          <span className={`text-xs uppercase tracking-wider ${
-            step === 1 ? 'text-foreground' : 'text-muted-foreground'
-          }`} style={fieldStyle}>MASTER KIT</span>
+          }`}>{step > 1 ? <Check className="w-4 h-4" /> : '1'}</div>
+          <span className={`text-xs uppercase tracking-wider ${ step === 1 ? 'text-foreground' : 'text-muted-foreground' }`} style={fieldStyle}>MASTER KIT</span>
           <ArrowRight className="w-4 h-4 text-muted-foreground" />
           <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${
             step === 2 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
           }`}>2</div>
-          <span className={`text-xs uppercase tracking-wider ${
-            step === 2 ? 'text-foreground' : 'text-muted-foreground'
-          }`} style={fieldStyle}>VERSION</span>
+          <span className={`text-xs uppercase tracking-wider ${ step === 2 ? 'text-foreground' : 'text-muted-foreground' }`} style={fieldStyle}>VERSION</span>
         </div>
 
         {/* ── STEP 1 : Master Kit ── */}
@@ -182,27 +191,50 @@ export default function AddJersey() {
 
             {/* Use existing kit */}
             <div className="border border-border p-4 bg-card">
-              <h3 className="text-xs uppercase tracking-wider font-bold mb-4" style={fieldStyle}>
-                USE EXISTING KIT
-              </h3>
-              <Select value={selectedExistingKit} onValueChange={setSelectedExistingKit}>
+              <h3 className="text-xs uppercase tracking-wider font-bold mb-4" style={fieldStyle}>USE EXISTING KIT</h3>
+              
+              {/* Search bar */}
+              <div className="relative mb-3">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Search by team, season, type..."
+                  value={kitSearch}
+                  onChange={e => setKitSearch(e.target.value)}
+                  className={`${inputClass} pl-8 text-sm`}
+                />
+              </div>
+
+              <Select value={selectedExistingKit} onValueChange={handleSelectKit}>
                 <SelectTrigger className={inputClass} data-testid="select-existing-kit">
                   <SelectValue placeholder="Select an existing Master Kit" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border max-h-60">
-                  {existingKits.map(k => (
+                <SelectContent className="bg-card border-border max-h-72">
+                  {filteredKits.length === 0 && (
+                    <div className="px-3 py-4 text-xs text-muted-foreground text-center" style={{ fontFamily: 'DM Sans' }}>No kits found</div>
+                  )}
+                  {filteredKits.map(k => (
                     <SelectItem key={k.kit_id} value={k.kit_id}>
-                      {k.club} - {k.season} ({k.kit_type})
+                      {k.club} · {k.season} · {k.kit_type}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              {selectedKitInfo && (
+                <div className="mt-3 p-3 bg-secondary/30 border border-border flex items-center gap-3">
+                  {selectedKitInfo.front_photo && (
+                    <img src={selectedKitInfo.front_photo} alt="" className="w-10 h-12 object-cover border border-border shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate" style={fieldStyle}>{selectedKitInfo.club} · {selectedKitInfo.season}</p>
+                    <p className="text-xs text-muted-foreground">{selectedKitInfo.kit_type} · {selectedKitInfo.brand}</p>
+                    {selectedKitInfo.league && <p className="text-xs text-muted-foreground">{selectedKitInfo.league}</p>}
+                  </div>
+                </div>
+              )}
+
               {selectedExistingKit && (
-                <Button
-                  onClick={() => setStep(2)}
-                  className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
-                  data-testid="use-existing-kit-btn"
-                >
+                <Button onClick={() => setStep(2)} className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="use-existing-kit-btn">
                   Continue with this Kit <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}
@@ -218,15 +250,7 @@ export default function AddJersey() {
             <div className="space-y-4">
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Team *</Label>
-                <EntityAutocomplete
-                  entityType="team"
-                  value={club}
-                  onChange={(val) => { setClub(val); setTeamId(''); }}
-                  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
-                  placeholder="e.g., FC Barcelona"
-                  className={inputClass}
-                  testId="input-club"
-                />
+                <EntityAutocomplete entityType="team" value={club} onChange={(val) => { setClub(val); setTeamId(''); }} onSelect={(item) => { setClub(item.label); setTeamId(item.id); }} placeholder="e.g., FC Barcelona" className={inputClass} testId="input-club" />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Season *</Label>
@@ -235,25 +259,13 @@ export default function AddJersey() {
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Type *</Label>
                 <Select value={kitType} onValueChange={setKitType}>
-                  <SelectTrigger className={inputClass} data-testid="select-kit-type">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger className={inputClass} data-testid="select-kit-type"><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">{KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Brand *</Label>
-                <EntityAutocomplete
-                  entityType="brand"
-                  value={brand}
-                  onChange={(val) => { setBrand(val); setBrandId(''); }}
-                  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
-                  placeholder="e.g., Nike"
-                  className={inputClass}
-                  testId="input-brand"
-                />
+                <EntityAutocomplete entityType="brand" value={brand} onChange={(val) => { setBrand(val); setBrandId(''); }} onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }} placeholder="e.g., Nike" className={inputClass} testId="input-brand" />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Design</Label>
@@ -261,54 +273,24 @@ export default function AddJersey() {
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Sponsor</Label>
-                <EntityAutocomplete
-                  entityType="sponsor"
-                  value={sponsor}
-                  onChange={(val) => { setSponsor(val); setSponsorId(''); }}
-                  onSelect={(item) => { setSponsor(item.label); setSponsorId(item.id); }}
-                  placeholder="e.g., Qatar Airways"
-                  className={inputClass}
-                  testId="input-sponsor"
-                />
+                <EntityAutocomplete entityType="sponsor" value={sponsor} onChange={(val) => { setSponsor(val); setSponsorId(''); }} onSelect={(item) => { setSponsor(item.label); setSponsorId(item.id); }} placeholder="e.g., Qatar Airways" className={inputClass} testId="input-sponsor" />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Gender</Label>
                 <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger className={inputClass} data-testid="select-gender">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger className={inputClass} data-testid="select-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">{GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>League</Label>
-                <EntityAutocomplete
-                  entityType="league"
-                  value={league}
-                  onChange={(val) => { setLeague(val); setLeagueId(''); }}
-                  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
-                  placeholder="e.g., Ligue 1"
-                  className={inputClass}
-                  testId="input-league"
-                />
+                <EntityAutocomplete entityType="league" value={league} onChange={(val) => { setLeague(val); setLeagueId(''); }} onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }} placeholder="e.g., Ligue 1" className={inputClass} testId="input-league" />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Front Photo *</Label>
-                <ImageUpload
-                  value={frontPhoto}
-                  onChange={setFrontPhoto}
-                  folder="master_kit"
-                  testId="upload-front-photo"
-                />
+                <ImageUpload value={frontPhoto} onChange={setFrontPhoto} folder="master_kit" testId="upload-front-photo" />
               </div>
-              <Button
-                onClick={handleCreateKit}
-                disabled={submitting}
-                className="w-full rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
-                data-testid="create-kit-btn"
-              >
+              <Button onClick={handleCreateKit} disabled={submitting} className="w-full rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="create-kit-btn">
                 {submitting ? 'Creating...' : 'Create Master Kit'} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -318,38 +300,39 @@ export default function AddJersey() {
         {/* ── STEP 2 : Version ── */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-2">
-              <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground" data-testid="back-to-step-1">
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs uppercase tracking-wider" style={fieldStyle}>
-                ADDING VERSION {createdKitId
-                  ? 'TO NEW KIT'
-                  : `TO ${existingKits.find(k => k.kit_id === selectedExistingKit)?.club || 'SELECTED KIT'}`
-                }
-              </span>
-            </div>
+            {/* Recap du kit sélectionné */}
+            {(selectedKitInfo || createdKitId) && (
+              <div className="border border-border bg-card p-3 flex items-center gap-3">
+                {selectedKitInfo?.front_photo && (
+                  <img src={selectedKitInfo.front_photo} alt="" className="w-10 h-12 object-cover border border-border shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground" style={fieldStyle}>Adding version to</p>
+                  <p className="text-sm font-semibold" style={fieldStyle}>
+                    {selectedKitInfo ? `${selectedKitInfo.club} · ${selectedKitInfo.season} · ${selectedKitInfo.kit_type}` : 'New Kit'}
+                  </p>
+                  {selectedKitInfo?.brand && <p className="text-xs text-muted-foreground">{selectedKitInfo.brand}</p>}
+                </div>
+                {!prefillKitId && (
+                  <button onClick={() => setStep(1)} className="ml-auto text-muted-foreground hover:text-foreground" data-testid="back-to-step-1">
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
 
             <div>
               <Label className={fieldLabel} style={fieldStyle}>Competition *</Label>
               <Select value={competition} onValueChange={setCompetition}>
-                <SelectTrigger className={inputClass} data-testid="select-competition">
-                  <SelectValue placeholder="Select competition" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
+                <SelectTrigger className={inputClass} data-testid="select-competition"><SelectValue placeholder="Select competition" /></SelectTrigger>
+                <SelectContent className="bg-card border-border">{COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label className={fieldLabel} style={fieldStyle}>Model *</Label>
               <Select value={model} onValueChange={setModel}>
-                <SelectTrigger className={inputClass} data-testid="select-model">
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
+                <SelectTrigger className={inputClass} data-testid="select-model"><SelectValue placeholder="Select model" /></SelectTrigger>
+                <SelectContent className="bg-card border-border">{MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
@@ -362,28 +345,13 @@ export default function AddJersey() {
             </div>
             <div>
               <Label className={fieldLabel} style={fieldStyle}>Front Photo</Label>
-              <ImageUpload
-                value={verFrontPhoto}
-                onChange={setVerFrontPhoto}
-                folder="version"
-                testId="upload-ver-front-photo"
-              />
+              <ImageUpload value={verFrontPhoto} onChange={setVerFrontPhoto} folder="version" testId="upload-ver-front-photo" />
             </div>
             <div>
               <Label className={fieldLabel} style={fieldStyle}>Back Photo</Label>
-              <ImageUpload
-                value={verBackPhoto}
-                onChange={setVerBackPhoto}
-                folder="version"
-                testId="upload-ver-back-photo"
-              />
+              <ImageUpload value={verBackPhoto} onChange={setVerBackPhoto} folder="version" testId="upload-ver-back-photo" />
             </div>
-            <Button
-              onClick={handleCreateVersion}
-              disabled={submitting}
-              className="w-full rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
-              data-testid="create-version-btn"
-            >
+            <Button onClick={handleCreateVersion} disabled={submitting} className="w-full rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="create-version-btn">
               {submitting ? 'Creating...' : 'Create Version'} <Check className="w-4 h-4 ml-2" />
             </Button>
           </div>

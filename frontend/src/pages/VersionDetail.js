@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
-  Check, Trash2, User, Plus, Loader2, Heart,
+  Check, Trash2, User, Plus, Loader2, Heart, DollarSign,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
+import AddToCollectionDialog from '@/components/AddToCollectionDialog';
 
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const MODELS       = ['Authentic', 'Replica', 'Other'];
@@ -78,21 +79,22 @@ export default function VersionDetail() {
   const { versionId } = useParams();
   const { user }      = useAuth();
 
-  const [version,       setVersion]       = useState(null);
-  const [wornBy,        setWornBy]        = useState([]);
-  const [estimates,     setEstimates]     = useState(null);
-  const [reviews,       setReviews]       = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [addStatus,     setAddStatus]     = useState('idle');
-  const [wishStatus,    setWishStatus]    = useState('idle');
-  const [wishlistId,    setWishlistId]    = useState(null);
-  const [showReport,    setShowReport]    = useState(false);
-  const [showRemoval,   setShowRemoval]   = useState(false);
-  const [removalNotes,  setRemovalNotes]  = useState('');
-  const [reviewRating,  setReviewRating]  = useState(0);
-  const [reviewHover,   setReviewHover]   = useState(0);
-  const [reviewComment, setReviewComment] = useState('');
-  const [submitting,    setSubmitting]    = useState(false);
+  const [version,           setVersion]           = useState(null);
+  const [wornBy,            setWornBy]            = useState([]);
+  const [estimates,         setEstimates]         = useState(null);
+  const [reviews,           setReviews]           = useState([]);
+  const [loading,           setLoading]           = useState(true);
+  const [addStatus,         setAddStatus]         = useState('idle');
+  const [showAddDialog,     setShowAddDialog]     = useState(false);
+  const [wishStatus,        setWishStatus]        = useState('idle');
+  const [wishlistId,        setWishlistId]        = useState(null);
+  const [showReport,        setShowReport]        = useState(false);
+  const [showRemoval,       setShowRemoval]       = useState(false);
+  const [removalNotes,      setRemovalNotes]      = useState('');
+  const [reviewRating,      setReviewRating]      = useState(0);
+  const [reviewHover,       setReviewHover]       = useState(0);
+  const [reviewComment,     setReviewComment]     = useState('');
+  const [submitting,        setSubmitting]        = useState(false);
 
   const [reportCorrections, setReportCorrections] = useState({
     competition: '',
@@ -106,60 +108,53 @@ export default function VersionDetail() {
 
   const setField = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
-const fetchReviews = useCallback(async () => {
-  try {
-    const res = await getReviews(versionId);
-    setReviews(Array.isArray(res.data) ? res.data : []);
-  } catch { setReviews([]); }
-}, [versionId]);
-
-useEffect(() => {
-  setLoading(true);
-  Promise.all([
-    getVersion(versionId),
-    getVersionWornBy(versionId).then(r => r.data).catch(() => []),
-    getVersionEstimates(versionId).catch(() => null),
-  ]).then(async ([versionRes, wornByData, estimatesRes]) => {
-    const v = versionRes.data;
-    setVersion(v);
-    setWornBy(Array.isArray(wornByData) ? wornByData : []);
-    setEstimates(estimatesRes?.data || null);
-    setReportCorrections({
-      competition: v.competition || '',
-      model:       v.model       || '',
-      sku_code:    v.sku_code    || '',
-      ean_code:    v.ean_code    || '',
-      front_photo: v.front_photo || '',
-      back_photo:  v.back_photo  || '',
-    });
-    await fetchReviews();
+  const fetchReviews = useCallback(async () => {
     try {
-      const wRes = await checkWishlist(v.version_id);
-      if (wRes.data?.in_wishlist) {
-        setWishStatus('done');
-        setWishlistId(wRes.data.wishlist_id);
-      }
-    } catch {}
-    setLoading(false);
-  }).catch(() => setLoading(false));
-}, [versionId, fetchReviews]);
+      const res = await getReviews(versionId);
+      setReviews(Array.isArray(res.data) ? res.data : []);
+    } catch { setReviews([]); }
+  }, [versionId]);
 
-  const handleAdd = async () => {
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      getVersion(versionId),
+      getVersionWornBy(versionId).then(r => r.data).catch(() => []),
+      getVersionEstimates(versionId).catch(() => null),
+    ]).then(async ([versionRes, wornByData, estimatesRes]) => {
+      const v = versionRes.data;
+      setVersion(v);
+      setWornBy(Array.isArray(wornByData) ? wornByData : []);
+      setEstimates(estimatesRes?.data || null);
+      setReportCorrections({
+        competition: v.competition || '',
+        model:       v.model       || '',
+        sku_code:    v.sku_code    || '',
+        ean_code:    v.ean_code    || '',
+        front_photo: v.front_photo || '',
+        back_photo:  v.back_photo  || '',
+      });
+      await fetchReviews();
+      try {
+        const wRes = await checkWishlist(v.version_id);
+        if (wRes.data?.in_wishlist) {
+          setWishStatus('done');
+          setWishlistId(wRes.data.wishlist_id);
+        }
+      } catch {}
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [versionId, fetchReviews]);
+
+  const handleAdd = () => {
     if (addStatus !== 'idle') return;
-    setAddStatus('loading');
-    try {
-      await addToCollection({ version_id: versionId });
-      setAddStatus('done');
-      toast.success('Added to your collection 🎽');
-    } catch (err) {
-      if (err?.response?.status === 400) {
-        setAddStatus('done');
-        toast.info('Already in your collection');
-      } else {
-        setAddStatus('error');
-        setTimeout(() => setAddStatus('idle'), 2000);
-      }
-    }
+    setShowAddDialog(true);
+  };
+
+  const handleAddSuccess = () => {
+    setShowAddDialog(false);
+    setAddStatus('done');
+    toast.success('Added to your collection 🎽');
   };
 
   const handleSubmitReport = async () => {
@@ -259,16 +254,35 @@ useEffect(() => {
   const kit    = version.master_kit || {};
   const photos = [version.front_photo, version.back_photo].filter(Boolean);
 
+  // Paths vers les entités
+  const teamPath = kit.team_id ? `/teams/${kit.team_id}` : kit.team_slug ? `/teams/${kit.team_slug}` : null;
+  const brandPath = kit.brand_id ? `/brands/${kit.brand_id}` : kit.brand_slug ? `/brands/${kit.brand_slug}` : null;
+
   return (
     <div className="animate-fade-in-up">
 
+      {/* ── Add to Collection Dialog ── */}
+      {showAddDialog && version && (
+        <AddToCollectionDialog
+          version={version}
+          onClose={() => setShowAddDialog(false)}
+          onSuccess={handleAddSuccess}
+        />
+      )}
+
       {/* Breadcrumb */}
       <div className="border-b border-border px-4 lg:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
           <Link to="/browse" className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>Browse</Link>
           <ChevronRight className="w-3 h-3" />
-          <Link to={`/kit/${kit.kit_id}`} className="hover:text-foreground truncate" style={{ transition: 'color 0.2s ease' }}>
-            {kit.club} {kit.season}
+          {teamPath ? (
+            <Link to={teamPath} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>{kit.club}</Link>
+          ) : (
+            <span>{kit.club || '—'}</span>
+          )}
+          <ChevronRight className="w-3 h-3" />
+          <Link to={`/kit/${kit.kit_id}`} className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>
+            {kit.season}
           </Link>
           <ChevronRight className="w-3 h-3" />
           <span className="text-foreground truncate">{version.model} · {version.competition}</span>
@@ -290,9 +304,11 @@ useEffect(() => {
                   {version.model && <Badge variant="outline" className="rounded-none text-xs">{version.model}</Badge>}
                 </div>
                 <h1 className="text-4xl sm:text-5xl tracking-tighter leading-none mb-2">
-                  <Link to={`/teams/${kit.team_slug ?? kit.club}`} className="hover:text-primary transition-colors">
-                    {kit.club}
-                  </Link>
+                  {teamPath ? (
+                    <Link to={teamPath} className="hover:text-primary transition-colors">{kit.club}</Link>
+                  ) : (
+                    <span>{kit.club}</span>
+                  )}
                 </h1>
                 <p className="text-lg text-muted-foreground" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
                   {kit.season} Season
@@ -316,6 +332,22 @@ useEffect(() => {
 
               {/* Info grid */}
               <div className="grid grid-cols-2 gap-4">
+                {kit.club && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Team</p>
+                    {teamPath ? (
+                      <Link to={teamPath} className="text-sm hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.club}</Link>
+                    ) : (
+                      <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.club}</p>
+                    )}
+                  </div>
+                )}
+                {kit.season && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Season</p>
+                    <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.season}</p>
+                  </div>
+                )}
                 {version.competition && (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Competition</p>
@@ -325,9 +357,11 @@ useEffect(() => {
                 {kit.brand && (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Brand</p>
-                    <Link to={`/brands/${kit.brand_slug ?? kit.brand}`} className="text-sm hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                      {kit.brand}
-                    </Link>
+                    {brandPath ? (
+                      <Link to={brandPath} className="text-sm hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.brand}</Link>
+                    ) : (
+                      <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.brand}</p>
+                    )}
                   </div>
                 )}
                 {version.sku_code && (
@@ -345,9 +379,12 @@ useEffect(() => {
               </div>
 
               {/* Price estimates */}
-              {estimates && (
+              {estimates && (estimates.min_price != null || estimates.avg_price != null || estimates.max_price != null) && (
                 <div className="border border-border p-4 space-y-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Price Estimates</p>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-3.5 h-3.5 text-primary" />
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Price Estimates</p>
+                  </div>
                   <div className="grid grid-cols-3 gap-4">
                     {estimates.min_price != null && (
                       <div>
@@ -382,12 +419,10 @@ useEffect(() => {
                   <>
                     <Button
                       onClick={handleAdd}
-                      disabled={addStatus === 'loading' || addStatus === 'done'}
+                      disabled={addStatus === 'done'}
                       className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
                     >
-                      {addStatus === 'loading' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
-                       addStatus === 'done'    ? <Check className="w-4 h-4 mr-2" /> :
-                                                <Plus className="w-4 h-4 mr-2" />}
+                      {addStatus === 'done' ? <Check className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
                       {addStatus === 'done' ? 'In Collection' : 'Add to Collection'}
                     </Button>
                     <Button
@@ -440,18 +475,14 @@ useEffect(() => {
                       <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition</Label>
                       <Select value={reportCorrections.competition} onValueChange={setField('competition')}>
                         <SelectTrigger className="bg-card border-border rounded-none"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
+                        <SelectContent className="bg-card border-border">{COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model</Label>
                       <Select value={reportCorrections.model} onValueChange={setField('model')}>
                         <SelectTrigger className="bg-card border-border rounded-none"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                        </SelectContent>
+                        <SelectContent className="bg-card border-border">{MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
@@ -463,11 +494,11 @@ useEffect(() => {
                       <Input value={reportCorrections.ean_code} onChange={e => setField('ean_code')(e.target.value)} className="bg-card border-border rounded-none font-mono" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo URL</Label>
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
                       <ImageUpload value={reportCorrections.front_photo} onChange={setField('front_photo')} folder="version" side="front" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo URL</Label>
+                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
                       <ImageUpload value={reportCorrections.back_photo} onChange={setField('back_photo')} folder="version" side="back" />
                     </div>
                   </div>
@@ -486,14 +517,8 @@ useEffect(() => {
               {showRemoval && (
                 <div className="border border-destructive/30 p-4 space-y-3 mt-2">
                   <p className="text-xs uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>Request Removal</p>
-                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                    This will create a community vote to remove this version.
-                  </p>
-                  <Textarea
-                    placeholder="Reason for removal..."
-                    value={removalNotes} onChange={e => setRemovalNotes(e.target.value)}
-                    className="bg-card border-border rounded-none resize-none" rows={3}
-                  />
+                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>This will create a community vote to remove this version.</p>
+                  <Textarea placeholder="Reason for removal..." value={removalNotes} onChange={e => setRemovalNotes(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
                   <div className="flex gap-2">
                     <Button onClick={handleRequestRemoval} variant="destructive" className="rounded-none">Submit Removal Request</Button>
                     <Button variant="outline" onClick={() => setShowRemoval(false)} className="rounded-none">Cancel</Button>
@@ -516,24 +541,14 @@ useEffect(() => {
             <p className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Leave a Review</p>
             <div className="flex items-center gap-1">
               {[1,2,3,4,5].map(i => (
-                <button
-                  key={i}
-                  onMouseEnter={() => setReviewHover(i)}
-                  onMouseLeave={() => setReviewHover(0)}
-                  onClick={() => setReviewRating(i)}
-                  className="p-1"
-                >
+                <button key={i} onMouseEnter={() => setReviewHover(i)} onMouseLeave={() => setReviewHover(0)} onClick={() => setReviewRating(i)} className="p-1">
                   <Star className={`w-6 h-6 transition-colors ${
                     i <= (reviewHover || reviewRating) ? 'fill-primary text-primary' : 'text-muted-foreground'
                   }`} />
                 </button>
               ))}
             </div>
-            <Textarea
-              placeholder="Share your thoughts about this jersey..."
-              value={reviewComment} onChange={e => setReviewComment(e.target.value)}
-              className="bg-card border-border rounded-none resize-none" rows={3}
-            />
+            <Textarea placeholder="Share your thoughts about this jersey..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
             <Button onClick={handleSubmitReview} disabled={submitting} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">
               {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Submit Review
@@ -561,35 +576,23 @@ useEffect(() => {
                     )}
                     <div>
                       {review.user_username ? (
-                        <Link
-                          to={`/profile/${review.user_username}`}
-                          className="text-sm font-semibold hover:text-primary transition-colors"
-                          style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-                        >
+                        <Link to={`/profile/${review.user_username}`} className="text-sm font-semibold hover:text-primary transition-colors" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           {review.user_name || review.user_username}
                         </Link>
                       ) : (
-                        <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          {review.user_name || 'Anonymous'}
-                        </p>
+                        <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.user_name || 'Anonymous'}</p>
                       )}
-                      <p className="text-[10px] text-muted-foreground">
-                        {review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">{review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0">
                     {[1,2,3,4,5].map(i => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${
-                        i <= review.rating ? 'fill-primary text-primary' : 'text-muted-foreground'
-                      }`} />
+                      <Star key={i} className={`w-3.5 h-3.5 ${i <= review.rating ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                     ))}
                   </div>
                 </div>
                 {review.comment && (
-                  <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                    {review.comment}
-                  </p>
+                  <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.comment}</p>
                 )}
               </div>
             ))}
