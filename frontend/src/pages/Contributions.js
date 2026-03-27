@@ -19,11 +19,11 @@ const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
-// Saisons disponibles : 2027/2028 → 2000/2001 (desc)
-const SEASONS = Array.from({ length: 28 }, (_, i) => {
-  const y = 2027 - i;
+// Saisons disponibles : 1985/1986 → 2025/2026 (de la plus ancienne à la plus récente)
+const SEASONS = Array.from({ length: 41 }, (_, i) => {
+  const y = 1985 + i;
   return `${y}/${y + 1}`;
-});
+}).reverse(); // desc : 2025/2026 en premier
 
 const FIELD_LABELS = {
   club: 'Club / Team', season: 'Season', kit_type: 'Type', brand: 'Brand',
@@ -236,7 +236,7 @@ function ReportDetail({ rep }) {
   );
 }
 
-// ===== COMPOSANT: USE EXISTING KIT (3 filtres) =====
+// ===== COMPOSANT: USE EXISTING KIT (3 filtres OBLIGATOIRES) =====
 // Radix UI interdit value="" sur SelectItem — sentinelle pour "Any"
 const ANY_TYPE   = '__all__';
 const ANY_SEASON = '__any__';
@@ -244,7 +244,6 @@ const ANY_SEASON = '__any__';
 function UseExistingKitPanel({ onSelect }) {
   // team : label affiché + id résolu via autocomplete
   const [filterTeamLabel, setFilterTeamLabel] = useState('');
-  const [filterTeamId,    setFilterTeamId]    = useState('');
   const [filterSeason, setFilterSeason]       = useState(ANY_SEASON);
   const [filterType,   setFilterType]         = useState(ANY_TYPE);
   const [results,  setResults]                = useState([]);
@@ -256,13 +255,13 @@ function UseExistingKitPanel({ onSelect }) {
     setSearched(true);
     try {
       const params = { limit: 100 };
-      // Préférer team_id (exact) sinon club (texte)
-      if (filterTeamId)                             params.team_id  = filterTeamId;
-      else if (filterTeamLabel.trim())              params.club     = filterTeamLabel.trim();
+      // Le backend accepte uniquement `club` (regex), pas team_id
+      if (filterTeamLabel.trim())                      params.club     = filterTeamLabel.trim();
       if (filterSeason && filterSeason !== ANY_SEASON) params.season   = filterSeason;
       if (filterType   && filterType   !== ANY_TYPE)   params.kit_type = filterType;
       const res = await getMasterKits(params);
-      const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
+      // Le backend retourne { results, total } — PAS items ni data directement
+      const kits = res.data?.results ?? [];
       setResults(kits);
     } catch (e) {
       toast.error('Failed to search kits');
@@ -271,10 +270,11 @@ function UseExistingKitPanel({ onSelect }) {
     }
   };
 
+  // Les 3 champs sont OBLIGATOIRES pour activer la recherche
   const canSearch =
-    filterTeamLabel.trim() ||
-    (filterSeason && filterSeason !== ANY_SEASON) ||
-    (filterType   && filterType   !== ANY_TYPE);
+    filterTeamLabel.trim() !== '' &&
+    filterSeason !== ANY_SEASON &&
+    filterType   !== ANY_TYPE;
 
   return (
     <div className="border border-border p-4 mb-4">
@@ -283,27 +283,26 @@ function UseExistingKitPanel({ onSelect }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
         {/* TEAM — autocomplete sur la DB */}
         <div className="space-y-1">
-          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
+          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team *</Label>
           <EntityAutocomplete
             entityType="team"
             value={filterTeamLabel}
-            onChange={(val) => { setFilterTeamLabel(val); setFilterTeamId(''); }}
-            onSelect={(item) => { setFilterTeamLabel(item.label); setFilterTeamId(item.id); }}
+            onChange={(val) => { setFilterTeamLabel(val); }}
+            onSelect={(item) => { setFilterTeamLabel(item.label); }}
             placeholder="e.g. AC Milan"
             className="bg-card border-border rounded-none text-xs"
             testId="filter-team"
           />
         </div>
 
-        {/* SEASON — select roll YEAR/YEAR */}
+        {/* SEASON — select 1985/1986 → 2025/2026 */}
         <div className="space-y-1">
-          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
+          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season *</Label>
           <Select value={filterSeason} onValueChange={setFilterSeason}>
             <SelectTrigger className="bg-card border-border rounded-none text-xs">
-              <SelectValue placeholder="Any season" />
+              <SelectValue placeholder="Select season" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border max-h-56">
-              <SelectItem value={ANY_SEASON}>Any season</SelectItem>
               {SEASONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -311,13 +310,12 @@ function UseExistingKitPanel({ onSelect }) {
 
         {/* TYPE */}
         <div className="space-y-1">
-          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
+          <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type *</Label>
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="bg-card border-border rounded-none text-xs">
-              <SelectValue placeholder="Any type" />
+              <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
-              <SelectItem value={ANY_TYPE}>Any type</SelectItem>
               {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -334,6 +332,12 @@ function UseExistingKitPanel({ onSelect }) {
         <Search className="w-3 h-3 mr-1" />
         {loading ? 'Searching...' : 'Search'}
       </Button>
+
+      {!canSearch && (
+        <p className="text-[10px] text-muted-foreground mb-3" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+          Please fill in Team, Season and Type to search.
+        </p>
+      )}
 
       {searched && !loading && (
         results.length === 0 ? (
@@ -452,7 +456,8 @@ export default function Contributions() {
     if (showAddForm) {
       getMasterKits({ limit: 500 })
         .then(res => {
-          const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
+          // Le backend retourne { results, total } — correction du parsing
+          const kits = res.data?.results ?? [];
           setExistingKits(kits);
         })
         .catch(console.error);
@@ -489,7 +494,7 @@ export default function Contributions() {
       closeAddForm();
       await fetchData();
       const kitsRes = await getMasterKits();
-      const kits = Array.isArray(kitsRes.data) ? kitsRes.data : (kitsRes.data?.items ?? []);
+      const kits = kitsRes.data?.results ?? [];
       setExistingKits(kits);
     } catch (err) {
       console.error(err);
@@ -947,7 +952,7 @@ export default function Contributions() {
                                   <span className="text-[10px] text-muted-foreground italic">En attente d'approbation du kit</span>
                                 </div>
                               </div>
-                            ))}
+            )  )}
                           </div>
                         </div>
                       );
