@@ -231,22 +231,25 @@ function ReportDetail({ rep }) {
 }
 
 // ===== COMPOSANT: USE EXISTING KIT (3 filtres) =====
+// Radix UI interdit value="" sur SelectItem — on utilise la sentinelle "__all__" pour "Any type"
+const ANY_TYPE = '__all__';
+
 function UseExistingKitPanel({ onSelect }) {
-  const [filterTeam, setFilterTeam]   = useState('');
+  const [filterTeam, setFilterTeam]     = useState('');
   const [filterSeason, setFilterSeason] = useState('');
-  const [filterType, setFilterType]   = useState('');
-  const [results, setResults]         = useState([]);
-  const [searched, setSearched]       = useState(false);
-  const [loading, setLoading]         = useState(false);
+  const [filterType, setFilterType]     = useState(ANY_TYPE);
+  const [results, setResults]           = useState([]);
+  const [searched, setSearched]         = useState(false);
+  const [loading, setLoading]           = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
     setSearched(true);
     try {
       const params = { limit: 100 };
-      if (filterTeam.trim())   params.club    = filterTeam.trim();
-      if (filterSeason.trim()) params.season  = filterSeason.trim();
-      if (filterType)          params.kit_type = filterType;
+      if (filterTeam.trim())                params.club     = filterTeam.trim();
+      if (filterSeason.trim())              params.season   = filterSeason.trim();
+      if (filterType && filterType !== ANY_TYPE) params.kit_type = filterType;
       const res = await getMasterKits(params);
       const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
       setResults(kits);
@@ -257,7 +260,7 @@ function UseExistingKitPanel({ onSelect }) {
     }
   };
 
-  const canSearch = filterTeam.trim() || filterSeason.trim() || filterType;
+  const canSearch = filterTeam.trim() || filterSeason.trim() || (filterType && filterType !== ANY_TYPE);
 
   return (
     <div className="border border-border p-4 mb-4">
@@ -292,7 +295,7 @@ function UseExistingKitPanel({ onSelect }) {
               <SelectValue placeholder="Any type" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
-              <SelectItem value="">Any type</SelectItem>
+              <SelectItem value={ANY_TYPE}>Any type</SelectItem>
               {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
