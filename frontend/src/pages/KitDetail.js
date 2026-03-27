@@ -1,7 +1,7 @@
 // src/pages/KitDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getMasterKit, createReport, proxyImageUrl, getKitPlayers } from '@/lib/api';
+import { getMasterKit, createReport, proxyImageUrl, getKitPlayers, createSubmission } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, Tag, Package, ChevronRight,
-  AlertTriangle, Check, Trash2, User, Plus,
+  AlertTriangle, Check, Trash2, User, Plus, X,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 
-const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const GENDERS   = ['Man', 'Woman', 'Kid'];
+const KIT_TYPES  = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
+const GENDERS    = ['Man', 'Woman', 'Kid'];
+const MODELS     = ['Authentic', 'Replica', 'Other'];
+const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
 export default function KitDetail() {
   const { kitId } = useParams();
@@ -34,6 +36,51 @@ export default function KitDetail() {
   const [reportNotes,       setReportNotes]       = useState('');
   const [showRemovalForm,   setShowRemovalForm]   = useState(false);
   const [removalNotes,      setRemovalNotes]      = useState('');
+
+  // Add Version panel
+  const [showAddVersion,  setShowAddVersion]  = useState(false);
+  const [vCompetition,    setVCompetition]    = useState('');
+  const [vModel,          setVModel]          = useState('');
+  const [vSkuCode,        setVSkuCode]        = useState('');
+  const [vEanCode,        setVEanCode]        = useState('');
+  const [vFrontPhoto,     setVFrontPhoto]     = useState('');
+  const [vBackPhoto,      setVBackPhoto]      = useState('');
+  const [vSubmitting,     setVSubmitting]     = useState(false);
+
+  const closeAddVersion = () => {
+    setShowAddVersion(false);
+    setVCompetition(''); setVModel('');
+    setVSkuCode(''); setVEanCode('');
+    setVFrontPhoto(''); setVBackPhoto('');
+  };
+
+  const handleSubmitVersion = async () => {
+    if (!vCompetition || !vModel) {
+      toast.error('Please fill required fields (Competition, Model)');
+      return;
+    }
+    setVSubmitting(true);
+    try {
+      await createSubmission({
+        submission_type: 'version',
+        data: {
+          kit_id: kitId,
+          competition: vCompetition,
+          model: vModel,
+          sku_code: vSkuCode,
+          ean_code: vEanCode,
+          front_photo: vFrontPhoto,
+          back_photo: vBackPhoto,
+        },
+      });
+      toast.success('Version submitted for community review!');
+      closeAddVersion();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit version');
+    } finally {
+      setVSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -375,6 +422,111 @@ export default function KitDetail() {
         </div>
       </div>
 
+      {/* ===== ADD VERSION PANEL (Sheet-like, côté droit) ===== */}
+      {showAddVersion && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={closeAddVersion}
+          />
+          {/* Panel */}
+          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-background border-l border-border z-50 flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+              <div>
+                <h3 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>ADD VERSION</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                  {kit.club} — {kit.season} ({kit.kit_type})
+                </p>
+              </div>
+              <button
+                onClick={closeAddVersion}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="close-add-version-btn"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
+                <Select value={vCompetition} onValueChange={setVCompetition}>
+                  <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-ver-competition">
+                    <SelectValue placeholder="Select competition" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
+                <Select value={vModel} onValueChange={setVModel}>
+                  <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-ver-model">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
+                <Input
+                  value={vSkuCode}
+                  onChange={e => setVSkuCode(e.target.value)}
+                  placeholder="Optional"
+                  className="bg-card border-border rounded-none font-mono"
+                  data-testid="add-ver-sku"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
+                <Input
+                  value={vEanCode}
+                  onChange={e => setVEanCode(e.target.value)}
+                  placeholder="Optional"
+                  className="bg-card border-border rounded-none font-mono"
+                  data-testid="add-ver-ean"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
+                <ImageUpload value={vFrontPhoto} onChange={setVFrontPhoto} folder="version" side="front" testId="add-ver-front-photo" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
+                <ImageUpload value={vBackPhoto} onChange={setVBackPhoto} folder="version" side="back" testId="add-ver-back-photo" />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-border shrink-0 flex gap-2">
+              <Button
+                onClick={handleSubmitVersion}
+                disabled={vSubmitting}
+                className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
+                data-testid="submit-add-version-btn"
+              >
+                {vSubmitting ? 'Submitting...' : 'Submit for Review'}
+                <Check className="w-4 h-4 ml-1" />
+              </Button>
+              <Button variant="outline" onClick={closeAddVersion} className="rounded-none" data-testid="cancel-add-version-btn">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Versions */}
       <div className="border-t border-border" id="versions-section">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
@@ -418,10 +570,10 @@ export default function KitDetail() {
               </Link>
             ))}
 
-            {/* Add Version — redirige vers /contributions avec kit_id pré-rempli */}
+            {/* Add Version — ouvre le panel inline */}
             {user && (
               <button
-                onClick={() => navigate(`/contributions?kit_id=${kitId}`)}
+                onClick={() => setShowAddVersion(true)}
                 className="border border-dashed border-border bg-card p-4 hover:border-primary/50 group flex flex-col items-center justify-center gap-3 min-h-[112px] w-full transition-colors"
                 data-testid="add-version-card"
               >
