@@ -80,6 +80,7 @@ async def create_submission(sub: SubmissionCreate, request: Request):
         "data": sub.data,
         "submitted_by": user["user_id"],
         "submitter_name": user.get("name", ""),
+        "submitter_username": user.get("username", ""),
         "status": "pending",
         "votes_up": 0,
         "votes_down": 0,
@@ -140,6 +141,12 @@ async def list_submissions(status: Optional[str] = "pending", skip: int = 0, lim
     if status:
         query["status"] = status
     subs = await db.submissions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    # Enrichir submitter_username si absent (anciennes soumissions)
+    for s in subs:
+        if not s.get("submitter_username") and s.get("submitted_by"):
+            u = await db.users.find_one({"user_id": s["submitted_by"]}, {"_id": 0, "username": 1})
+            if u:
+                s["submitter_username"] = u.get("username", "")
     return subs
 
 
@@ -180,10 +187,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     if vote.vote not in ("up", "down"):
         raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
 
-    # Poids du vote :
-    # - admin/modérateur vote up = APPROVAL_THRESHOLD (approbation directe)
-    # - admin vote down = APPROVAL_THRESHOLD (rejet direct)
-    # - user = 1
     if is_moderator and vote.vote == "up":
         vote_weight = APPROVAL_THRESHOLD
     elif user_role == "admin" and vote.vote == "down":
@@ -450,20 +453,21 @@ async def create_report(report: ReportCreate, request: Request):
         raise HTTPException(status_code=400, detail="report_type must be 'error' or 'removal'")
 
     doc = {
-        "report_id":     f"rep_{uuid.uuid4().hex[:12]}",
-        "target_type":   report.target_type,
-        "target_id":     report.target_id,
-        "report_type":   report_type,
-        "original_data": target,
-        "corrections":   report.corrections if report_type == "error" else {},
-        "notes":         report.notes or "",
-        "reported_by":   user["user_id"],
-        "reporter_name": user.get("name", ""),
-        "status":        "pending",
-        "votes_up":      0,
-        "votes_down":    0,
-        "voters":        [],
-        "created_at":    datetime.now(timezone.utc).isoformat()
+        "report_id":       f"rep_{uuid.uuid4().hex[:12]}",
+        "target_type":     report.target_type,
+        "target_id":       report.target_id,
+        "report_type":     report_type,
+        "original_data":   target,
+        "corrections":     report.corrections if report_type == "error" else {},
+        "notes":           report.notes or "",
+        "reported_by":     user["user_id"],
+        "reporter_name":   user.get("name", ""),
+        "reporter_username": user.get("username", ""),
+        "status":          "pending",
+        "votes_up":        0,
+        "votes_down":      0,
+        "voters":          [],
+        "created_at":      datetime.now(timezone.utc).isoformat()
     }
     await db.reports.insert_one(doc)
     result = await db.reports.find_one({"report_id": doc["report_id"]}, {"_id": 0})
@@ -476,6 +480,12 @@ async def list_reports(status: Optional[str] = "pending", skip: int = 0, limit: 
     if status:
         query["status"] = status
     reports = await db.reports.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    # Enrichir reporter_username si absent (anciens reports)
+    for rep in reports:
+        if not rep.get("reporter_username") and rep.get("reported_by"):
+            u = await db.users.find_one({"user_id": rep["reported_by"]}, {"_id": 0, "username": 1})
+            if u:
+                rep["reporter_username"] = u.get("username", "")
     return reports
 
 
