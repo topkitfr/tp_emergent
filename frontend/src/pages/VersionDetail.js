@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
-  Check, Trash2, User, Plus, Loader2, Heart, DollarSign,
+  Check, Trash2, User, Plus, Loader2, Heart, TrendingDown, TrendingUp, Minus,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import AddToCollectionDialog from '@/components/AddToCollectionDialog';
@@ -72,6 +72,89 @@ function KitSlider({ photos }) {
   );
 }
 
+// ── VALUE ESTIMATION bloc ──────────────────────────────────────────────────
+function ValueEstimation({ estimates }) {
+  if (!estimates) return null;
+  const { min_price, avg_price, max_price, count } = estimates;
+  if (min_price == null && avg_price == null && max_price == null) return null;
+
+  const max = Math.max(min_price ?? 0, avg_price ?? 0, max_price ?? 0) || 1;
+
+  const bars = [
+    {
+      label: 'Low',
+      value: min_price,
+      color: 'bg-red-500',
+      textColor: 'text-red-400',
+      icon: <TrendingDown className="w-4 h-4" />,
+      border: 'border-red-500/40',
+    },
+    {
+      label: 'Average',
+      value: avg_price,
+      color: 'bg-yellow-400',
+      textColor: 'text-yellow-300',
+      icon: <Minus className="w-4 h-4" />,
+      border: 'border-yellow-400/40',
+    },
+    {
+      label: 'High',
+      value: max_price,
+      color: 'bg-green-500',
+      textColor: 'text-green-400',
+      icon: <TrendingUp className="w-4 h-4" />,
+      border: 'border-green-500/40',
+    },
+  ];
+
+  return (
+    <div className="border border-border bg-card p-4 space-y-4" data-testid="value-estimation">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>VALUE ESTIMATION</h4>
+        {count > 0 && (
+          <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+            ({count} estimate{count !== 1 ? 's' : ''})
+          </span>
+        )}
+      </div>
+
+      {/* Cards Low / Average / High */}
+      <div className="grid grid-cols-3 gap-3">
+        {bars.map(({ label, value, textColor, icon, border }) => (
+          <div key={label} className={`border ${border} bg-background p-3 flex flex-col items-center gap-1`}>
+            <span className={textColor}>{icon}</span>
+            <span className={`text-xl font-mono font-bold ${textColor}`}>
+              {value != null ? `${value}€` : '—'}
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Barres colorées */}
+      <div className="flex items-end justify-center gap-8 pt-2 pb-1">
+        {bars.map(({ label, value, color }) => {
+          const pct = value != null ? Math.max(10, Math.round((value / max) * 100)) : 0;
+          return (
+            <div key={label} className="flex flex-col items-center gap-2">
+              <div className="w-12 bg-border relative" style={{ height: '80px' }}>
+                <div
+                  className={`absolute bottom-0 left-0 right-0 ${color} transition-all duration-500`}
+                  style={{ height: `${pct}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 export default function VersionDetail() {
   const { versionId } = useParams();
@@ -120,7 +203,6 @@ export default function VersionDetail() {
         front_photo: v.front_photo || '', back_photo: v.back_photo || '',
       });
 
-      // Charger le master_kit séparément pour le breadcrumb
       const kitId = v.kit_id || v.master_kit?.kit_id;
       if (kitId) {
         getMasterKit(kitId).then(r => setMasterKit(r.data)).catch(() => {});
@@ -202,10 +284,8 @@ export default function VersionDetail() {
     </div>
   );
 
-  // Données du master kit — priorité à l'appel direct, fallback sur version.master_kit
   const kit      = masterKit || version.master_kit || {};
   const photos   = [version.front_photo, version.back_photo].filter(Boolean);
-
   const teamPath  = kit.team_id  ? `/teams/${kit.team_id}`   : null;
   const brandPath = kit.brand_id ? `/brands/${kit.brand_id}` : null;
   const kitPath   = kit.kit_id   ? `/kit/${kit.kit_id}`      : null;
@@ -214,7 +294,6 @@ export default function VersionDetail() {
   return (
     <div className="animate-fade-in-up">
 
-      {/* Sheet Add to Collection */}
       {showAddDialog && version && (
         <AddToCollectionDialog
           version={version}
@@ -223,36 +302,22 @@ export default function VersionDetail() {
         />
       )}
 
-      {/* Breadcrumb — Browse > Club > Season (kit_type) > Competition · Model */}
+      {/* Breadcrumb */}
       <div className="border-b border-border px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-
           <Link to="/browse" className="hover:text-foreground transition-colors">Browse</Link>
           <ChevronRight className="w-3 h-3" />
-
-          {/* Team */}
           {teamPath
             ? <Link to={teamPath} className="hover:text-foreground transition-colors">{kit.club || '—'}</Link>
-            : <span>{kit.club || '—'}</span>
-          }
+            : <span>{kit.club || '—'}</span>}
           <ChevronRight className="w-3 h-3" />
-
-          {/* Season (kit_type) — lien vers la page master kit */}
           {kitPath
-            ? <Link to={kitPath} className="hover:text-foreground transition-colors">
-                {kit.season || '—'}{kitType ? ` (${kitType})` : ''}
-              </Link>
-            : <span>{kit.season || '—'}{kitType ? ` (${kitType})` : ''}</span>
-          }
+            ? <Link to={kitPath} className="hover:text-foreground transition-colors">{kit.season || '—'}{kitType ? ` (${kitType})` : ''}</Link>
+            : <span>{kit.season || '—'}{kitType ? ` (${kitType})` : ''}</span>}
           <ChevronRight className="w-3 h-3" />
-
-          {/* Competition */}
           <span>{version.competition || '—'}</span>
           <ChevronRight className="w-3 h-3" />
-
-          {/* Model — segment actif */}
           <span className="text-foreground">{version.model || '—'}</span>
-
         </div>
       </div>
 
@@ -339,21 +404,8 @@ export default function VersionDetail() {
                 )}
               </div>
 
-              {/* Price estimates */}
-              {estimates && (estimates.min_price != null || estimates.avg_price != null || estimates.max_price != null) && (
-                <div className="border border-border p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-3.5 h-3.5 text-primary" />
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Price Estimates</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    {estimates.min_price != null && <div><p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MIN</p><p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.min_price}€</p></div>}
-                    {estimates.avg_price != null && <div><p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>AVG</p><p className="text-lg font-semibold text-primary" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.avg_price}€</p></div>}
-                    {estimates.max_price != null && <div><p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>MAX</p><p className="text-lg font-semibold" style={{ fontFamily: 'Barlow Condensed' }}>{estimates.max_price}€</p></div>}
-                  </div>
-                  {estimates.count > 0 && <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Based on {estimates.count} collection entr{estimates.count !== 1 ? 'ies' : 'y'}</p>}
-                </div>
-              )}
+              {/* VALUE ESTIMATION */}
+              <ValueEstimation estimates={estimates} />
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3">
