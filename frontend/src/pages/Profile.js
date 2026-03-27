@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getMyCollection, getCollectionStats, updateProfile, updateCredentials, getUserBadges, getUserByUsername, getFollows, proxyImageUrl } from '@/lib/api';
+import {
+  getMyCollection, getCollectionStats, updateProfile, updateCredentials,
+  getUserBadges, getUserByUsername, getFollows, proxyImageUrl,
+  getUserPublicCollection, getUserPublicSubmissions, getUserPublicFollows
+} from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,22 +14,33 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X, Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus, FileCheck, Shield, KeyRound, Users, User } from 'lucide-react';
+import {
+  Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X,
+  Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus,
+  FileCheck, Shield, KeyRound, Users, User
+} from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 
 export default function Profile() {
   const { username: urlUsername } = useParams();
   const { user, checkAuth } = useAuth();
-  const [profileUser, setProfileUser] = useState(null);
-  const [collection, setCollection] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [profileUser, setProfileUser]       = useState(null);
+  const [collection, setCollection]         = useState([]);
+  const [stats, setStats]                   = useState(null);
+  const [editing, setEditing]               = useState(false);
+  const [saving, setSaving]                 = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(!!urlUsername);
-  const [badges, setBadges] = useState([]);
-  const [follows, setFollows] = useState([]);
-  const [credForm, setCredForm] = useState({ current_password: '', new_email: '', new_password: '' });
-  const [savingCreds, setSavingCreds] = useState(false);
+  const [badges, setBadges]                 = useState([]);
+  const [follows, setFollows]               = useState([]);
+  const [credForm, setCredForm]             = useState({ current_password: '', new_email: '', new_password: '' });
+  const [savingCreds, setSavingCreds]       = useState(false);
+
+  // Données profil tiers
+  const [publicCollection, setPublicCollection]   = useState([]);
+  const [publicCollectionPrivate, setPublicCollectionPrivate] = useState(false);
+  const [publicSubmissions, setPublicSubmissions] = useState([]);
+  const [publicFollows, setPublicFollows]         = useState([]);
+
   const [formData, setFormData] = useState({
     username: '',
     description: '',
@@ -35,36 +50,49 @@ export default function Profile() {
 
   const isOwnProfile = !urlUsername || (user && profileUser && user.user_id === profileUser.user_id);
 
+  // Chargement du profil
   useEffect(() => {
     if (urlUsername) {
       setLoadingProfile(true);
       getUserByUsername(urlUsername)
-        .then(r => {
-          setProfileUser(r.data);
-          setLoadingProfile(false);
-        })
-        .catch(() => {
-          setProfileUser(null);
-          setLoadingProfile(false);
-        });
+        .then(r => { setProfileUser(r.data); setLoadingProfile(false); })
+        .catch(() => { setProfileUser(null); setLoadingProfile(false); });
     } else if (user) {
       setProfileUser(user);
     }
   }, [urlUsername, user]);
 
+  // Données propre profil
   useEffect(() => {
-    const displayUser = profileUser;
-    if (displayUser && isOwnProfile) {
+    if (profileUser && isOwnProfile) {
       setFormData({
-        username: displayUser.username || '',
-        description: displayUser.description || '',
-        collection_privacy: displayUser.collection_privacy || 'public',
-        profile_picture: displayUser.profile_picture || displayUser.picture || ''
+        username: profileUser.username || '',
+        description: profileUser.description || '',
+        collection_privacy: profileUser.collection_privacy || 'public',
+        profile_picture: profileUser.profile_picture || profileUser.picture || ''
       });
       getMyCollection({}).then(r => setCollection(r.data)).catch(() => {});
       getCollectionStats().then(r => setStats(r.data)).catch(() => {});
       getUserBadges().then(r => setBadges(r.data?.badges || [])).catch(() => {});
       getFollows().then(r => setFollows(r.data?.follows || [])).catch(() => {});
+    }
+  }, [profileUser, isOwnProfile]);
+
+  // Données profil tiers
+  useEffect(() => {
+    if (profileUser && !isOwnProfile) {
+      const uid = profileUser.user_id;
+      getUserPublicCollection(uid)
+        .then(r => setPublicCollection(r.data?.collection || []))
+        .catch(err => {
+          if (err.response?.status === 403) setPublicCollectionPrivate(true);
+        });
+      getUserPublicSubmissions(uid)
+        .then(r => setPublicSubmissions(r.data?.submissions || []))
+        .catch(() => {});
+      getUserPublicFollows(uid)
+        .then(r => setPublicFollows(r.data?.follows || []))
+        .catch(() => {});
     }
   }, [profileUser, isOwnProfile]);
 
@@ -140,6 +168,7 @@ export default function Profile() {
       <div className="relative">
         <div className="absolute inset-0 stadium-glow pointer-events-none" />
         <div className="max-w-4xl mx-auto px-4 lg:px-8 py-12">
+
           {/* Profile Header */}
           <div className="flex items-start gap-6 mb-8" data-testid="profile-header">
             <Avatar className="w-20 h-20 border-2 border-border">
@@ -166,10 +195,12 @@ export default function Profile() {
                 )}
               </div>
               <div className="flex items-center gap-4 mt-2">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Mail className="w-3 h-3" />
-                  <span style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{displayUser.email}</span>
-                </div>
+                {isOwnProfile && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Mail className="w-3 h-3" />
+                    <span style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{displayUser.email}</span>
+                  </div>
+                )}
                 {displayUser.created_at && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="w-3 h-3" />
@@ -190,10 +221,9 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Edit Form */}
+          {/* Edit Form — propre profil seulement */}
           {editing && isOwnProfile && (
             <div className="space-y-6 mb-8">
-              {/* ── Edit Profile ── */}
               <div className="border border-primary/30 p-6 space-y-4" data-testid="profile-edit-form">
                 <h3 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EDIT PROFILE</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -226,7 +256,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* ── Credentials ── */}
               <div className="border border-border p-6 space-y-4" data-testid="credentials-form">
                 <h3 className="text-sm uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
                   <KeyRound className="w-4 h-4" /> CHANGE EMAIL / PASSWORD
@@ -252,7 +281,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Privacy Toggle - only for own profile */}
+          {/* Privacy Toggle */}
           {isOwnProfile && user && (
             <div className="flex items-center justify-between border border-border p-4 mb-8" data-testid="privacy-toggle">
               <div className="flex items-center gap-3">
@@ -276,7 +305,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Stats */}
+          {/* Stats — propre profil */}
           {isOwnProfile && (
             <div className="grid grid-cols-2 sm:grid-cols-4 border border-border mb-8" data-testid="profile-stats">
               <div className="p-5 text-center border-r border-border">
@@ -302,7 +331,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Public profile stats */}
+          {/* Stats — profil tiers */}
           {!isOwnProfile && profileUser && (
             <div className="grid grid-cols-3 border border-border mb-8" data-testid="public-profile-stats">
               <div className="p-5 text-center border-r border-border">
@@ -323,7 +352,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Collection Value - own profile only */}
+          {/* Collection Value */}
           {isOwnProfile && stats && stats.items_with_estimates > 0 && (
             <div className="border border-border p-6 mb-8" data-testid="collection-total-value">
               <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -349,7 +378,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* ── Badges ClubID ── */}
+          {/* Badges ClubID */}
           {isOwnProfile && badges.length > 0 && (
             <div className="mb-8" data-testid="clubid-badges">
               <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -377,7 +406,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* ── Following ── */}
+          {/* Following — propre profil */}
           {isOwnProfile && follows.length > 0 && (
             <div className="mb-8" data-testid="following-section">
               <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -392,9 +421,7 @@ export default function Profile() {
                     style={{ fontFamily: 'Barlow Condensed' }}
                     data-testid={`follow-item-${f.follow_id}`}
                   >
-                    {f.target_type === 'team'
-                      ? <Shield className="w-3 h-3 text-primary" />
-                      : <User   className="w-3 h-3 text-accent" />}
+                    {f.target_type === 'team' ? <Shield className="w-3 h-3 text-primary" /> : <User className="w-3 h-3 text-accent" />}
                     <span className="uppercase">{f.target_name || f.target_id}</span>
                     <span className="text-muted-foreground/50 text-[10px] lowercase">{f.target_type}</span>
                   </Link>
@@ -405,7 +432,7 @@ export default function Profile() {
 
           <Separator className="bg-border mb-8" />
 
-          {/* Recent Collection - own profile only */}
+          {/* Collection propre profil */}
           {isOwnProfile && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -446,6 +473,86 @@ export default function Profile() {
               )}
             </div>
           )}
+
+          {/* ─── Section profil tiers ─────────────────────────────── */}
+          {!isOwnProfile && (
+            <div className="space-y-10">
+
+              {/* Collection publique */}
+              <div>
+                <h2 className="text-xl tracking-tight mb-6">COLLECTION</h2>
+                {publicCollectionPrivate ? (
+                  <div className="flex items-center gap-3 py-8 border border-dashed border-border text-muted-foreground justify-center">
+                    <Lock className="w-5 h-5" />
+                    <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Cette collection est privée</span>
+                  </div>
+                ) : publicCollection.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {publicCollection.slice(0, 8).map(item => (
+                      <Link to={`/version/${item.version_id}`} key={item.collection_id}>
+                        <div className="border border-border bg-card overflow-hidden hover:border-primary/30" style={{ transition: 'border-color 0.2s ease' }}>
+                          <div className="aspect-[3/4] bg-secondary overflow-hidden">
+                            <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs font-semibold truncate" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{item.master_kit?.club}</p>
+                            <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{item.master_kit?.season}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border border-dashed border-border">
+                    <FolderOpen className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Aucun maillot pour l'instant</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Contributions */}
+              {publicSubmissions.length > 0 && (
+                <div>
+                  <h2 className="text-xl tracking-tight mb-6">CONTRIBUTIONS ({publicSubmissions.length})</h2>
+                  <div className="space-y-2">
+                    {publicSubmissions.slice(0, 10).map(s => (
+                      <div key={s.submission_id} className="flex items-center justify-between border border-border p-3 text-sm">
+                        <div style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                          <span className="font-medium">{s.submission_type}</span>
+                          {s.data?.club && <span className="text-muted-foreground ml-2">{s.data.club}</span>}
+                          {s.data?.season && <span className="text-muted-foreground ml-1">— {s.data.season}</span>}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono">{new Date(s.created_at).toLocaleDateString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Follows tiers */}
+              {publicFollows.length > 0 && (
+                <div>
+                  <h2 className="text-xl tracking-tight mb-6">FOLLOWING ({publicFollows.length})</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {publicFollows.map(f => (
+                      <Link
+                        key={f.follow_id}
+                        to={f.target_type === 'team' ? `/teams/${f.target_id}` : `/players/${f.target_id}`}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border hover:border-primary/50 transition-colors"
+                        style={{ fontFamily: 'Barlow Condensed' }}
+                      >
+                        {f.target_type === 'team' ? <Shield className="w-3 h-3 text-primary" /> : <User className="w-3 h-3 text-accent" />}
+                        <span className="uppercase">{f.target_name || f.target_id}</span>
+                        <span className="text-muted-foreground/50 text-[10px] lowercase">{f.target_type}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
         </div>
       </div>
     </div>

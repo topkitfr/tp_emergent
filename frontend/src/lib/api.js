@@ -7,20 +7,16 @@ const API = `${BACKEND_URL}/api`;
 export const proxyImageUrl = (url) => {
   if (!url) return '';
 
-  // Chemin relatif → préfixe BACKEND_URL
   if (url.startsWith('/api/uploads/') || url.startsWith('/api/images/')) {
     return `${BACKEND_URL}${url}`;
   }
 
-  // URL absolue Render stockée en base (legacy) :
-  // ex: https://tp-emergent.onrender.com/api/images/versions/photos/abc.webp
   const apiImagesPattern = /^https?:\/\/[^/]+(\/api\/images\/.+)$/;
   const match = url.match(apiImagesPattern);
   if (match) {
     return `${BACKEND_URL}${match[1]}`;
   }
 
-  // Images CDN externes : chargées directement
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
 
   return url;
@@ -105,17 +101,22 @@ export const uploadImage = (file, folder = 'master_kit', entityId = null, side =
 };
 
 // User Profile
-export const getUserProfile     = (userId)   => api.get(`/users/${userId}/profile`);
-export const getUserByUsername  = (username) => api.get(`/users/by-username/${username}`);
-export const updateProfile      = (data)     => api.put('/users/profile', data);
-export const updateCredentials  = (data)     => api.put('/users/credentials', data);
-export const getUserBadges      = ()         => api.get('/users/profile/badges');
-export const followEntity       = (data)     => api.post('/users/follow', data);
-export const unfollowEntity     = (data)     => api.delete('/users/follow', { data });
-export const getFollows         = ()         => api.get('/users/follows');
-export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/${id}`);
-export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
-export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
+export const getUserProfile            = (userId)   => api.get(`/users/${userId}/profile`);
+export const getUserByUsername         = (username) => api.get(`/users/by-username/${username}`);
+export const updateProfile             = (data)     => api.put('/users/profile', data);
+export const updateCredentials         = (data)     => api.put('/users/credentials', data);
+export const getUserBadges             = ()         => api.get('/users/profile/badges');
+export const followEntity              = (data)     => api.post('/users/follow', data);
+export const unfollowEntity            = (data)     => api.delete('/users/follow', { data });
+export const getFollows                = ()         => api.get('/users/follows');
+export const isFollowing               = (type, id) => api.get(`/users/follows/${type}/${id}`);
+export const votePlayerAura            = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
+export const getPlayerAura             = (playerId) => api.get(`/players/${playerId}/aura`);
+
+// Profils publics tiers
+export const getUserPublicCollection   = (userId)   => api.get(`/users/${userId}/public-collection`);
+export const getUserPublicSubmissions  = (userId)   => api.get(`/users/${userId}/public-submissions`);
+export const getUserPublicFollows      = (userId)   => api.get(`/users/${userId}/public-follows`);
 
 // ── Listes personnalisées ────────────────────────────────────────────────────
 export const getUserLists       = ()                      => api.get('/lists');

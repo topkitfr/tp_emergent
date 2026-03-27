@@ -1,14 +1,19 @@
 # backend/routers/users.py
 """
 Routes utilisateur :
-- PUT  /api/users/profile            — mise à jour profil (username, bio, photo)
-- PUT  /api/users/credentials        — changement email + mot de passe
-- GET  /api/users/profile/badges     — badges ClubID calculés depuis la collection
-- POST /api/users/follow             — follow team ou player
-- DELETE /api/users/follow           — unfollow
-- GET  /api/users/follows            — liste des entités suivies
-- POST /api/players/{player_id}/aura — voter l'aura d'un joueur (1-5)
-- GET  /api/players/{player_id}/aura — récupère le score aura communautaire
+- PUT  /api/users/profile                          — mise à jour profil
+- PUT  /api/users/credentials                      — changement email + mot de passe
+- GET  /api/users/profile/badges                   — badges ClubID
+- GET  /api/users/by-username/{username}           — profil public par username
+- GET  /api/users/{user_id}/profile                — profil public par ID
+- GET  /api/users/{user_id}/public-collection      — collection publique d'un user tiers
+- GET  /api/users/{user_id}/public-submissions     — contributions approuvées d'un user tiers
+- GET  /api/users/{user_id}/public-follows         — follows publics d'un user tiers
+- POST /api/users/follow                           — follow team ou player
+- DELETE /api/users/follow                         — unfollow
+- GET  /api/users/follows                          — liste des entités suivies
+- POST /api/players/{player_id}/aura               — voter l'aura d'un joueur (1-5)
+- GET  /api/players/{player_id}/aura               — récupère le score aura communautaire
 """
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional, Literal
@@ -55,14 +60,93 @@ async def get_user_by_username(username: str, request: Request):
     """Profil public d'un utilisateur par son username."""
     user_doc = await db.users.find_one(
         {"username": username},
-        {"_id": 0, "password_hash": 0}
+        {"_id": 0, "password_hash": 0, "email": 0}
     )
     if not user_doc:
         raise HTTPException(status_code=404, detail="User not found")
-    # Stats publiques
     col_count = await db.collections.count_documents({"user_id": user_doc["user_id"]})
     user_doc["collection_count"] = col_count
     return user_doc
+
+
+@router.get("/users/{user_id}/profile")
+async def get_user_profile_by_id(user_id: str, request: Request):
+    """Profil public d'un utilisateur par son user_id."""
+    user_doc = await db.users.find_one(
+        {"user_id": user_id},
+        {"_id": 0, "password_hash": 0, "email": 0}
+    )
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    col_count = await db.collections.count_documents({"user_id": user_id})
+    user_doc["collection_count"] = col_count
+    return user_doc
+
+
+@router.get("/users/{user_id}/public-collection")
+async def get_user_public_collection(user_id: str, request: Request):
+    """Collection publique d'un user tiers. 403 si collection privée."""
+    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "collection_privacy": 1})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user_doc.get("collection_privacy", "public") != "public":
+        raise HTTPException(status_code=403, detail="Cette collection est privée")
+
+    items = await db.collections.find(
+        {"user_id": user_id}, {"_id": 0}
+    ).sort("added_at", -1).limit(50).to_list(50)
+
+    # Enrichit avec master_kit + version
+    for item in items:
+        try:
+            mk = await db.master_kits.find_one({"kit_id": item.get("kit_id")}, {"_id": 0, "club": 1, "season": 1, "front_photo": 1})
+            item["master_kit"] = mk or {}
+            if item.get("version_id"):
+                v = await db.versions.find_one({"version_id": item["version_id"]}, {"_id": 0, "front_photo": 1})
+                item["version"] = v or {}
+        except Exception:
+            item["master_kit"] = {}
+            item["version"] = {}
+
+    return {"collection": items, "total": len(items)}
+
+
+@router.get("/users/{user_id}/public-submissions")
+async def get_user_public_submissions(user_id: str, request: Request):
+    """Contributions approuvées (status=approved) d'un user tiers."""
+    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "user_id": 1})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    submissions = await db.submissions.find(
+        {"submitted_by": user_id, "status": "approved"},
+        {"_id": 0, "submitted_by": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+
+    return {"submissions": submissions, "total": len(submissions)}
+
+
+@router.get("/users/{user_id}/public-follows")
+async def get_user_public_follows(user_id: str, request: Request):
+    """Follows publics d'un user tiers."""
+    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "user_id": 1})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    follows = await db.follows.find({"user_id": user_id}, {"_id": 0}).to_list(500)
+
+    for f in follows:
+        try:
+            if f["target_type"] == "team":
+                doc = await db.teams.find_one({"team_id": f["target_id"]}, {"name": 1})
+                f["target_name"] = doc["name"] if doc else f["target_id"]
+            elif f["target_type"] == "player":
+                doc = await db.players.find_one({"player_id": f["target_id"]}, {"full_name": 1})
+                f["target_name"] = doc["full_name"] if doc else f["target_id"]
+        except Exception:
+            f["target_name"] = f["target_id"]
+
+    return {"follows": follows}
 
 
 @router.put("/users/profile")
@@ -89,7 +173,6 @@ async def update_credentials(update: CredentialsUpdate, request: Request):
     if not user_doc:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Vérification du mot de passe actuel obligatoire
     if not pwd_context.verify(update.current_password, user_doc.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Mot de passe actuel incorrect")
 
@@ -119,15 +202,9 @@ async def update_credentials(update: CredentialsUpdate, request: Request):
 
 @router.get("/users/profile/badges")
 async def get_user_badges(request: Request):
-    """
-    Retourne les badges ClubID de l'utilisateur connecté.
-    Un badge est décerné pour chaque club dont l'user possède >= 10 maillots.
-    Inclut primary_color/secondary_color de l'équipe pour coloriser le badge.
-    """
     user = await get_current_user(request)
     uid  = user["user_id"]
 
-    # Agrégation : compte les kits par club depuis la collection de l'user
     pipeline = [
         {"$match": {"user_id": uid}},
         {"$lookup": {
@@ -138,9 +215,9 @@ async def get_user_badges(request: Request):
         }},
         {"$unwind": {"path": "$master_kit", "preserveNullAndEmptyArrays": True}},
         {"$group": {
-            "_id":     "$master_kit.team_id",
-            "club":    {"$first": "$master_kit.club"},
-            "count":   {"$sum": 1},
+            "_id":   "$master_kit.team_id",
+            "club":  {"$first": "$master_kit.club"},
+            "count": {"$sum": 1},
         }},
         {"$match": {"count": {"$gte": 10}, "_id": {"$ne": None}}},
     ]
@@ -205,7 +282,6 @@ async def get_follows(request: Request):
     uid     = user["user_id"]
     follows = await db.follows.find({"user_id": uid}, {"_id": 0}).to_list(500)
 
-    # Enrichit chaque follow avec target_name
     for f in follows:
         try:
             if f["target_type"] == "team":
@@ -236,7 +312,6 @@ async def is_following(target_type: str, target_id: str, request: Request):
 
 @router.post("/players/{player_id}/aura")
 async def vote_player_aura(player_id: str, body: AuraVote, request: Request):
-    """Vote 1-5 étoiles sur l'aura d'un joueur. Un user = un vote (modifiable)."""
     if body.score < 1 or body.score > 5:
         raise HTTPException(status_code=400, detail="Score must be between 1 and 5")
     user = await get_current_user(request)
@@ -246,26 +321,19 @@ async def vote_player_aura(player_id: str, body: AuraVote, request: Request):
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
 
-    # Upsert le vote
     await db.player_aura_votes.update_one(
         {"player_id": player_id, "user_id": uid},
-        {"$set": {
-            "score":      body.score,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }},
+        {"$set": {"score": body.score, "updated_at": datetime.now(timezone.utc).isoformat()}},
         upsert=True,
     )
 
-    # Recalcule le score moyen et met à jour le joueur
     pipeline = [
         {"$match": {"player_id": player_id}},
         {"$group": {"_id": None, "avg": {"$avg": "$score"}, "count": {"$sum": 1}}},
     ]
     agg = await db.player_aura_votes.aggregate(pipeline).to_list(1)
-    avg_score   = agg[0]["avg"]   if agg else body.score
-    vote_count  = agg[0]["count"] if agg else 1
-
-    # Arrondi au niveau 1-5 le plus proche
+    avg_score  = agg[0]["avg"]   if agg else body.score
+    vote_count = agg[0]["count"] if agg else 1
     aura_level = max(1, min(5, round(avg_score)))
 
     await db.players.update_one(
@@ -273,17 +341,11 @@ async def vote_player_aura(player_id: str, body: AuraVote, request: Request):
         {"$set": {"aura_level": aura_level, "aura_avg": round(avg_score, 2), "aura_vote_count": vote_count}},
     )
 
-    return {
-        "aura_level":    aura_level,
-        "aura_avg":      round(avg_score, 2),
-        "aura_votes":    vote_count,
-        "your_vote":     body.score,
-    }
+    return {"aura_level": aura_level, "aura_avg": round(avg_score, 2), "aura_votes": vote_count, "your_vote": body.score}
 
 
 @router.get("/players/{player_id}/aura")
 async def get_player_aura(player_id: str, request: Request):
-    """Retourne le score aura communautaire + le vote de l'user connecté si disponible."""
     player = await db.players.find_one(
         {"player_id": player_id},
         {"_id": 0, "aura_level": 1, "aura_avg": 1, "aura_vote_count": 1}
@@ -301,11 +363,11 @@ async def get_player_aura(player_id: str, request: Request):
         if vote:
             your_vote = vote["score"]
     except Exception:
-        pass  # utilisateur non connecté → pas de vote personnel
+        pass
 
     return {
-        "aura_level":  player.get("aura_level", 1),
-        "aura_avg":    player.get("aura_avg", 0.0),
-        "aura_votes":  player.get("aura_vote_count", 0),
-        "your_vote":   your_vote,
+        "aura_level": player.get("aura_level", 1),
+        "aura_avg":   player.get("aura_avg", 0.0),
+        "aura_votes": player.get("aura_vote_count", 0),
+        "your_vote":  your_vote,
     }
