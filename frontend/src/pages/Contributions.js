@@ -19,6 +19,12 @@ const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
+// Saisons disponibles : 2027/2028 → 2000/2001 (desc)
+const SEASONS = Array.from({ length: 28 }, (_, i) => {
+  const y = 2027 - i;
+  return `${y}/${y + 1}`;
+});
+
 const FIELD_LABELS = {
   club: 'Club / Team', season: 'Season', kit_type: 'Type', brand: 'Brand',
   design: 'Design', sponsor: 'Sponsor', league: 'League', gender: 'Gender',
@@ -231,25 +237,30 @@ function ReportDetail({ rep }) {
 }
 
 // ===== COMPOSANT: USE EXISTING KIT (3 filtres) =====
-// Radix UI interdit value="" sur SelectItem — on utilise la sentinelle "__all__" pour "Any type"
-const ANY_TYPE = '__all__';
+// Radix UI interdit value="" sur SelectItem — sentinelle pour "Any"
+const ANY_TYPE   = '__all__';
+const ANY_SEASON = '__any__';
 
 function UseExistingKitPanel({ onSelect }) {
-  const [filterTeam, setFilterTeam]     = useState('');
-  const [filterSeason, setFilterSeason] = useState('');
-  const [filterType, setFilterType]     = useState(ANY_TYPE);
-  const [results, setResults]           = useState([]);
-  const [searched, setSearched]         = useState(false);
-  const [loading, setLoading]           = useState(false);
+  // team : label affiché + id résolu via autocomplete
+  const [filterTeamLabel, setFilterTeamLabel] = useState('');
+  const [filterTeamId,    setFilterTeamId]    = useState('');
+  const [filterSeason, setFilterSeason]       = useState(ANY_SEASON);
+  const [filterType,   setFilterType]         = useState(ANY_TYPE);
+  const [results,  setResults]                = useState([]);
+  const [searched, setSearched]               = useState(false);
+  const [loading,  setLoading]                = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
     setSearched(true);
     try {
       const params = { limit: 100 };
-      if (filterTeam.trim())                params.club     = filterTeam.trim();
-      if (filterSeason.trim())              params.season   = filterSeason.trim();
-      if (filterType && filterType !== ANY_TYPE) params.kit_type = filterType;
+      // Préférer team_id (exact) sinon club (texte)
+      if (filterTeamId)                             params.team_id  = filterTeamId;
+      else if (filterTeamLabel.trim())              params.club     = filterTeamLabel.trim();
+      if (filterSeason && filterSeason !== ANY_SEASON) params.season   = filterSeason;
+      if (filterType   && filterType   !== ANY_TYPE)   params.kit_type = filterType;
       const res = await getMasterKits(params);
       const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
       setResults(kits);
@@ -260,34 +271,45 @@ function UseExistingKitPanel({ onSelect }) {
     }
   };
 
-  const canSearch = filterTeam.trim() || filterSeason.trim() || (filterType && filterType !== ANY_TYPE);
+  const canSearch =
+    filterTeamLabel.trim() ||
+    (filterSeason && filterSeason !== ANY_SEASON) ||
+    (filterType   && filterType   !== ANY_TYPE);
 
   return (
     <div className="border border-border p-4 mb-4">
       <h4 className="text-xs uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>Use Existing Kit</h4>
 
-      {/* 3 filtres */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+        {/* TEAM — autocomplete sur la DB */}
         <div className="space-y-1">
           <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
-          <Input
-            value={filterTeam}
-            onChange={e => setFilterTeam(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && canSearch && handleSearch()}
+          <EntityAutocomplete
+            entityType="team"
+            value={filterTeamLabel}
+            onChange={(val) => { setFilterTeamLabel(val); setFilterTeamId(''); }}
+            onSelect={(item) => { setFilterTeamLabel(item.label); setFilterTeamId(item.id); }}
             placeholder="e.g. AC Milan"
             className="bg-card border-border rounded-none text-xs"
+            testId="filter-team"
           />
         </div>
+
+        {/* SEASON — select roll YEAR/YEAR */}
         <div className="space-y-1">
           <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
-          <Input
-            value={filterSeason}
-            onChange={e => setFilterSeason(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && canSearch && handleSearch()}
-            placeholder="e.g. 2023/2024"
-            className="bg-card border-border rounded-none text-xs"
-          />
+          <Select value={filterSeason} onValueChange={setFilterSeason}>
+            <SelectTrigger className="bg-card border-border rounded-none text-xs">
+              <SelectValue placeholder="Any season" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border max-h-56">
+              <SelectItem value={ANY_SEASON}>Any season</SelectItem>
+              {SEASONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* TYPE */}
         <div className="space-y-1">
           <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
           <Select value={filterType} onValueChange={setFilterType}>
@@ -313,7 +335,6 @@ function UseExistingKitPanel({ onSelect }) {
         {loading ? 'Searching...' : 'Search'}
       </Button>
 
-      {/* Résultats */}
       {searched && !loading && (
         results.length === 0 ? (
           <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
@@ -595,7 +616,6 @@ export default function Contributions() {
 
             {addStep === 1 && (
               <div>
-                {/* USE EXISTING KIT — 3 filtres */}
                 <UseExistingKitPanel onSelect={handleSelectExistingKit} />
 
                 <div className="text-center text-xs text-muted-foreground tracking-wider my-4" style={{ fontFamily: 'Barlow Condensed' }}>OR CREATE NEW</div>
