@@ -12,15 +12,33 @@ router = APIRouter(prefix="/api", tags=["kits"])
 
 # ─────────────────────────────────────────────────────────────────
 # IMAGE URL → Freebox NAS local
+# Naming convention: master_{kit_type}_{kit_id}.jpg
+# ex: master_Home_kit_abf234ba08ca.jpg
 # ─────────────────────────────────────────────────────────────────
 MEDIA_BASE_URL = "https://tp-emergent.onrender.com/api/images"
 
 
+def master_kit_image_url(kit_type: str, kit_id: str) -> str:
+    """Reconstruit l'URL Freebox pour un master kit."""
+    if not kit_id:
+        return ""
+    return f"{MEDIA_BASE_URL}/master_kits/photos/master_{kit_type}_{kit_id}.jpg"
+
+
 def local_image_url(original_url: str) -> str:
+    """Fallback pour les versions/autres entités sans convention Freebox."""
     if not original_url:
         return original_url
-    file_name = original_url.rsplit("/", 1)[-1]
-    return f"{MEDIA_BASE_URL}/{file_name}"
+    # Si c'est déjà une URL relative /api/images/..., on la retourne telle quelle
+    if original_url.startswith("/api/images"):
+        return f"https://tp-emergent.onrender.com{original_url}"
+    # Si c'est une URL Freebox directe (http://82.67.103.45/...)
+    if original_url.startswith("http://82.67.103.45"):
+        import re
+        relative = re.sub(r'^https?://[^/]+', '', original_url)
+        return f"{MEDIA_BASE_URL}{relative}"
+    # Sinon on retourne l'URL d'origine (CDN externe)
+    return original_url
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -140,9 +158,7 @@ async def list_master_kits(
     for kit in kits:
         kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
         kit["kit_type"] = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = local_image_url(
-            kit.get("front_photo") or kit.get("img_url", "")
-        )
+        kit["front_photo"] = master_kit_image_url(kit["kit_type"], kit["kit_id"])
         kit["version_count"] = kit.get("version_count", 0)
         kit["avg_rating"] = kit.get("avg_rating", 0.0)
         kit["review_count"] = kit.get("review_count", 0)
@@ -166,9 +182,7 @@ async def get_master_kit(kit_id: str):
         raise HTTPException(status_code=404, detail="Kit not found")
     kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
     kit["kit_type"] = kit.get("kit_type") or kit.get("type", "")
-    kit["front_photo"] = local_image_url(
-        kit.get("front_photo") or kit.get("img_url", "")
-    )
+    kit["front_photo"] = master_kit_image_url(kit["kit_type"], kit["kit_id"])
     ca = kit.get("created_at")
     if hasattr(ca, "isoformat"):
         kit["created_at"] = ca.isoformat()
@@ -474,9 +488,7 @@ async def list_versions(
         for k in kits_docs:
             k["kit_id"] = k.get("kit_id") or k.get("id", "")
             k["kit_type"] = k.get("kit_type") or k.get("type", "")
-            k["front_photo"] = local_image_url(
-                k.get("front_photo") or k.get("img_url", "")
-            )
+            k["front_photo"] = master_kit_image_url(k["kit_type"], k["kit_id"])
             kits_map[k["kit_id"]] = k
 
     result = []
@@ -643,9 +655,7 @@ async def get_version(version_id: str):
     if kit:
         kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
         kit["kit_type"] = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = local_image_url(
-            kit.get("front_photo") or kit.get("img_url", "")
-        )
+        kit["front_photo"] = master_kit_image_url(kit["kit_type"], kit["kit_id"])
         version["master_kit"] = kit
     reviews = await db.reviews.find(
         {"version_id": version_id}, {"_id": 0}
@@ -727,9 +737,7 @@ async def _normalize_kit(doc: dict) -> dict:
         return {}
     doc["kit_id"] = doc.get("kit_id") or doc.get("id", "")
     doc["kit_type"] = doc.get("kit_type") or doc.get("type", "")
-    doc["front_photo"] = local_image_url(
-        doc.get("front_photo") or doc.get("img_url", "")
-    )
+    doc["front_photo"] = master_kit_image_url(doc["kit_type"], doc["kit_id"])
     doc["avg_rating"] = doc.get("avg_rating", 0.0)
     doc["review_count"] = doc.get("review_count", 0)
     doc["version_count"] = doc.get("version_count", 0)
