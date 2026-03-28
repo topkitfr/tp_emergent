@@ -1,38 +1,138 @@
-import asyncio, csv, os, re, uuid
+import asyncio, csv, os, re, uuid, pathlib
 from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorClient
 
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+    print("⚠️  httpx non installé — téléchargement images désactivé. Installe avec: pip install httpx")
+
 MONGO_URL = "mongodb+srv://topkit:jUFgdXvN8baQslp4@cluster0.hhhrkiz.mongodb.net/topkit?retryWrites=true&w=majority"
-CSV_PATH  = os.path.join(os.path.dirname(__file__), "FKA-Scrap-Data.csv")
+CSV_PATH  = os.path.join(os.path.dirname(__file__), "Db_topkit-Data.csv")
+
+# Répertoire de destination images sur la Freebox (via montage VM)
+# Adapter ce chemin selon le montage NFS/SMB de ta VM
+FREEBOX_IMG_DIR = os.environ.get("FREEBOX_IMG_DIR", "/mnt/freebox/images/kits")
+DOWNLOAD_IMAGES = os.environ.get("DOWNLOAD_IMAGES", "false").lower() == "true"
+
 
 def slugify(t):
     t = t.lower().strip()
     t = re.sub(r"[^\w\s-]", "", t)
     return re.sub(r"[\s_-]+", "-", t).strip("-")
 
+
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def normalize_kit_type(raw: str) -> str:
+    """
+    Normalise le type de kit du CSV vers une valeur propre pour la DB.
+    Ex: 'GK 1' -> 'GK1', 'GK 2' -> 'GK2', 'Home' -> 'Home'
+    """
+    t = raw.strip()
+    mapping = {
+        "GK 1": "GK1",
+        "GK 2": "GK2",
+        "GK 3": "GK3",
+        "Home": "Home",
+        "Away": "Away",
+        "Third": "Third",
+        "Fourth": "Fourth",
+    }
+    if t in mapping:
+        return mapping[t]
+    # fallback: supprime les espaces
+    return re.sub(r'\s+', '', t)
+
+
+def fix_img_url(raw: str) -> str:
+    """
+    Reconstruit les URLs d'images malformées du CSV (sans :// ni slashes).
+    Ex: 'httpscdn.footballkitarchive.com20230908CJ9rTEWxZUzZuNn.jpg'
+     -> 'https://cdn.footballkitarchive.com/2023/09/08/CJ9rTEWxZUzZuNn.jpg'
+    """
+    raw = raw.strip()
+    if not raw:
+        return ""
+    # Déjà une URL valide
+    if raw.startswith("http://") or raw.startswith("https://"):
+        return raw
+    # Pattern CDN footballkitarchive: https + cdn.footballkitarchive.com + YYYYMMDD + filename
+    m = re.match(
+        r'https(cdn\.footballkitarchive\.com)(\d{4})(\d{2})(\d{2})([\w]+\.jpg)',
+        raw
+    )
+    if m:
+        return f"https://{m.group(1)}/{m.group(2)}/{m.group(3)}/{m.group(4)}/{m.group(5)}"
+    # Pattern alternatif: https + cdn... + YYYYMM (6 chiffres) + filename (anciens kits)
+    m2 = re.match(
+        r'https(cdn\.footballkitarchive\.com)(\d{6})([\w]+\.jpg)',
+        raw
+    )
+    if m2:
+        year = m2.group(2)[:4]
+        month = m2.group(2)[4:6]
+        return f"https://{m2.group(1)}/{year}/{month}/{m2.group(3)}"
+    # Pattern www.footballkitarchive.com (source_url)
+    m3 = re.match(r'https(www\.footballkitarchive\.com)(.*)', raw)
+    if m3:
+        return f"https://{m3.group(1)}{m3.group(2)}"
+    return raw
+
+
+async def download_image(kit_id: str, kit_type: str, img_url: str, dest_dir: str) -> str:
+    """
+    Télécharge l'image du kit et la sauvegarde sur la Freebox.
+    Naming: master_{kit_type}_{kit_id}.jpg
+    Retourne le chemin local du fichier.
+    """
+    if not img_url or not HTTPX_AVAILABLE:
+        return ""
+    norm_type = normalize_kit_type(kit_type)
+    filename = f"master_{norm_type}_{kit_id}.jpg"
+    dest = pathlib.Path(dest_dir) / filename
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        return str(dest)
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            r = await client.get(img_url)
+            r.raise_for_status()
+            dest.write_bytes(r.content)
+        return str(dest)
+    except Exception as e:
+        print(f"⚠️  Erreur téléchargement {filename}: {e}")
+        return ""
+
 
 async def main():
     db = AsyncIOMotorClient(MONGO_URL)["topkit"]
 
-    rows = list(csv.DictReader(open(CSV_PATH, encoding="utf-8")))
-    print(f"📄 {len(rows)} lignes lues")
+    if not os.path.exists(CSV_PATH):
+        print(f"❌ CSV introuvable: {CSV_PATH}")
+        return
 
-    # Dédoublonnage sur team+season+type
+    rows = list(csv.DictReader(open(CSV_PATH, encoding="utf-8")))
+    print(f"📄 {len(rows)} lignes lues depuis {os.path.basename(CSV_PATH)}")
+
+    # Dédoublonnage sur team+season+type (GK1 et GK2 sont des clés différentes → conservés)
     seen, unique = {}, []
     for r in rows:
         key = f"{slugify(r['team'])}|{slugify(r['season'])}|{slugify(r['type'])}"
         if key not in seen:
             seen[key] = True
             unique.append(r)
-    print(f"🎽 {len(unique)} master_kits uniques")
+    print(f"🎽 {len(unique)} master_kits uniques (GK1 et GK2 comptent séparément)")
 
     # Vider les collections
-    for col in ["master_kits","versions","teams","brands","leagues"]:
+    for col in ["master_kits", "versions", "teams", "brands", "leagues"]:
         await db[col].delete_many({})
 
-    # Entités
+    # Entités (teams, brands, leagues)
     teams_map, brands_map, leagues_map = {}, {}, {}
     t_docs, b_docs, l_docs = [], [], []
     for r in unique:
@@ -45,7 +145,10 @@ async def main():
             if name and slugify(name) not in mapping:
                 eid = f"{id_prefix}_{uuid.uuid4().hex[:12]}"
                 mapping[slugify(name)] = eid
-                docs.append({id_field: eid, "name": name, "slug": slugify(name), "status": "approved", "created_at": now_iso()})
+                docs.append({
+                    id_field: eid, "name": name, "slug": slugify(name),
+                    "status": "approved", "created_at": now_iso()
+                })
 
     if t_docs: await db.teams.insert_many(t_docs)
     if b_docs: await db.brands.insert_many(b_docs)
@@ -54,29 +157,78 @@ async def main():
 
     # master_kits + versions
     kit_docs, ver_docs = [], []
+    download_tasks = []
+
     for r in unique:
         kid = f"kit_{uuid.uuid4().hex[:12]}"
-        img = r.get("img_url","").strip()
+        raw_img  = r.get("img_url", "").strip()
+        raw_src  = r.get("source_url", "").strip()
+        img      = fix_img_url(raw_img)
+        src_url  = fix_img_url(raw_src)
+        kit_type = normalize_kit_type(r["type"].strip())
+
         kit_docs.append({
-            "kit_id": kid, "club": r["team"].strip(), "team_id": teams_map.get(slugify(r["team"]),""),
-            "season": r["season"].strip(), "kit_type": r["type"].strip(), "design": r.get("design","").strip(),
-            "colors": r.get("colors","").strip(), "brand": r["brand"].strip(), "brand_id": brands_map.get(slugify(r["brand"]),""),
-            "sponsor": r.get("sponsor","").strip(), "league": r["league"].strip(), "league_id": leagues_map.get(slugify(r["league"]),""),
-            "front_photo": img, "img_url": img, "source_url": r.get("source_url","").strip(),
-            "gender": "Male", "avg_rating": 0.0, "review_count": 0, "version_count": 1, "created_at": now_iso(),
+            "kit_id":      kid,
+            "club":        r["team"].strip(),
+            "team_id":     teams_map.get(slugify(r["team"]), ""),
+            "season":      r["season"].strip(),
+            "kit_type":    kit_type,
+            "design":      r.get("design", "").strip(),
+            "colors":      r.get("colors", "").strip(),
+            "brand":       r["brand"].strip(),
+            "brand_id":    brands_map.get(slugify(r["brand"]), ""),
+            "sponsor":     r.get("sponsor", "").strip(),
+            "league":      r["league"].strip(),
+            "league_id":   leagues_map.get(slugify(r["league"]), ""),
+            "front_photo": img,
+            "img_url":     img,
+            "source_url":  src_url,
+            "gender":      "Male",
+            "avg_rating":  0.0,
+            "review_count": 0,
+            "version_count": 1,
+            "created_at":  now_iso(),
         })
         ver_docs.append({
-            "version_id": f"ver_{uuid.uuid4().hex[:12]}", "kit_id": kid,
-            "competition": "National Championship", "model": "Replica",
-            "sku_code": "", "ean_code": "", "front_photo": img, "back_photo": "",
-            "avg_rating": 0.0, "review_count": 0, "created_at": now_iso(),
+            "version_id":   f"ver_{uuid.uuid4().hex[:12]}",
+            "kit_id":       kid,
+            "competition":  "National Championship",
+            "model":        "Replica",
+            "sku_code":     "",
+            "ean_code":     "",
+            "front_photo":  img,
+            "back_photo":   "",
+            "avg_rating":   0.0,
+            "review_count": 0,
+            "created_at":   now_iso(),
         })
+        if DOWNLOAD_IMAGES and img:
+            download_tasks.append((kid, kit_type, img))
 
     for i in range(0, len(kit_docs), 500):
         await db.master_kits.insert_many(kit_docs[i:i+500])
     for i in range(0, len(ver_docs), 500):
         await db.versions.insert_many(ver_docs[i:i+500])
 
-    print(f"✅ {await db.master_kits.count_documents({})} master_kits, {await db.versions.count_documents({})} versions importés")
+    total_kits = await db.master_kits.count_documents({})
+    total_vers = await db.versions.count_documents({})
+    print(f"✅ {total_kits} master_kits, {total_vers} versions importés en DB")
+
+    # Téléchargement images vers Freebox (optionnel, activé via DOWNLOAD_IMAGES=true)
+    if download_tasks:
+        print(f"\n📸 Téléchargement de {len(download_tasks)} images vers {FREEBOX_IMG_DIR}...")
+        ok, fail = 0, 0
+        for kid, kit_type, img_url in download_tasks:
+            path = await download_image(kid, kit_type, img_url, FREEBOX_IMG_DIR)
+            if path:
+                ok += 1
+            else:
+                fail += 1
+        print(f"✅ {ok} images téléchargées, {fail} erreurs")
+        print(f"   Naming: master_{{type}}_{{kit_id}}.jpg (ex: master_GK1_kit_abc123.jpg)")
+    else:
+        if not DOWNLOAD_IMAGES:
+            print("\nℹ️  Téléchargement images désactivé. Lance avec DOWNLOAD_IMAGES=true pour copier sur la Freebox.")
+
 
 asyncio.run(main())
