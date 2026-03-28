@@ -6,7 +6,7 @@ import uuid
 from ..database import db, client
 from ..models import SubmissionCreate, VoteCreate, ReportCreate
 from ..auth import get_current_user
-from ..utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name, check_user_quota
+from ..utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name, check_user_quota, normalize_season
 from .notifications import create_notification
 from ..email_service import send_submission_result, send_report_result
 
@@ -74,10 +74,15 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     if user.get("role", "user") == "user":
         await check_user_quota(db, user["user_id"], sub.submission_type)
 
+    # Normalisation de la saison à la soumission
+    data = sub.data
+    if isinstance(data, dict) and data.get("season"):
+        data["season"] = normalize_season(data["season"])
+
     doc = {
         "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
         "submission_type": sub.submission_type,
-        "data": sub.data,
+        "data": data,
         "submitted_by": user["user_id"],
         "submitter_name": user.get("name", ""),
         "submitter_username": user.get("username", ""),
@@ -214,10 +219,12 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 
             if updated_sub["submission_type"] == "master_kit":
                 kit_id = f"kit_{uuid.uuid4().hex[:12]}"
+                # Normalisation saison à l'approbation (filet de sécurité)
+                season = normalize_season(data.get("season", ""))
                 kit_doc = {
                     "kit_id":      kit_id,
                     "club":        data.get("club", ""),
-                    "season":      data.get("season", ""),
+                    "season":      season,
                     "kit_type":    data.get("kit_type", ""),
                     "brand":       data.get("brand", ""),
                     "front_photo": data.get("front_photo", ""),
@@ -351,7 +358,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             )
             email, name = await _get_user_email_and_name(submitter_id)
             if email:
-                await send_submission_result(email, name, sub_name, approved=False)
+                await send_report_result(email, name, sub_type_label, sub_name, approved=False, report_type="error")
 
     return await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 
@@ -539,6 +546,9 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 await db.versions.delete_one({"version_id": updated["target_id"]})
         else:
             corrections = updated["corrections"]
+            # Normaliser la saison si elle est corrigée
+            if "season" in corrections:
+                corrections["season"] = normalize_season(corrections["season"])
             if updated["target_type"] == "master_kit":
                 update_fields = {k: v for k, v in corrections.items() if k not in ("kit_id", "_id")}
                 new_club = corrections.get("club")

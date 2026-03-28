@@ -53,6 +53,44 @@ def slugify(text: str) -> str:
     return text.strip("-")
 
 
+# ─── Normalisation saison ─────────────────────────────────────────────────────
+def normalize_season(raw: str) -> str:
+    """
+    Normalise n'importe quel format de saison vers YYYY/YYYY.
+    Exemples :
+      '2025-2026'  → '2025/2026'
+      '2025.2026'  → '2025/2026'
+      '25/26'      → '2025/2026'
+      '2025 2026'  → '2025/2026'
+      '2025/2026'  → '2025/2026' (inchangé)
+      '2025'       → '2025/2026' (saison sur 1 an → on ajoute +1)
+    """
+    if not raw:
+        return raw
+    raw = raw.strip()
+    # Séparateur → on split
+    parts = re.split(r"[\-\./ ]+", raw)
+    if len(parts) == 2:
+        y1, y2 = parts
+        # Format court : 25/26 → 2025/2026
+        if len(y1) == 2:
+            y1 = "20" + y1
+        if len(y2) == 2:
+            y2 = "20" + y2
+        try:
+            return f"{int(y1)}/{int(y2)}"
+        except ValueError:
+            return raw
+    elif len(parts) == 1:
+        # Une seule année : 2025 → 2025/2026
+        try:
+            y = int(parts[0])
+            return f"{y}/{y + 1}"
+        except ValueError:
+            return raw
+    return raw
+
+
 # ─── Teams ─────────────────────────────────────────────────────────────────────
 async def get_or_create_team_by_name(name: str) -> str:
     if not name:
