@@ -1,0 +1,32 @@
+name: Fix Seasons Migration
+
+on:
+  workflow_dispatch:  # Déclenchement manuel uniquement
+
+jobs:
+  fix-seasons:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install motor python-dotenv
+
+      - name: Dry-run
+        env:
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+        run: python fix_seasons.py --dry-run
+
+      - name: Apply migration
+        env:
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+        run: python fix_seasons.py
