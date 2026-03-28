@@ -18,8 +18,35 @@ router = APIRouter(prefix="/api", tags=["kits"])
 MEDIA_BASE_URL = "https://tp-emergent.onrender.com/api/images"
 
 
-def master_kit_image_url(kit_type: str, kit_id: str) -> str:
-    """Reconstruit l'URL Freebox pour un master kit."""
+def master_kit_image_url(kit_type: str, kit_id: str, stored_photo: str = "") -> str:
+    """
+    Retourne l'URL d'image pour un master kit.
+    - Si une image a été uploadée (contribution), on retourne directement cette URL.
+    - Sinon, on reconstruit l'URL Freebox convention (kits importés du CSV).
+    """
+    # Priorité 1 : image uploadée (contribution utilisateur)
+    # On détecte si c'est une URL externe (pas Freebox/API) ou une URL /api/images/uploads/
+    if stored_photo:
+        if stored_photo.startswith("/api/images"):
+            return f"https://tp-emergent.onrender.com{stored_photo}"
+        if stored_photo.startswith("http://82.67.103.45"):
+            import re
+            relative = re.sub(r'^https?://[^/]+', '', stored_photo)
+            return f"{MEDIA_BASE_URL}{relative}"
+        # URL externe (CDN, etc.) ou URL tp-emergent déjà complète
+        if stored_photo.startswith("http"):
+            # Vérification : si c'est déjà une URL Freebox reconstruite (master_kits/photos/master_...jpg)
+            # on ne l'utilise pas comme "uploadée" car elle peut être invalide pour des contributions
+            if "/api/images/uploads/" in stored_photo or "cloudinary" in stored_photo or "amazonaws" in stored_photo:
+                return stored_photo
+            # Pour les URLs /api/images/master_kits/ (CSV import), on la retourne telle quelle
+            if "/api/images/master_kits/" in stored_photo:
+                return stored_photo
+            # Autre URL externe (CDN FKA etc.)
+            if not stored_photo.startswith(f"{MEDIA_BASE_URL}/master_kits/photos/master_"):
+                return stored_photo
+
+    # Priorité 2 : reconstruction URL Freebox (kits importés via CSV)
     if not kit_id:
         return ""
     return f"{MEDIA_BASE_URL}/master_kits/photos/master_{kit_type}_{kit_id}.jpg"
@@ -141,7 +168,7 @@ async def list_master_kits(
     total = await db.master_kits.count_documents(query)
     capped_limit = min(limit, 100)
 
-    # ── Tri ──────────────────────────────────────────────────────────
+    # ── Tri ──────────────────────────────────────────────────────────────────
     ALLOWED_SORT_FIELDS = {"created_at", "season", "avg_rating", "review_count"}
     sort_field = sort_by if sort_by in ALLOWED_SORT_FIELDS else "season"
     sort_dir = -1 if order == "desc" else 1
@@ -158,7 +185,9 @@ async def list_master_kits(
     for kit in kits:
         kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
         kit["kit_type"] = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = master_kit_image_url(kit["kit_type"], kit["kit_id"])
+        kit["front_photo"] = master_kit_image_url(
+            kit["kit_type"], kit["kit_id"], kit.get("front_photo", "")
+        )
         kit["version_count"] = kit.get("version_count", 0)
         kit["avg_rating"] = kit.get("avg_rating", 0.0)
         kit["review_count"] = kit.get("review_count", 0)
@@ -182,7 +211,9 @@ async def get_master_kit(kit_id: str):
         raise HTTPException(status_code=404, detail="Kit not found")
     kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
     kit["kit_type"] = kit.get("kit_type") or kit.get("type", "")
-    kit["front_photo"] = master_kit_image_url(kit["kit_type"], kit["kit_id"])
+    kit["front_photo"] = master_kit_image_url(
+        kit["kit_type"], kit["kit_id"], kit.get("front_photo", "")
+    )
     ca = kit.get("created_at")
     if hasattr(ca, "isoformat"):
         kit["created_at"] = ca.isoformat()
@@ -488,7 +519,9 @@ async def list_versions(
         for k in kits_docs:
             k["kit_id"] = k.get("kit_id") or k.get("id", "")
             k["kit_type"] = k.get("kit_type") or k.get("type", "")
-            k["front_photo"] = master_kit_image_url(k["kit_type"], k["kit_id"])
+            k["front_photo"] = master_kit_image_url(
+                k["kit_type"], k["kit_id"], k.get("front_photo", "")
+            )
             kits_map[k["kit_id"]] = k
 
     result = []
@@ -655,7 +688,9 @@ async def get_version(version_id: str):
     if kit:
         kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
         kit["kit_type"] = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = master_kit_image_url(kit["kit_type"], kit["kit_id"])
+        kit["front_photo"] = master_kit_image_url(
+            kit["kit_type"], kit["kit_id"], kit.get("front_photo", "")
+        )
         version["master_kit"] = kit
     reviews = await db.reviews.find(
         {"version_id": version_id}, {"_id": 0}
@@ -737,7 +772,9 @@ async def _normalize_kit(doc: dict) -> dict:
         return {}
     doc["kit_id"] = doc.get("kit_id") or doc.get("id", "")
     doc["kit_type"] = doc.get("kit_type") or doc.get("type", "")
-    doc["front_photo"] = master_kit_image_url(doc["kit_type"], doc["kit_id"])
+    doc["front_photo"] = master_kit_image_url(
+        doc["kit_type"], doc["kit_id"], doc.get("front_photo", "")
+    )
     doc["avg_rating"] = doc.get("avg_rating", 0.0)
     doc["review_count"] = doc.get("review_count", 0)
     doc["version_count"] = doc.get("version_count", 0)
