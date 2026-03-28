@@ -1,4 +1,4 @@
-import asyncio, csv, os, re, uuid, pathlib
+import asyncio, csv, os, re, hashlib, pathlib
 from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -25,6 +25,14 @@ def slugify(t):
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def stable_id(prefix: str, *parts: str) -> str:
+    """Génère un ID déterministe basé sur le contenu.
+    Même entrée → même ID à chaque import."""
+    key = "|".join(p.strip().lower() for p in parts)
+    h = hashlib.md5(key.encode()).hexdigest()[:12]
+    return f"{prefix}_{h}"
 
 
 def normalize_kit_type(raw: str) -> str:
@@ -113,6 +121,7 @@ async def main():
         await db[col].delete_many({})
 
     # Entités (teams, brands, leagues, sponsors)
+    # IDs déterministes basés sur le nom → stables entre imports
     teams_map, brands_map, leagues_map, sponsors_map = {}, {}, {}, {}
     t_docs, b_docs, l_docs, s_docs = [], [], [], []
 
@@ -125,7 +134,7 @@ async def main():
         ]:
             name = name.strip()
             if name and slugify(name) not in mapping:
-                eid = f"{id_prefix}_{uuid.uuid4().hex[:12]}"
+                eid = stable_id(id_prefix, name)
                 mapping[slugify(name)] = eid
                 docs.append({
                     id_field: eid, "name": name, "slug": slugify(name),
@@ -139,43 +148,46 @@ async def main():
     print(f"✅ {len(t_docs)} teams, {len(b_docs)} brands, {len(l_docs)} leagues, {len(s_docs)} sponsors")
 
     # master_kits + versions
+    # kit_id stable : hash(team + season + type)
+    # version_id stable : hash(team + season + type + "version")
     kit_docs, ver_docs = [], []
     download_tasks = []
 
     for r in unique:
-        kid = f"kit_{uuid.uuid4().hex[:12]}"
-        raw_img  = r.get("img_url", "").strip()
-        raw_src  = r.get("source_url", "").strip()
-        img      = fix_img_url(raw_img)
-        src_url  = fix_img_url(raw_src)
-        kit_type = normalize_kit_type(r["type"].strip())
+        kit_type     = normalize_kit_type(r["type"].strip())
+        kid          = stable_id("kit",  r["team"], r["season"], r["type"])
+        vid          = stable_id("ver",  r["team"], r["season"], r["type"], "version")
+        raw_img      = r.get("img_url", "").strip()
+        raw_src      = r.get("source_url", "").strip()
+        img          = fix_img_url(raw_img)
+        src_url      = fix_img_url(raw_src)
         sponsor_name = r.get("sponsor", "").strip()
 
         kit_docs.append({
-            "kit_id":      kid,
-            "club":        r["team"].strip(),
-            "team_id":     teams_map.get(slugify(r["team"]), ""),
-            "season":      r["season"].strip(),
-            "kit_type":    kit_type,
-            "design":      r.get("design", "").strip(),
-            "colors":      r.get("colors", "").strip(),
-            "brand":       r["brand"].strip(),
-            "brand_id":    brands_map.get(slugify(r["brand"]), ""),
-            "sponsor":     sponsor_name,
-            "sponsor_id":  sponsors_map.get(slugify(sponsor_name), "") if sponsor_name else "",
-            "league":      r["league"].strip(),
-            "league_id":   leagues_map.get(slugify(r["league"]), ""),
-            "front_photo": img,
-            "img_url":     img,
-            "source_url":  src_url,
-            "gender":      "Male",
-            "avg_rating":  0.0,
+            "kit_id":       kid,
+            "club":         r["team"].strip(),
+            "team_id":      teams_map.get(slugify(r["team"]), ""),
+            "season":       r["season"].strip(),
+            "kit_type":     kit_type,
+            "design":       r.get("design", "").strip(),
+            "colors":       r.get("colors", "").strip(),
+            "brand":        r["brand"].strip(),
+            "brand_id":     brands_map.get(slugify(r["brand"]), ""),
+            "sponsor":      sponsor_name,
+            "sponsor_id":   sponsors_map.get(slugify(sponsor_name), "") if sponsor_name else "",
+            "league":       r["league"].strip(),
+            "league_id":    leagues_map.get(slugify(r["league"]), ""),
+            "front_photo":  img,
+            "img_url":      img,
+            "source_url":   src_url,
+            "gender":       "Male",
+            "avg_rating":   0.0,
             "review_count": 0,
             "version_count": 1,
-            "created_at":  now_iso(),
+            "created_at":   now_iso(),
         })
         ver_docs.append({
-            "version_id":   f"ver_{uuid.uuid4().hex[:12]}",
+            "version_id":   vid,
             "kit_id":       kid,
             "competition":  "National Championship",
             "model":        "Replica",
