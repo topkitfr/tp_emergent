@@ -43,10 +43,75 @@ const RedirectWithId = ({ to }) => {
   return <Navigate to={`${to}/${id}`} replace />;
 };
 
+// Composant interne : rendu après BrowserRouter + providers
+function AppContent() {
+  const [betaUnlocked, setBetaUnlocked] = useState(false);
+
+  if (BETA_ENABLED && !betaUnlocked) {
+    return <BetaGate onAccess={() => setBetaUnlocked(true)} />;
+  }
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        <Route element={<Layout />}>
+          {/* ── Navigation principale ── */}
+          <Route path="/browse" element={<Browse />} />
+          <Route path="/kit/:kitId" element={<KitDetail />} />
+          <Route path="/version/:versionId" element={<VersionDetail />} />
+
+          {/* ── Database — Teams ── */}
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/teams/:id" element={<TeamDetail />} />
+
+          {/* ── Database — Leagues ── */}
+          <Route path="/leagues" element={<Leagues />} />
+          <Route path="/leagues/:id" element={<LeagueDetail />} />
+          <Route path="/database/leagues" element={<Navigate to="/leagues" replace />} />
+          <Route path="/database/leagues/:id" element={<RedirectWithId to="/leagues" />} />
+
+          {/* ── Database — Brands ── */}
+          <Route path="/brands" element={<Brands />} />
+          <Route path="/brands/:id" element={<BrandDetail />} />
+          <Route path="/database/brands" element={<Navigate to="/brands" replace />} />
+          <Route path="/database/brands/:id" element={<RedirectWithId to="/brands" />} />
+
+          {/* ── Database — Players ── */}
+          <Route path="/players" element={<Players />} />
+          <Route path="/players/:id" element={<PlayerDetail />} />
+
+          {/* ── Database — Sponsors ── */}
+          <Route path="/sponsors" element={<Sponsors />} />
+          <Route path="/sponsors/:id" element={<SponsorDetail />} />
+          <Route path="/database/sponsors" element={<Navigate to="/sponsors" replace />} />
+          <Route path="/database/sponsors/:id" element={<RedirectWithId to="/sponsors" />} />
+
+          {/* ── Pages protégées ── */}
+          <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+          <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
+          <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile/:username" element={<Profile />} />
+          <Route path="/admin" element={<ProtectedRoute requireRole="moderator"><AdminPanel /></ProtectedRoute>} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <Toaster position="bottom-right" theme="dark" />
+    </>
+  );
+}
+
 function App() {
   const [maintenance, setMaintenance] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [betaUnlocked, setBetaUnlocked] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/admin/maintenance`, { credentials: "include" })
@@ -59,68 +124,13 @@ function App() {
   if (checking) return null;
   if (maintenance) return <MaintenancePage />;
 
-  // Afficher la BetaGate si activée et pas encore déverrouillée
-  if (BETA_ENABLED && !betaUnlocked) {
-    return <BetaGate onAccess={() => setBetaUnlocked(true)} />;
-  }
-
+  // ✅ BetaGate est maintenant DANS BrowserRouter + providers
   return (
     <div className="noise-overlay">
       <BrowserRouter>
         <AuthProvider>
           <NotificationProvider>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-
-              <Route element={<Layout />}>
-                {/* ── Navigation principale ── */}
-                <Route path="/browse" element={<Browse />} />
-                <Route path="/kit/:kitId" element={<KitDetail />} />
-                <Route path="/version/:versionId" element={<VersionDetail />} />
-
-                {/* ── Database — Teams ── */}
-                <Route path="/teams" element={<Teams />} />
-                <Route path="/teams/:id" element={<TeamDetail />} />
-
-                {/* ── Database — Leagues ── */}
-                <Route path="/leagues" element={<Leagues />} />
-                <Route path="/leagues/:id" element={<LeagueDetail />} />
-                <Route path="/database/leagues" element={<Navigate to="/leagues" replace />} />
-                <Route path="/database/leagues/:id" element={<RedirectWithId to="/leagues" />} />
-
-                {/* ── Database — Brands ── */}
-                <Route path="/brands" element={<Brands />} />
-                <Route path="/brands/:id" element={<BrandDetail />} />
-                <Route path="/database/brands" element={<Navigate to="/brands" replace />} />
-                <Route path="/database/brands/:id" element={<RedirectWithId to="/brands" />} />
-
-                {/* ── Database — Players ── */}
-                <Route path="/players" element={<Players />} />
-                <Route path="/players/:id" element={<PlayerDetail />} />
-
-                {/* ── Database — Sponsors ── */}
-                <Route path="/sponsors" element={<Sponsors />} />
-                <Route path="/sponsors/:id" element={<SponsorDetail />} />
-                <Route path="/database/sponsors" element={<Navigate to="/sponsors" replace />} />
-                <Route path="/database/sponsors/:id" element={<RedirectWithId to="/sponsors" />} />
-
-                {/* ── Pages protégées ── */}
-                <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
-                <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-                <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
-                <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/admin" element={<ProtectedRoute requireRole="moderator"><AdminPanel /></ProtectedRoute>} />
-              </Route>
-
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-            <Toaster position="bottom-right" theme="dark" />
+            <AppContent />
           </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
