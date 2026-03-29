@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 
 // Codes d'accès beta valides — à modifier selon tes besoins
 const VALID_CODES = [
-  'TOPKIT2025',
-  'BETA-KIT',
-  'TK-TESTER',
-  'TOPKIT-BETA',
-  'KITBETA01',
+  'BETAKIT',
+  'TKTESTER',
+  'MEXES',
+  'KITBETA26',
 ];
 
 export default function BetaGate({ onAccess }) {
