@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-const API_URL = process.env.REACT_APP_API_URL || '';
-
 export default function BetaGate({ onAccess }) {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +18,7 @@ export default function BetaGate({ onAccess }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/beta/verify`, {
+      const res = await fetch('/api/beta/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: code.trim() }),
@@ -28,7 +26,7 @@ export default function BetaGate({ onAccess }) {
 
       if (res.ok) {
         setSuccess(true);
-        setTimeout(() => onAccess(), 900);
+        setTimeout(() => onAccess(), 800);
       } else {
         setError('Code invalide. Verifie ton invitation.');
         setShake(true);
@@ -48,7 +46,6 @@ export default function BetaGate({ onAccess }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-6">
-
         {/* Logo */}
         <div className="flex justify-center">
           <span className="text-2xl font-bold tracking-tight">Topkit</span>
@@ -66,7 +63,7 @@ export default function BetaGate({ onAccess }) {
         <div className="text-center space-y-1 border-t border-border pt-6">
           <h1 className="text-xl font-semibold">Acces sur invitation</h1>
           <p className="text-sm text-muted-foreground">
-            Topkit est en periode de test ferme. Entre ton code d'invitation pour acceder a la plateforme.
+            Topkit est en periode de test ferme. Entre ton code d&apos;invitation pour acceder a la plateforme.
           </p>
         </div>
 
@@ -74,7 +71,7 @@ export default function BetaGate({ onAccess }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <label htmlFor="beta-code" className="text-sm font-medium">
-              Code d'acces
+              Code d&apos;acces
             </label>
             <Input
               ref={inputRef}
@@ -131,7 +128,7 @@ export default function BetaGate({ onAccess }) {
         {/* Footer */}
         <div className="text-center space-y-1 border-t border-border pt-4">
           <p className="text-xs text-muted-foreground">
-            Tu n'as pas de code ?{' '}
+            Tu n&apos;as pas de code ?{' '}
             <Link to="mailto:contact@topkit.app" className="underline underline-offset-2">
               Demande une invitation
             </Link>
@@ -140,7 +137,6 @@ export default function BetaGate({ onAccess }) {
             topkit.app &middot; beta privee &middot; {new Date().getFullYear()}
           </p>
         </div>
-
       </div>
     </div>
   );
