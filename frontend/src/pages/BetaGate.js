@@ -3,13 +3,7 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-// Codes d'accès beta valides — à modifier selon tes besoins
-const VALID_CODES = [
-  'BETAKIT',
-  'TKTESTER',
-  'MEXES',
-  'KITBETA26',
-];
+const API_URL = process.env.REACT_APP_API_URL || '';
 
 export default function BetaGate({ onAccess }) {
   const [code, setCode] = useState('');
@@ -19,19 +13,24 @@ export default function BetaGate({ onAccess }) {
   const [shake, setShake] = useState(false);
   const inputRef = useRef(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || success) return;
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      const trimmed = code.trim().toUpperCase();
-      if (VALID_CODES.includes(trimmed)) {
+    try {
+      const res = await fetch(`${API_URL}/api/beta/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim() }),
+      });
+
+      if (res.ok) {
         setSuccess(true);
         setTimeout(() => onAccess(), 900);
       } else {
-        setError('Code invalide. Vérifie ton invitation.');
+        setError('Code invalide. Verifie ton invitation.');
         setShake(true);
         setTimeout(() => {
           setShake(false);
@@ -39,57 +38,43 @@ export default function BetaGate({ onAccess }) {
           inputRef.current?.select();
         }, 600);
       }
+    } catch {
+      setError('Erreur reseau. Reessaie.');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm space-y-6">
 
         {/* Logo */}
-        <div className="mb-10 text-center">
-          <Link to="/">
-            <img
-              src="/topkit-logo.png"
-              alt="Topkit"
-              className="h-8 object-contain mx-auto"
-            />
-          </Link>
+        <div className="flex justify-center">
+          <span className="text-2xl font-bold tracking-tight">Topkit</span>
         </div>
 
         {/* Badge beta */}
-        <div className="flex items-center gap-2 mb-5">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase px-2 py-1 border border-border text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-pulse" />
-            Bêta privée
+        <div className="flex justify-center">
+          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-border bg-muted text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+            Beta privee
           </span>
         </div>
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-lg font-semibold text-foreground leading-snug">
-            Accès sur invitation
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-            Topkit est en période de test fermé. Entre ton code d'invitation pour accéder à la plateforme.
+        <div className="text-center space-y-1 border-t border-border pt-6">
+          <h1 className="text-xl font-semibold">Acces sur invitation</h1>
+          <p className="text-sm text-muted-foreground">
+            Topkit est en periode de test ferme. Entre ton code d'invitation pour acceder a la plateforme.
           </p>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-border mb-6" />
-
         {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className={`space-y-4 transition-all ${shake ? 'animate-shake' : ''}`}
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label
-              htmlFor="beta-code"
-              className="text-xs text-muted-foreground uppercase tracking-wider"
-            >
-              Code d'accès
+            <label htmlFor="beta-code" className="text-sm font-medium">
+              Code d'acces
             </label>
             <Input
               ref={inputRef}
@@ -107,7 +92,7 @@ export default function BetaGate({ onAccess }) {
                   : error
                   ? 'border-red-400'
                   : ''
-              }`}
+              } ${shake ? 'animate-shake' : ''}`}
               autoFocus
               autoComplete="off"
               spellCheck={false}
@@ -118,56 +103,41 @@ export default function BetaGate({ onAccess }) {
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-500 mt-0.5 shrink-0">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p className="text-sm text-red-500">{error}</p>
-            </div>
+            <p className="text-sm text-red-500 flex items-center gap-1.5">
+              <span>&#x26A0;</span>
+              {error}
+            </p>
           )}
 
           {/* Success */}
           {success && (
-            <div className="flex items-center gap-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-500 shrink-0">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <p className="text-sm text-green-600 font-medium">Code valide — accès en cours...</p>
-            </div>
+            <p className="text-sm text-green-600 flex items-center gap-1.5">
+              <span>&#x2713;</span>
+              Code valide - acces en cours...
+            </p>
           )}
 
           <Button
             type="submit"
-            className={`w-full rounded-none transition-all ${
-              success
-                ? 'bg-green-600 hover:bg-green-600 text-white cursor-default'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'
+            className={`w-full rounded-none ${
+              success ? 'bg-green-600 hover:bg-green-700' : ''
             }`}
-            disabled={loading || !code.trim() || success}
+            disabled={loading || success}
           >
-            {success
-              ? 'Accès accordé ✓'
-              : loading
-              ? 'Vérification...'
-              : 'Accéder au site'}
+            {success ? 'Acces accorde \u2713' : loading ? 'Verification...' : 'Acceder au site'}
           </Button>
         </form>
 
         {/* Footer */}
-        <div className="mt-8 space-y-3 text-center">
+        <div className="text-center space-y-1 border-t border-border pt-4">
           <p className="text-xs text-muted-foreground">
             Tu n'as pas de code ?{' '}
-            <a
-              href="mailto:contact@topkit.app"
-              className="hover:text-foreground transition-colors underline underline-offset-2"
-            >
+            <Link to="mailto:contact@topkit.app" className="underline underline-offset-2">
               Demande une invitation
-            </a>
+            </Link>
           </p>
-          <p className="text-xs text-muted-foreground/60">
-            topkit.app · bêta privée · {new Date().getFullYear()}
+          <p className="text-xs text-muted-foreground">
+            topkit.app &middot; beta privee &middot; {new Date().getFullYear()}
           </p>
         </div>
 
