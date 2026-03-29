@@ -95,7 +95,7 @@ export default function BetaGate({ onAccess }) {
               ref={inputRef}
               id="beta-code"
               type="text"
-              placeholder="ex : TOPKIT2025"
+              placeholder=""
               value={code}
               onChange={(e) => {
                 setCode(e.target.value);
