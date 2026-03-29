@@ -25,6 +25,7 @@ from .routers.proxy import router as proxy_router
 from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
+from .routers.beta import router as beta_router
 from .middleware import maintenance_middleware
 
 
@@ -168,7 +169,8 @@ app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(admin_panel_router)
 app.include_router(proxy_router, prefix="/api")
-app.include_router(notifications_router)
+app.include_router(notifications_router) 
+app.include_router(beta_router)
 
 
 @app.on_event("startup")
