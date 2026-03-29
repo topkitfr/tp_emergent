@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import BetaGate from "@/pages/BetaGate";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -34,7 +35,9 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
-// Composants redirect qui lisent le vrai :id depuis useParams
+// Activer ou désactiver la beta gate ici
+const BETA_ENABLED = true;
+
 const RedirectWithId = ({ to }) => {
   const { id } = useParams();
   return <Navigate to={`${to}/${id}`} replace />;
@@ -43,6 +46,7 @@ const RedirectWithId = ({ to }) => {
 function App() {
   const [maintenance, setMaintenance] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [betaUnlocked, setBetaUnlocked] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/admin/maintenance`, { credentials: "include" })
@@ -54,6 +58,11 @@ function App() {
 
   if (checking) return null;
   if (maintenance) return <MaintenancePage />;
+
+  // Afficher la BetaGate si activée et pas encore déverrouillée
+  if (BETA_ENABLED && !betaUnlocked) {
+    return <BetaGate onAccess={() => setBetaUnlocked(true)} />;
+  }
 
   return (
     <div className="noise-overlay">
