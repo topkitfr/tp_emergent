@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { User, Heart } from 'lucide-react';
 import { proxyImageUrl } from '@/lib/api';
 
-// ── Config couleurs par note ───────────────────────────────────────────────
+// ── Couleurs du cadre selon la note Aura ──────────────────────────────────
 const TIER = {
   0: { border: '#3f3f46', glow: 'rgba(63,63,70,0)',     bg: '#18181b' },
   1: { border: '#7B3F1A', glow: 'rgba(139,69,19,0.5)',  bg: '#1c1008' },
@@ -33,17 +33,6 @@ function resolveAuraStars(player) {
   return 0;
 }
 
-function resolveImageUrl(player) {
-  const raw =
-    player.image_url    ?? player.photo_url   ?? player.photo      ??
-    player.picture      ?? player.img         ?? player.img_url    ??
-    player.avatar       ?? player.avatar_url  ?? player.headshot   ??
-    player.headshot_url ?? player.thumbnail   ?? player.profile_image ??
-    player.profile_picture ?? '';
-  if (!raw) return '';
-  try { return proxyImageUrl(raw); } catch { return raw; }
-}
-
 export default function PlayerCard({ player, isFollowed = false, onFollowToggle }) {
   const [followLoading, setFollowLoading] = useState(false);
 
@@ -51,12 +40,20 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
   const playerSlug = player.slug       ?? player.player_slug ?? playerId;
   const playerName =
     player.name         ?? player.player_name  ??
-    player.full_name    ?? player.display_name ?? 'Joueur inconnu';
+    player.full_name    ?? player.display_name ?? 'Unknown';
   const nationality = player.nationality ?? player.country ?? '';
   const position    = player.position   ?? player.role    ?? player.poste ?? '';
-  const imageUrl    = resolveImageUrl(player);
-  const stars       = resolveAuraStars(player);
-  const tier        = TIER[stars] ?? TIER[0];
+
+  // Même logique que JerseyCard : proxyImageUrl direct sur le champ image
+  const rawImage =
+    player.image_url    ?? player.photo_url   ?? player.photo      ??
+    player.picture      ?? player.img         ?? player.img_url    ??
+    player.avatar       ?? player.avatar_url  ?? player.headshot   ??
+    player.profile_image ?? '';
+  const imageUrl = rawImage ? proxyImageUrl(rawImage) : '';
+
+  const stars = resolveAuraStars(player);
+  const tier  = TIER[stars] ?? TIER[0];
 
   const handleFollow = useCallback(async (e) => {
     e.preventDefault();
@@ -68,132 +65,107 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
   }, [playerId, isFollowed, onFollowToggle, followLoading]);
 
   return (
-    <Link
-      to={`/players/${playerSlug}`}
-      className="group block focus:outline-none"
-      style={{ textDecoration: 'none' }}
-    >
+    <Link to={`/players/${playerSlug}`} data-testid={`player-card-${playerId}`}>
       <div
+        className="relative overflow-hidden group hover:-translate-y-1"
         style={{
-          position: 'relative',
           aspectRatio: '2 / 3',
-          borderRadius: 8,
-          overflow: 'hidden',
           border: `3px solid ${tier.border}`,
           boxShadow: `0 0 12px ${tier.glow}, 0 3px 10px rgba(0,0,0,0.5)`,
           background: tier.bg,
-          transition: 'transform 0.16s ease, box-shadow 0.18s ease',
+          borderRadius: 8,
+          transition: 'transform 0.3s ease, box-shadow 0.2s ease',
         }}
-        className="hover:scale-[1.03]"
       >
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt={playerName}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'top center',
-              display: 'block',
-            }}
-          />
-        )}
-        {!imageUrl && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: tier.bg,
-          }}>
-            <User size={40} color="#52525b" />
-          </div>
-        )}
+        {/* ── Photo ───────────────────────────────────────────── */}
+        <div className="absolute inset-0">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={playerName}
+              className="w-full h-full object-cover object-top group-hover:scale-105"
+              style={{ transition: 'transform 0.5s ease' }}
+              loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <User className="w-10 h-10 text-zinc-600" />
+            </div>
+          )}
+        </div>
 
-        {/* Bandeau haut : étoiles + cœur */}
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '5px 6px',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 100%)',
-          zIndex: 3,
-        }}>
-          <span style={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, userSelect: 'none' }}>
+        {/* ── Bandeau haut : étoiles + follow ─────────────────── */}
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center justify-between px-1.5 py-1"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)',
+            zIndex: 2,
+          }}
+        >
+          {/* Étoiles Aura */}
+          <span className="text-[11px] leading-none select-none" style={{ letterSpacing: 1 }}>
             {Array.from({ length: 5 }, (_, i) => (
-              <span key={i} style={{ color: i < stars ? tier.border : 'rgba(255,255,255,0.25)' }}>
+              <span key={i} style={{ color: i < stars ? tier.border : 'rgba(255,255,255,0.2)' }}>
                 {i < stars ? '★' : '☆'}
               </span>
             ))}
           </span>
 
+          {/* Follow */}
           {onFollowToggle && (
             <button
               onClick={handleFollow}
               disabled={followLoading}
               aria-label={isFollowed ? 'Ne plus suivre' : 'Suivre'}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '2px',
-                cursor: followLoading ? 'wait' : 'pointer',
-                lineHeight: 1,
-                opacity: followLoading ? 0.5 : 1,
-                transition: 'transform 0.15s ease',
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              className="p-0.5 transition-transform hover:scale-125"
+              style={{ background: 'none', border: 'none', cursor: followLoading ? 'wait' : 'pointer' }}
             >
               <Heart
-                size={14}
+                size={13}
                 fill={isFollowed ? '#ef4444' : 'none'}
-                stroke={isFollowed ? '#ef4444' : 'rgba(255,255,255,0.8)'}
+                stroke={isFollowed ? '#ef4444' : 'rgba(255,255,255,0.75)'}
                 strokeWidth={2}
               />
             </button>
           )}
         </div>
 
-        {/* Bandeau blanc bas style Panini */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0, left: 0, right: 0,
-          background: '#ffffff',
-          borderTop: `2px solid ${tier.border}`,
-          padding: '4px 6px 5px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          zIndex: 2,
-        }}>
-          <span style={{
-            color: '#111',
-            fontWeight: 800,
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: '0.7px',
-            lineHeight: 1.2,
-            textAlign: 'center',
-            width: '100%',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
+        {/* ── Bandeau blanc bas style Panini ──────────────────── */}
+        <div
+          className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
+          style={{
+            background: '#ffffff',
+            borderTop: `2px solid ${tier.border}`,
+            padding: '4px 6px 5px',
+            zIndex: 2,
+          }}
+        >
+          <span
+            className="w-full text-center truncate"
+            style={{
+              color: '#111',
+              fontWeight: 800,
+              fontSize: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '0.7px',
+              lineHeight: 1.2,
+              fontFamily: 'Barlow Condensed, sans-serif',
+            }}
+          >
             {playerName}
           </span>
           {(position || nationality) && (
-            <span style={{
-              color: '#555',
-              fontSize: 8,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              lineHeight: 1,
-            }}>
+            <span
+              style={{
+                color: '#666',
+                fontSize: 8,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                lineHeight: 1,
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >
               {[position, nationality].filter(Boolean).join(' · ')}
             </span>
           )}
