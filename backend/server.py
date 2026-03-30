@@ -8,7 +8,7 @@ import logging
 import time
 from collections import defaultdict
 
-from database import db, client
+from .database import db, client  # ← CORRIGÉ : import relatif
 
 from .routers.beta import router as beta_router
 from .routers.auth import router as auth_router
@@ -26,7 +26,6 @@ from .routers.proxy import router as proxy_router
 from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
-from .routers.beta import router as beta_router
 from .middleware import maintenance_middleware
 
 
@@ -59,7 +58,7 @@ async def health():
     return {"status": "ok"}
 
 
-# ─── CORS en PREMIER ──────────────────────────────────────────────────────────────
+# ─── CORS en PREMIER ─────────────────────────────────────────────────────────
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
     "http://localhost:3000,http://127.0.0.1:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
@@ -74,11 +73,11 @@ app.add_middleware(
 )
 
 
-# ─── Maintenance Middleware ──────────────────────────────────────────────────────────
+# ─── Maintenance Middleware ───────────────────────────────────────────────────
 app.middleware("http")(maintenance_middleware)
 
 
-# ─── Rate Limiting (simple in-memory) ───────────────────────────────────────────────
+# ─── Rate Limiting (simple in-memory) ────────────────────────────────────────
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
@@ -121,7 +120,7 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# ─── Security Headers + CORS sur erreurs 500 ────────────────────────────────────
+# ─── Security Headers + CORS sur erreurs 500 ─────────────────────────────────
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
     try:
@@ -156,6 +155,7 @@ async def security_headers_middleware(request: Request, call_next):
 
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
+# ─── Routers ─────────────────────────────────────────────────────────────────
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(user_lists_router)
@@ -170,9 +170,9 @@ app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(admin_panel_router)
 app.include_router(proxy_router, prefix="/api")
-app.include_router(notifications_router) 
-app.include_router(beta_router)
-app.include_router(beta_router, prefix="/api/beta", tags=["beta"])
+app.include_router(notifications_router)
+app.include_router(beta_router, prefix="/api/beta", tags=["beta"])  # ← CORRIGÉ : une seule fois, avec prefix
+
 
 @app.on_event("startup")
 async def create_indexes():
