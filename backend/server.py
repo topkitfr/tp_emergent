@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from database import db, client
 
-
+from .routers.beta import router as beta_router
 from .routers.auth import router as auth_router
 from .routers.kits import router as kits_router
 from .routers.collections import router as collections_router
