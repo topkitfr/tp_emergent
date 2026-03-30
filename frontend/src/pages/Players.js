@@ -6,6 +6,7 @@ import EntityListPage from '@/components/EntityListPage';
 import AddEntityDialog from '@/components/AddEntityDialog';
 import Pagination from '@/components/Pagination';
 import PlayerCard from '@/components/ui/playerscard';
+import './Players.css';
 
 const PAGE_SIZE = 48;
 
