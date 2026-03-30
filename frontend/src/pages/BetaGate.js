@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+
+const BETA_STORAGE_KEY = 'topkit_beta_validated';
 
 export default function BetaGate({ onAccess }) {
   const [code, setCode] = useState('');
@@ -10,6 +12,13 @@ export default function BetaGate({ onAccess }) {
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
   const inputRef = useRef(null);
+
+  // ← Vérifie localStorage au montage : si déjà validé, on bypasse direct
+  useEffect(() => {
+    if (localStorage.getItem(BETA_STORAGE_KEY) === 'true') {
+      onAccess();
+    }
+  }, [onAccess]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +34,7 @@ export default function BetaGate({ onAccess }) {
       });
 
       if (res.ok) {
+        localStorage.setItem(BETA_STORAGE_KEY, 'true'); // ← Sauvegarde
         setSuccess(true);
         setTimeout(() => onAccess(), 800);
       } else {
