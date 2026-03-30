@@ -101,31 +101,31 @@ export const uploadImage = (file, folder = 'master_kit', entityId = null, side =
 };
 
 // User Profile
-export const getUserProfile            = (userId)   => api.get(`/users/${userId}/profile`);
-export const getUserByUsername         = (username) => api.get(`/users/by-username/${username}`);
-export const updateProfile             = (data)     => api.put('/users/profile', data);
-export const updateCredentials         = (data)     => api.put('/users/credentials', data);
-export const getUserBadges             = ()         => api.get('/users/profile/badges');
-export const followEntity              = (data)     => api.post('/users/follow', data);
-export const unfollowEntity            = (data)     => api.delete('/users/follow', { data });
-export const getFollows                = ()         => api.get('/users/follows');
-export const isFollowing               = (type, id) => api.get(`/users/follows/${type}/${id}`);
-export const votePlayerAura            = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
-export const getPlayerAura             = (playerId) => api.get(`/players/${playerId}/aura`);
+export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`);
+export const getUserByUsername = (username) => api.get(`/users/by-username/${username}`);
+export const updateProfile = (data) => api.put('/users/profile', data);
+export const updateCredentials = (data) => api.put('/users/credentials', data);
+export const getUserBadges = () => api.get('/users/profile/badges');
+export const followEntity = (data) => api.post('/users/follow', data);
+export const unfollowEntity = (data) => api.delete('/users/follow', { data });
+export const getFollows = () => api.get('/users/follows');
+export const isFollowing = (type, id) => api.get(`/users/follows/${type}/${id}`);
+export const votePlayerAura = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
+export const getPlayerAura = (playerId) => api.get(`/players/${playerId}/aura`);
 
 // Profils publics tiers
-export const getUserPublicCollection   = (userId)   => api.get(`/users/${userId}/public-collection`);
-export const getUserPublicSubmissions  = (userId)   => api.get(`/users/${userId}/public-submissions`);
-export const getUserPublicFollows      = (userId)   => api.get(`/users/${userId}/public-follows`);
+export const getUserPublicCollection = (userId) => api.get(`/users/${userId}/public-collection`);
+export const getUserPublicSubmissions = (userId) => api.get(`/users/${userId}/public-submissions`);
+export const getUserPublicFollows = (userId) => api.get(`/users/${userId}/public-follows`);
 
 // ── Listes personnalisées ────────────────────────────────────────────────────
-export const getUserLists       = ()                      => api.get('/lists');
-export const getListDetail      = (listId)                => api.get(`/lists/${listId}`);
-export const createList         = (data)                  => api.post('/lists', data);
-export const updateList         = (listId, data)          => api.patch(`/lists/${listId}`, data);
-export const deleteList         = (listId)                => api.delete(`/lists/${listId}`);
-export const addItemToList      = (listId, collectionId)  => api.post(`/lists/${listId}/items`, { collection_id: collectionId });
-export const removeItemFromList = (listId, collectionId)  => api.delete(`/lists/${listId}/items/${collectionId}`);
+export const getUserLists = () => api.get('/lists');
+export const getListDetail = (listId) => api.get(`/lists/${listId}`);
+export const createList = (data) => api.post('/lists', data);
+export const updateList = (listId, data) => api.patch(`/lists/${listId}`, data);
+export const deleteList = (listId) => api.delete(`/lists/${listId}`);
+export const addItemToList = (listId, collectionId) => api.post(`/lists/${listId}/items`, { collection_id: collectionId });
+export const removeItemFromList = (listId, collectionId) => api.delete(`/lists/${listId}/items/${collectionId}`);
 
 // Submissions
 export const createSubmission = (data) => api.post('/submissions', data);
@@ -168,16 +168,20 @@ export const createBrand = (data) => api.post('/brands', data);
 export const updateBrand = (id, data) => api.put(`/brands/${id}`, data);
 
 // Sponsors
-export const getSponsors    = (params) => api.get('/sponsors', { params });
-export const getSponsor     = (id)     => api.get(`/sponsors/${id}`);
-export const getSponsorKits = (slug)   => api.get(`/sponsors/${slug}/kits`);
+export const getSponsors = (params) => api.get('/sponsors', { params });
+export const getSponsor = (id) => api.get(`/sponsors/${id}`);
+export const getSponsorKits = (slug) => api.get(`/sponsors/${slug}/kits`);
 
 // Players
-export const getPlayers    = (params) => api.get('/players', { params });
-export const getPlayer     = (id)     => api.get(`/players/${id}`);
-export const getPlayerKits = (slug)   => api.get(`/players/${slug}/kits`);
-export const createPlayer  = (data)   => api.post('/players', data);
-export const updatePlayer  = (id, data) => api.put(`/players/${id}`, data);
+export const getPlayers = (params) => api.get('/players', { params });
+export const getPlayer = (id) => api.get(`/players/${id}`);
+export const getPlayerKits = (slug) => api.get(`/players/${slug}/kits`);
+export const createPlayer = (data) => api.post('/players', data);
+export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
+export const togglePlayerFollow = (playerId, followed) =>
+  followed
+    ? followEntity({ entity_type: 'player', entity_id: playerId })
+    : unfollowEntity({ entity_type: 'player', entity_id: playerId });
 
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
