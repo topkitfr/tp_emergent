@@ -1,6 +1,6 @@
 // frontend/src/pages/Players.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { getPlayers, followEntity, unfollowEntity } from '@/lib/api';
+import { getPlayers, togglePlayerFollow } from '@/lib/api';
 import { User } from 'lucide-react';
 import EntityListPage from '@/components/EntityListPage';
 import AddEntityDialog from '@/components/AddEntityDialog';
@@ -23,13 +23,16 @@ export default function Players() {
 
   const fetchPlayers = useCallback(async () => {
     setLoading(true);
+
     try {
       const params = {
         skip: (page - 1) * PAGE_SIZE,
         limit: PAGE_SIZE,
       };
 
-      if (search) params.search = search;
+      if (search) {
+        params.search = search;
+      }
 
       const res = await getPlayers(params);
       const data = res.data;
@@ -43,11 +46,12 @@ export default function Players() {
           (p) => p.status !== 'rejected'
         );
         setPlayers(filtered);
-        setTotal(data.total ?? 0);
+        setTotal(data.total ?? filtered.length);
       }
     } catch (error) {
-      // Option : log ou futur système de notification global
-      console.error('Impossible de charger les joueurs', error);
+      console.error('Failed to load players:', error);
+      setPlayers([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -58,45 +62,41 @@ export default function Players() {
   }, [fetchPlayers]);
 
   const handleFollowToggle = useCallback(async (playerId, nextFollowed) => {
-    let rollbackPlayer = null;
+    let previousPlayer = null;
 
-    // Optimistic UI
     setPlayers((prev) =>
       prev.map((player) => {
         const currentId = player.player_id || player._id;
+
         if (currentId === playerId) {
-          rollbackPlayer = player;
+          previousPlayer = player;
           return {
             ...player,
             is_followed: nextFollowed,
             followed: nextFollowed,
           };
         }
+
         return player;
       })
     );
 
     try {
-      const payload = { type: 'player', id: playerId };
-
-      if (nextFollowed) {
-        await followEntity(payload);
-      } else {
-        await unfollowEntity(payload);
-      }
+      await togglePlayerFollow(playerId, nextFollowed);
     } catch (error) {
-      // rollback en cas d’erreur
+      console.error('Failed to update player follow state:', error);
+
       setPlayers((prev) =>
         prev.map((player) => {
           const currentId = player.player_id || player._id;
-          if (currentId === playerId && rollbackPlayer) {
-            return rollbackPlayer;
+
+          if (currentId === playerId && previousPlayer) {
+            return previousPlayer;
           }
+
           return player;
         })
       );
-
-      console.error('Impossible de mettre à jour le suivi', error);
     }
   }, []);
 
