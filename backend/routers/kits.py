@@ -171,7 +171,7 @@ async def list_master_kits(
     # ── Tri ──────────────────────────────────────────────────────────────────
     ALLOWED_SORT_FIELDS = {"created_at", "season", "avg_rating", "review_count"}
     sort_field = sort_by if sort_by in ALLOWED_SORT_FIELDS else "season"
-    sort_dir = -1 if order == "desc" else 1
+    sort_dir = 1 if order == "asc" else -1
 
     kits = (
         await db.master_kits.find(query, {"_id": 0})
@@ -486,8 +486,8 @@ async def list_versions(
             ]
 
         matching_kits = await db.master_kits.find(
-            kit_query, {"_id": 0, "kit_id": 1}
-        ).to_list(2000)
+            kit_query, {"_id": 0, "kit_id": 1, "season": 1}
+        ).sort("season", -1).to_list(2000)
         kit_ids = [k["kit_id"] for k in matching_kits]
 
         if not kit_ids:
