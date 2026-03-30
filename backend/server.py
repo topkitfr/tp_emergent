@@ -172,7 +172,7 @@ app.include_router(admin_panel_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router) 
 app.include_router(beta_router)
-
+app.include_router(beta_router, prefix="/api/beta", tags=["beta"])
 
 @app.on_event("startup")
 async def create_indexes():
