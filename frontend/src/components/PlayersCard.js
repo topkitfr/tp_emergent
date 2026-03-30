@@ -1,4 +1,4 @@
-// frontend/src/components/ui/playerscard.jsx
+// frontend/src/components/PlayerCard.js
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Heart } from 'lucide-react';
@@ -86,7 +86,6 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
         }}
         className="hover:scale-[1.03]"
       >
-        {/* ── Photo full-bleed ─────────────────────────────────── */}
         {imageUrl && (
           <img
             src={imageUrl}
@@ -113,7 +112,7 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           </div>
         )}
 
-        {/* ── Bandeau haut : étoiles à gauche, cœur follow à droite ─ */}
+        {/* Bandeau haut : étoiles + cœur */}
         <div style={{
           position: 'absolute',
           top: 0, left: 0, right: 0,
@@ -124,7 +123,6 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 100%)',
           zIndex: 3,
         }}>
-          {/* Étoiles Aura */}
           <span style={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, userSelect: 'none' }}>
             {Array.from({ length: 5 }, (_, i) => (
               <span key={i} style={{ color: i < stars ? tier.border : 'rgba(255,255,255,0.25)' }}>
@@ -133,7 +131,6 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
             ))}
           </span>
 
-          {/* Bouton follow (cœur) */}
           {onFollowToggle && (
             <button
               onClick={handleFollow}
@@ -161,7 +158,7 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           )}
         </div>
 
-        {/* ── Bandeau blanc bas style Panini ──────────────────────── */}
+        {/* Bandeau blanc bas style Panini */}
         <div style={{
           position: 'absolute',
           bottom: 0, left: 0, right: 0,

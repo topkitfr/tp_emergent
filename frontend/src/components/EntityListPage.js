@@ -1,5 +1,4 @@
 // frontend/src/components/EntityListPage.js
-// Composant générique pour toutes les pages liste d'entités (Teams, Leagues, Brands, Players, Sponsors)
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -7,24 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Plus } from 'lucide-react';
 import { proxyImageUrl } from '@/lib/api';
 
-/**
- * EntityListPage — layout unifié pour toutes les pages liste d'entités.
- *
- * Props:
- * - title: string
- * - icon: ReactNode
- * - entities: array
- * - loading: bool
- * - search: string
- * - onSearchChange: fn
- * - filters: array de { key, label, value, onChange, options }
- * - renderCard: fn(entity) → ReactNode
- * - emptyMessage: string
- * - totalLabel: string
- * - testId: string
- * - onAddNew: fn
- * - footer: ReactNode — contenu affiché sous la grille (ex: <Pagination />)
- */
 export default function EntityListPage({
   title,
   icon: Icon,
@@ -39,6 +20,7 @@ export default function EntityListPage({
   testId,
   onAddNew,
   footer,
+  gridClassName, // ← nouvelle prop
 }) {
   return (
     <div className="animate-fade-in-up" data-testid={testId}>
@@ -119,7 +101,10 @@ export default function EntityListPage({
           </div>
         ) : (
           <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 stagger-children"
+            className={
+              gridClassName ||
+              "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 stagger-children"
+            }
             data-testid={`${testId}-grid`}
           >
             {entities.map(renderCard)}
@@ -139,18 +124,13 @@ export default function EntityListPage({
 export function EntityCard({ to, image, icon: CardIcon, name, meta = [], badges = [], testId }) {
   return (
     <Link to={to} data-testid={testId}>
-      <div
-        className="border border-border bg-card p-4 hover:border-primary/50 group flex items-center gap-4 transition-colors duration-200 cursor-pointer h-full"
-      >
-        {/* Thumbnail */}
+      <div className="border border-border bg-card p-4 hover:border-primary/50 group flex items-center gap-4 transition-colors duration-200 cursor-pointer h-full">
         <div className="w-12 h-12 bg-secondary flex items-center justify-center shrink-0 overflow-hidden rounded-sm">
           {image
             ? <img src={proxyImageUrl(image)} alt={name} className="w-12 h-12 object-contain p-1" />
             : CardIcon && <CardIcon className="w-5 h-5 text-muted-foreground" />
           }
         </div>
-
-        {/* Infos */}
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold tracking-tight truncate group-hover:text-primary transition-colors duration-200">
             {name}

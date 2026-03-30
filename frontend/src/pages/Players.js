@@ -5,8 +5,7 @@ import { User } from 'lucide-react';
 import EntityListPage from '@/components/EntityListPage';
 import AddEntityDialog from '@/components/AddEntityDialog';
 import Pagination from '@/components/Pagination';
-import PlayerCard from '@/components/ui/playerscard';
-import './Players.css';
+import PlayerCard from '@/components/PlayerCard';
 
 const PAGE_SIZE = 48;
 
@@ -21,25 +20,25 @@ function diagPlayer(player) {
     (typeof v === 'string' && (v.startsWith('http') || v.startsWith('/')))
   );
   const auraFields = Object.entries(player).filter(([k]) =>
-    k.toLowerCase().includes('aura') || k.toLowerCase().includes('star') ||
-    k.toLowerCase().includes('rating') || k.toLowerCase().includes('score') ||
-    k.toLowerCase().includes('note')   || k.toLowerCase().includes('grade') ||
+    k.toLowerCase().includes('aura')  || k.toLowerCase().includes('star') ||
+    k.toLowerCase().includes('rating')|| k.toLowerCase().includes('score') ||
+    k.toLowerCase().includes('note')  || k.toLowerCase().includes('grade') ||
     k.toLowerCase().includes('community')
   );
   console.group('🔍 [Players] Diagnostic shape joueur');
   console.log('Tous les champs :', Object.keys(player));
-  console.log('📸 Champs image :', imageFields.map(([k,v]) => `${k}: ${v}`));
-  console.log('⭐ Champs note  :', auraFields.map(([k,v]) => `${k}: ${v}`));
+  console.log('📸 Champs image :', imageFields.map(([k, v]) => `${k}: ${v}`));
+  console.log('⭐ Champs note  :', auraFields.map(([k, v]) => `${k}: ${v}`));
   console.groupEnd();
 }
 
 export default function Players() {
-  const [players, setPlayers]           = useState([]);
-  const [total, setTotal]               = useState(0);
-  const [page, setPage]                 = useState(1);
-  const [loading, setLoading]           = useState(true);
+  const [players, setPlayers]             = useState([]);
+  const [total, setTotal]                 = useState(0);
+  const [page, setPage]                   = useState(1);
+  const [loading, setLoading]             = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [search, setSearch]             = useState('');
+  const [search, setSearch]               = useState('');
 
   useEffect(() => { setPage(1); }, [search]);
 
@@ -93,13 +92,6 @@ export default function Players() {
     }
   }, []);
 
-  // ── Grille 5 colonnes (injectée par-dessus EntityListPage) ───────────────
-  const gridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
-    gap: '12px',
-  };
-
   return (
     <>
       <EntityListPage
@@ -114,8 +106,7 @@ export default function Players() {
         testId="players-page"
         emptyMessage="Try a different search or filter"
         filters={[]}
-        gridStyle={gridStyle}          // ← si EntityListPage le supporte
-        gridClassName="players-grid"   // ← sinon on utilise la classe CSS ci-dessous
+        gridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
         renderCard={(player) => (
           <PlayerCard
             key={player._id ?? player.player_id ?? player.id}
