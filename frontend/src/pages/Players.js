@@ -1,5 +1,5 @@
 // frontend/src/pages/Players.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getPlayers, togglePlayerFollow } from '@/lib/api';
 import { User } from 'lucide-react';
 import EntityListPage from '@/components/EntityListPage';
@@ -9,47 +9,98 @@ import PlayerCard from '@/components/ui/playerscard';
 
 const PAGE_SIZE = 48;
 
-export default function Players() {
-  const [players, setPlayers] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [search, setSearch] = useState('');
+// ── Diagnostic une seule fois pour trouver les bons champs ────────────────
+let _diagDone = false;
+function diagPlayer(player) {
+  if (_diagDone) return;
+  _diagDone = true;
 
+  const imageFields = Object.entries(player).filter(([k, v]) =>
+    k.toLowerCase().includes('image') ||
+    k.toLowerCase().includes('photo') ||
+    k.toLowerCase().includes('img') ||
+    k.toLowerCase().includes('avatar') ||
+    k.toLowerCase().includes('picture') ||
+    k.toLowerCase().includes('headshot') ||
+    k.toLowerCase().includes('thumbnail') ||
+    (typeof v === 'string' && (v.startsWith('http') || v.startsWith('/')))
+  );
+
+  const auraFields = Object.entries(player).filter(([k]) =>
+    k.toLowerCase().includes('aura') ||
+    k.toLowerCase().includes('star') ||
+    k.toLowerCase().includes('rating') ||
+    k.toLowerCase().includes('score') ||
+    k.toLowerCase().includes('note') ||
+    k.toLowerCase().includes('grade') ||
+    k.toLowerCase().includes('community')
+  );
+
+  console.group('🔍 [Players] Diagnostic shape joueur');
+  console.log('Tous les champs:', Object.keys(player));
+  console.log('');
+  console.log('📸 Champs image suspects:');
+  imageFields.forEach(([k, v]) => console.log(`  ${k}:`, v));
+  console.log('');
+  console.log('⭐ Champs note/aura suspects:');
+  auraFields.forEach(([k, v]) => console.log(`  ${k}:`, v));
+  console.groupEnd();
+}
+
+export default function Players() {
+  const [players, setPlayers]       = useState([]);
+  const [total, setTotal]           = useState(0);
+  const [page, setPage]             = useState(1);
+  const [loading, setLoading]       = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [search, setSearch]         = useState('');
+
+  // Reset page à 1 quand la recherche change
   useEffect(() => {
     setPage(1);
   }, [search]);
 
   const fetchPlayers = useCallback(async () => {
     setLoading(true);
-
     try {
       const params = {
         skip: (page - 1) * PAGE_SIZE,
         limit: PAGE_SIZE,
       };
-
-      if (search) {
-        params.search = search;
-      }
+      if (search) params.search = search;
 
       const res = await getPlayers(params);
-      const data = res.data;
 
-      if (Array.isArray(data)) {
-        const filtered = data.filter((p) => p.status !== 'rejected');
-        setPlayers(filtered);
-        setTotal(filtered.length);
+      // ── Normalisation de la réponse (plusieurs shapes possibles) ──
+      let rawList = [];
+      let rawTotal = 0;
+
+      if (Array.isArray(res.data)) {
+        rawList  = res.data;
+        rawTotal = res.data.length;
+      } else if (res.data && Array.isArray(res.data.results)) {
+        rawList  = res.data.results;
+        rawTotal = res.data.total ?? res.data.count ?? rawList.length;
+      } else if (res.data && Array.isArray(res.data.players)) {
+        rawList  = res.data.players;
+        rawTotal = res.data.total ?? res.data.count ?? rawList.length;
+      } else if (res.data && Array.isArray(res.data.items)) {
+        rawList  = res.data.items;
+        rawTotal = res.data.total ?? res.data.count ?? rawList.length;
       } else {
-        const filtered = (data.results || []).filter(
-          (p) => p.status !== 'rejected'
-        );
-        setPlayers(filtered);
-        setTotal(data.total ?? filtered.length);
+        console.warn('[Players] Shape de réponse inattendu:', res.data);
       }
+
+      // Filtrer les rejected
+      const filtered = rawList.filter((p) => p.status !== 'rejected');
+
+      // Diagnostic sur le premier joueur
+      if (filtered.length > 0) diagPlayer(filtered[0]);
+
+      setPlayers(filtered);
+      setTotal(rawTotal);
     } catch (error) {
-      console.error('Failed to load players:', error);
+      console.error('[Players] Erreur fetchPlayers:', error);
       setPlayers([]);
       setTotal(0);
     } finally {
@@ -61,22 +112,17 @@ export default function Players() {
     fetchPlayers();
   }, [fetchPlayers]);
 
+  // ── Follow/unfollow optimiste avec rollback ────────────────────────────
   const handleFollowToggle = useCallback(async (playerId, nextFollowed) => {
     let previousPlayer = null;
 
     setPlayers((prev) =>
       prev.map((player) => {
-        const currentId = player.player_id || player._id;
-
-        if (currentId === playerId) {
+        const id = player._id ?? player.player_id ?? player.id;
+        if (id === playerId) {
           previousPlayer = player;
-          return {
-            ...player,
-            is_followed: nextFollowed,
-            followed: nextFollowed,
-          };
+          return { ...player, is_followed: nextFollowed, followed: nextFollowed };
         }
-
         return player;
       })
     );
@@ -84,17 +130,12 @@ export default function Players() {
     try {
       await togglePlayerFollow(playerId, nextFollowed);
     } catch (error) {
-      console.error('Failed to update player follow state:', error);
-
+      console.error('[Players] Erreur follow toggle:', error);
+      // Rollback
       setPlayers((prev) =>
         prev.map((player) => {
-          const currentId = player.player_id || player._id;
-
-          if (currentId === playerId && previousPlayer) {
-            return previousPlayer;
-          }
-
-          return player;
+          const id = player._id ?? player.player_id ?? player.id;
+          return id === playerId && previousPlayer ? previousPlayer : player;
         })
       );
     }
@@ -116,7 +157,7 @@ export default function Players() {
         filters={[]}
         renderCard={(player) => (
           <PlayerCard
-            key={player.player_id || player._id}
+            key={player._id ?? player.player_id ?? player.id}
             player={player}
             isFollowed={!!(player.is_followed ?? player.followed)}
             onFollowToggle={handleFollowToggle}
