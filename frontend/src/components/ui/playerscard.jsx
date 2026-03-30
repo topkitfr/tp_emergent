@@ -48,16 +48,19 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
     player.nation ||
     null;
 
+  const position =
+    player.position ||
+    player.role ||
+    player.poste ||
+    player.player_position ||
+    null;
+
   const auraScore =
     player.aura_score ??
     player.auraScore ??
+    player.community_aura ??
+    player.community_rating ??
     null;
-
-  const kitCount =
-    player.kit_count ??
-    player.kits_count ??
-    player.kitCount ??
-    0;
 
   return (
     <Link
@@ -101,10 +104,18 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           </div>
         )}
 
+        {position && (
+          <div className="truncate text-xs text-text-muted">
+            {position}
+          </div>
+        )}
+
         <div className="mt-1 flex items-center justify-between text-[11px] text-text-faint">
-          <span>{kitCount} kits</span>
-          {typeof auraScore === 'number' && (
-            <span>Aura {auraScore.toFixed(1)}</span>
+          <span>Aura communautaire</span>
+          {typeof auraScore === 'number' ? (
+            <span>{auraScore.toFixed(1)}</span>
+          ) : (
+            <span>—</span>
           )}
         </div>
       </div>
