@@ -13,13 +13,6 @@ export default function BetaGate({ onAccess }) {
   const [shake, setShake] = useState(false);
   const inputRef = useRef(null);
 
-  // ← Vérifie localStorage au montage : si déjà validé, on bypasse direct
-  useEffect(() => {
-    if (localStorage.getItem(BETA_STORAGE_KEY) === 'true') {
-      onAccess();
-    }
-  }, [onAccess]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || success) return;
