@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getPlayers, followEntity, unfollowEntity } from '@/lib/api';
 import { User } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 import EntityListPage from '@/components/EntityListPage';
 import AddEntityDialog from '@/components/AddEntityDialog';
 import Pagination from '@/components/Pagination';
@@ -47,7 +46,8 @@ export default function Players() {
         setTotal(data.total ?? 0);
       }
     } catch (error) {
-      toast.error('Impossible de charger les joueurs');
+      // Option : log ou futur système de notification global
+      console.error('Impossible de charger les joueurs', error);
     } finally {
       setLoading(false);
     }
@@ -81,13 +81,11 @@ export default function Players() {
 
       if (nextFollowed) {
         await followEntity(payload);
-        toast.success('Joueur ajouté aux suivis');
       } else {
         await unfollowEntity(payload);
-        toast.success('Joueur retiré des suivis');
       }
     } catch (error) {
-      // rollback
+      // rollback en cas d’erreur
       setPlayers((prev) =>
         prev.map((player) => {
           const currentId = player.player_id || player._id;
@@ -98,7 +96,7 @@ export default function Players() {
         })
       );
 
-      toast.error('Impossible de mettre à jour le suivi');
+      console.error('Impossible de mettre à jour le suivi', error);
     }
   }, []);
 
