@@ -45,7 +45,9 @@ const RedirectWithId = ({ to }) => {
 
 // Composant interne : rendu après BrowserRouter + providers
 function AppContent() {
-  const [betaUnlocked, setBetaUnlocked] = useState(false);
+const [betaUnlocked, setBetaUnlocked] = useState(
+  () => localStorage.getItem('topkit_beta_validated') === 'true'
+);
 
   if (BETA_ENABLED && !betaUnlocked) {
     return <BetaGate onAccess={() => setBetaUnlocked(true)} />;

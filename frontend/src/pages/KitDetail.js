@@ -1,7 +1,7 @@
 // src/pages/KitDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getMasterKit, createReport, proxyImageUrl, getKitPlayers, createSubmission } from '@/lib/api';
+import { getMasterKit, createReport, proxyImageUrl, getKitPlayers, createSubmission, addToCollection } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,16 +13,116 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, Tag, Package, ChevronRight,
-  AlertTriangle, Check, Trash2, User, Plus, X,
+  AlertTriangle, Check, Trash2, User, Plus, X, Loader2,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 
-const KIT_TYPES  = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const GENDERS    = ['Man', 'Woman', 'Kid'];
-const MODELS     = ['Authentic', 'Replica', 'Other'];
+
+const KIT_TYPES    = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
+const GENDERS      = ['Man', 'Woman', 'Kid'];
+const MODELS       = ['Authentic', 'Replica', 'Other'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
+
+// ─── Composant interne pour chaque vignette de version ────────────────────────
+function VersionInlineCard({ version: v, kitFallbackPhoto }) {
+  const { user }  = useAuth();
+  const [status, setStatus] = useState('idle'); // idle | loading | done | error
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (status !== 'idle') return;
+    setStatus('loading');
+    try {
+      await addToCollection({ version_id: v.version_id });
+      setStatus('done');
+      toast.success('Added to your collection 🎽');
+    } catch (err) {
+      if (err?.response?.status === 400) {
+        setStatus('done');
+        toast.info('Already in your collection');
+      } else {
+        console.error('addToCollection error:', err?.response?.data || err);
+        setStatus('error');
+        setTimeout(() => setStatus('idle'), 2000);
+      }
+    }
+  };
+
+  return (
+    <Link to={`/version/${v.version_id}`}>
+      <div
+        className="border border-border bg-card p-4 hover:border-primary/30 group"
+        data-testid={`version-card-${v.version_id}`}
+        style={{ transition: 'border-color 0.2s ease' }}
+      >
+        <div className="flex gap-4">
+
+          {/* Miniature avec bouton + en overlay */}
+          <div className="relative w-20 h-24 bg-secondary overflow-hidden shrink-0">
+            <img
+              src={proxyImageUrl(v.front_photo || kitFallbackPhoto)}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {user && (
+              <button
+                onClick={handleAdd}
+                aria-label="Add to collection"
+                className={[
+                  'absolute inset-0 flex items-center justify-center transition-all duration-200',
+                  status === 'idle'    ? 'bg-black/40 opacity-0 group-hover:opacity-100' : '',
+                  status === 'loading' ? 'bg-black/40 opacity-100' : '',
+                  status === 'done'    ? 'bg-green-500/80 opacity-100' : '',
+                  status === 'error'   ? 'bg-destructive/80 opacity-100' : '',
+                ].join(' ')}
+              >
+                {status === 'loading' && <Loader2 className="w-4 h-4 text-white animate-spin" />}
+                {status === 'done'    && <Check   className="w-4 h-4 text-white" />}
+                {status === 'idle'    && <Plus    className="w-4 h-4 text-white" />}
+                {status === 'error'   && <Plus    className="w-4 h-4 text-white opacity-50" />}
+              </button>
+            )}
+          </div>
+
+          {/* Infos */}
+          <div className="min-w-0 space-y-1.5">
+            <Badge variant="outline" className="rounded-none text-[10px]">{v.model}</Badge>
+            <h4
+              className="text-sm font-semibold truncate"
+              style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}
+            >
+              {v.competition}
+            </h4>
+            {v.sku_code && <p className="font-mono text-[10px] text-muted-foreground">{v.sku_code}</p>}
+            {v.ean_code && <p className="font-mono text-[10px] text-muted-foreground">EAN: {v.ean_code}</p>}
+            {(v.review_count ?? 0) > 0 ? (
+              <div className="flex items-center gap-1">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} className={`w-3 h-3 ${s <= Math.round(v.avg_rating ?? 0) ? 'text-accent fill-accent' : 'text-muted-foreground'}`} />
+                  ))}
+                </div>
+                <span className="text-xs font-mono text-accent">{(v.avg_rating ?? 0).toFixed(1)}</span>
+                <span className="text-[10px] text-muted-foreground">({v.review_count})</span>
+              </div>
+            ) : (
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-3 h-3 text-muted-foreground/30" />)}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+
+// ─── Page principale ───────────────────────────────────────────────────────────
 export default function KitDetail() {
   const { kitId } = useParams();
   const { user }  = useAuth();
@@ -37,7 +137,6 @@ export default function KitDetail() {
   const [showRemovalForm,   setShowRemovalForm]   = useState(false);
   const [removalNotes,      setRemovalNotes]      = useState('');
 
-  // Add Version panel
   const [showAddVersion,  setShowAddVersion]  = useState(false);
   const [vCompetition,    setVCompetition]    = useState('');
   const [vModel,          setVModel]          = useState('');
@@ -166,9 +265,9 @@ export default function KitDetail() {
     </div>
   );
 
-  const teamPath   = kit.team_id   ? `/teams/${kit.team_id}`   : kit.club_slug ? `/teams/${kit.club_slug}`   : null;
-  const brandPath  = kit.brand_id  ? `/brands/${kit.brand_id}` : kit.brand_slug ? `/brands/${kit.brand_slug}` : null;
-  const leaguePath = kit.league_id ? `/leagues/${kit.league_id}` : kit.league_slug ? `/leagues/${kit.league_slug}` : null;
+  const teamPath    = kit.team_id    ? `/teams/${kit.team_id}`       : kit.club_slug   ? `/teams/${kit.club_slug}`     : null;
+  const brandPath   = kit.brand_id   ? `/brands/${kit.brand_id}`     : kit.brand_slug  ? `/brands/${kit.brand_slug}`   : null;
+  const leaguePath  = kit.league_id  ? `/leagues/${kit.league_id}`   : kit.league_slug ? `/leagues/${kit.league_slug}` : null;
   const sponsorPath = kit.sponsor_id ? `/database/sponsors/${kit.sponsor_id}` : null;
 
   return (
@@ -208,7 +307,6 @@ export default function KitDetail() {
 
             {/* Right — Info */}
             <div className="space-y-6">
-
               <div>
                 <Badge variant="outline" className="rounded-none text-xs mb-3">{kit.kit_type}</Badge>
                 <h1 className="text-4xl sm:text-5xl tracking-tighter leading-none mb-2" data-testid="kit-title">
@@ -218,17 +316,14 @@ export default function KitDetail() {
                     <span>{kit.club}</span>
                   )}
                 </h1>
-                <p className="text-lg text-muted-foreground"
-                  style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
+                <p className="text-lg text-muted-foreground" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
                   {kit.season} Season
                 </p>
                 {(kit.review_count ?? 0) > 0 ? (
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => (
-                        <Star key={s} className={`w-4 h-4 ${
-                          s <= Math.round(kit.avg_rating ?? 0) ? 'text-accent fill-accent' : 'text-muted-foreground'
-                        }`} />
+                        <Star key={s} className={`w-4 h-4 ${s <= Math.round(kit.avg_rating ?? 0) ? 'text-accent fill-accent' : 'text-muted-foreground'}`} />
                       ))}
                     </div>
                     <span className="text-sm font-mono text-accent">{(kit.avg_rating ?? 0).toFixed(1)}</span>
@@ -422,17 +517,11 @@ export default function KitDetail() {
         </div>
       </div>
 
-      {/* ===== ADD VERSION PANEL (Sheet-like, côté droit) ===== */}
+      {/* ADD VERSION PANEL */}
       {showAddVersion && (
         <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={closeAddVersion}
-          />
-          {/* Panel */}
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={closeAddVersion} />
           <div className="fixed top-0 right-0 h-full w-full max-w-md bg-background border-l border-border z-50 flex flex-col overflow-hidden">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
               <div>
                 <h3 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>ADD VERSION</h3>
@@ -440,16 +529,10 @@ export default function KitDetail() {
                   {kit.club} — {kit.season} ({kit.kit_type})
                 </p>
               </div>
-              <button
-                onClick={closeAddVersion}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="close-add-version-btn"
-              >
+              <button onClick={closeAddVersion} className="text-muted-foreground hover:text-foreground transition-colors" data-testid="close-add-version-btn">
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
@@ -462,7 +545,6 @@ export default function KitDetail() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
                 <Select value={vModel} onValueChange={setVModel}>
@@ -474,60 +556,35 @@ export default function KitDetail() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
-                <Input
-                  value={vSkuCode}
-                  onChange={e => setVSkuCode(e.target.value)}
-                  placeholder="Optional"
-                  className="bg-card border-border rounded-none font-mono"
-                  data-testid="add-ver-sku"
-                />
+                <Input value={vSkuCode} onChange={e => setVSkuCode(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none font-mono" data-testid="add-ver-sku" />
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
-                <Input
-                  value={vEanCode}
-                  onChange={e => setVEanCode(e.target.value)}
-                  placeholder="Optional"
-                  className="bg-card border-border rounded-none font-mono"
-                  data-testid="add-ver-ean"
-                />
+                <Input value={vEanCode} onChange={e => setVEanCode(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none font-mono" data-testid="add-ver-ean" />
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
                 <ImageUpload value={vFrontPhoto} onChange={setVFrontPhoto} folder="version" side="front" testId="add-ver-front-photo" />
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
                 <ImageUpload value={vBackPhoto} onChange={setVBackPhoto} folder="version" side="back" testId="add-ver-back-photo" />
               </div>
             </div>
-
-            {/* Footer */}
             <div className="px-6 py-4 border-t border-border shrink-0 flex gap-2">
-              <Button
-                onClick={handleSubmitVersion}
-                disabled={vSubmitting}
-                className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
-                data-testid="submit-add-version-btn"
-              >
+              <Button onClick={handleSubmitVersion} disabled={vSubmitting} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 flex-1" data-testid="submit-add-version-btn">
                 {vSubmitting ? 'Submitting...' : 'Submit for Review'}
                 <Check className="w-4 h-4 ml-1" />
               </Button>
-              <Button variant="outline" onClick={closeAddVersion} className="rounded-none" data-testid="cancel-add-version-btn">
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={closeAddVersion} className="rounded-none" data-testid="cancel-add-version-btn">Cancel</Button>
             </div>
           </div>
         </>
       )}
 
-      {/* Versions */}
+      {/* ═══ VERSIONS ═══ */}
       <div className="border-t border-border" id="versions-section">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
           <h2 className="text-xl tracking-tight mb-6" data-testid="versions-section-title">
@@ -535,42 +592,17 @@ export default function KitDetail() {
             <span className="font-mono text-sm text-muted-foreground ml-2">{kit.versions?.length || 0}</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children" data-testid="versions-grid">
+
+            {/* ← MODIFIÉ : utilise VersionInlineCard avec bouton + */}
             {(kit.versions || []).map(v => (
-              <Link to={`/version/${v.version_id}`} key={v.version_id}>
-                <div className="border border-border bg-card p-4 hover:border-primary/30 group"
-                  data-testid={`version-card-${v.version_id}`}
-                  style={{ transition: 'border-color 0.2s ease' }}>
-                  <div className="flex gap-4">
-                    <div className="w-20 h-24 bg-secondary overflow-hidden shrink-0">
-                      <img src={proxyImageUrl(v.front_photo || kit.front_photo)} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="min-w-0 space-y-1.5">
-                      <Badge variant="outline" className="rounded-none text-[10px]">{v.model}</Badge>
-                      <h4 className="text-sm font-semibold truncate" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>{v.competition}</h4>
-                      {v.sku_code && <p className="font-mono text-[10px] text-muted-foreground">{v.sku_code}</p>}
-                      {v.ean_code && <p className="font-mono text-[10px] text-muted-foreground">EAN: {v.ean_code}</p>}
-                      {(v.review_count ?? 0) > 0 ? (
-                        <div className="flex items-center gap-1">
-                          <div className="flex gap-0.5">
-                            {[1,2,3,4,5].map(s => (
-                              <Star key={s} className={`w-3 h-3 ${s <= Math.round(v.avg_rating ?? 0) ? 'text-accent fill-accent' : 'text-muted-foreground'}`} />
-                            ))}
-                          </div>
-                          <span className="text-xs font-mono text-accent">{(v.avg_rating ?? 0).toFixed(1)}</span>
-                          <span className="text-[10px] text-muted-foreground">({v.review_count})</span>
-                        </div>
-                      ) : (
-                        <div className="flex gap-0.5">
-                          {[1,2,3,4,5].map(s => <Star key={s} className="w-3 h-3 text-muted-foreground/30" />)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <VersionInlineCard
+                key={v.version_id}
+                version={v}
+                kitFallbackPhoto={kit.front_photo}
+              />
             ))}
 
-            {/* Add Version — ouvre le panel inline */}
+            {/* Add Version */}
             {user && (
               <button
                 onClick={() => setShowAddVersion(true)}
