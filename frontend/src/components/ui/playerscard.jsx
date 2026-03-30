@@ -4,49 +4,78 @@ import { Link } from 'react-router-dom';
 import { User } from 'lucide-react';
 import { proxyImageUrl } from '@/lib/api';
 
-export default function PlayerCard({ player, isFollowed, onFollowToggle }) {
+export default function PlayerCard({ player, isFollowed = false, onFollowToggle }) {
   const [loading, setLoading] = useState(false);
+
+  const playerId = player.player_id || player._id || player.id;
+  const playerSlug = player.slug || player.player_id || player._id || player.id;
 
   const handleFollowClick = useCallback(
     async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (loading) return;
+
+      if (loading || !playerId || typeof onFollowToggle !== 'function') return;
 
       setLoading(true);
       try {
-        const id = player.player_id || player._id;
-        await onFollowToggle(id, !isFollowed);
+        await onFollowToggle(playerId, !isFollowed);
       } finally {
         setLoading(false);
       }
     },
-    [loading, onFollowToggle, player, isFollowed]
+    [loading, playerId, onFollowToggle, isFollowed]
   );
 
-  const imageUrl = proxyImageUrl(player.photo_url);
-  const displayName = player.name || 'Unknown player';
-  const nationality = player.nationality;
-  const auraScore = player.aura_score;
+  const imageUrl = proxyImageUrl(
+    player.photo_url ||
+      player.photo ||
+      player.image_url ||
+      player.image ||
+      ''
+  );
+
+  const displayName =
+    player.name ||
+    player.player_name ||
+    player.full_name ||
+    player.display_name ||
+    'Unknown player';
+
+  const nationality =
+    player.nationality ||
+    player.country ||
+    player.nation ||
+    null;
+
+  const auraScore =
+    player.aura_score ??
+    player.auraScore ??
+    null;
+
+  const kitCount =
+    player.kit_count ??
+    player.kits_count ??
+    player.kitCount ??
+    0;
 
   return (
     <Link
-      to={`/players/${player.slug || player.player_id || player._id}`}
-      className="group relative block overflow-hidden rounded-lg bg-surface shadow-sm transition hover:shadow-md"
-      data-testid={`player-card-${player.player_id || player._id}`}
+      to={`/players/${playerSlug}`}
+      className="group relative block overflow-hidden rounded-lg bg-surface shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
+      data-testid={`player-card-${playerId}`}
     >
-      {/* Follow button overlay */}
       <button
         type="button"
         onClick={handleFollowClick}
-        className="absolute right-2 top-2 z-10 rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-primary shadow-sm opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
+        disabled={loading || !playerId || typeof onFollowToggle !== 'function'}
+        className="absolute right-2 top-2 z-10 rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-primary shadow-sm transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 disabled:cursor-not-allowed disabled:opacity-70"
         aria-label={isFollowed ? 'Unfollow player' : 'Follow player'}
       >
         {loading ? '...' : isFollowed ? 'Following' : 'Follow'}
       </button>
 
-      {/* Image / avatar */}
-      <div className="aspect-[3/4] w-full bg-surface-offset flex items-center justify-center overflow-hidden">
+      <div className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden bg-surface-offset">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -61,18 +90,19 @@ export default function PlayerCard({ player, isFollowed, onFollowToggle }) {
         )}
       </div>
 
-      {/* Content */}
       <div className="flex flex-col gap-1 px-3 py-2">
         <div className="truncate text-sm font-semibold text-text">
           {displayName}
         </div>
+
         {nationality && (
           <div className="truncate text-xs text-text-muted">
             {nationality}
           </div>
         )}
+
         <div className="mt-1 flex items-center justify-between text-[11px] text-text-faint">
-          <span>{player.kit_count ?? 0} kits</span>
+          <span>{kitCount} kits</span>
           {typeof auraScore === 'number' && (
             <span>Aura {auraScore.toFixed(1)}</span>
           )}
