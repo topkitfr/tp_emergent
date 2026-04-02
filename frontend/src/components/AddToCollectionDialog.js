@@ -61,7 +61,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     flocking_detail:     '',
     flocking_player_id:  '',
     size:                '',
-    purchase_cost:       '',
     signed:              false,
     signed_proof_level:  'none',
     // ── Advanced extras
@@ -126,7 +125,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         signed_by:           form.signed_details      || undefined,
         signed_by_player_id: resolvedSignedByPlayerId || undefined,
         signed_proof:        form.signed_proof_level !== 'none',
-        purchase_cost:       form.purchase_cost ? parseFloat(form.purchase_cost) : undefined,
         estimated_price:     estimation.estimatedPrice,
         notes:               form.notes               || undefined,
       });
@@ -238,28 +236,16 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* Row 2 : Size + Purchase Cost */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Size</Label>
-              <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">—</SelectItem>
-                  {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Purchase Cost (€)</Label>
-              <Input
-                type="number"
-                value={form.purchase_cost}
-                onChange={e => set('purchase_cost', e.target.value)}
-                placeholder="0"
-                className={`${inputCls} font-mono`}
-              />
-            </div>
+          {/* Size seul */}
+          <div className="space-y-1">
+            <Label className={fieldLabel} style={fs}>Size</Label>
+            <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
+              <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="none">—</SelectItem>
+                {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Signed */}
