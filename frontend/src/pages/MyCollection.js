@@ -56,6 +56,21 @@ const PHYSICAL_STATES = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs 
 const FLOCKING_TYPES = ['Name+Number', 'Name', 'Number'];
 const FLOCKING_ORIGINS = ['Official', 'Personalized'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const SIGNED_TYPES = [
+  { value: 'player_flocked', label: 'Signed by flocked player' },
+  { value: 'team',           label: 'Signed by the team' },
+  { value: 'other',          label: 'Other (specify)' },
+];
+const PROOF_LEVELS = [
+  { value: 'none',   label: 'No proof' },
+  { value: 'light',  label: 'Light certificate' },
+  { value: 'strong', label: 'Solid proof (COA)' },
+];
+const PLAYER_PROFILES = [
+  { value: 'legend', label: 'Football Legend' },
+  { value: 'star',   label: 'Club Star' },
+  { value: 'none',   label: 'Standard player' },
+];
 
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
@@ -86,7 +101,6 @@ export default function MyCollection() {
   const [editingListName, setEditingListName] = useState('');
   const [addToListItem, setAddToListItem] = useState(null);
   const [detailItem, setDetailItem] = useState(null);
-  const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [editForm, setEditForm] = useState({});
 
   const fetchCollection = useCallback(async () => {
@@ -194,32 +208,38 @@ export default function MyCollection() {
     }
   };
 
+  // ─── openDetail ───────────────────────────────────────────────────────────
   const openDetail = (item) => {
     setDetailItem(item);
-    setSignedPlayerAuraLevel(0);
-    if (item.signed_by_player_id) {
-      getPlayerAura(item.signed_by_player_id)
-        .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
-        .catch(() => {});
-    }
     setEditForm({
-      flocking_type: item.flocking_type || '',
-      flocking_origin: item.flocking_origin || '',
-      flocking_detail: item.flocking_detail || item.printing || '',
-      flocking_player_id: item.flocking_player_id || '',
-      condition_origin: item.condition_origin || '',
-      physical_state: item.physical_state || item.condition || '',
-      size: item.size || '',
-      purchase_cost: item.purchase_cost || '',
-      signed: item.signed || false,
-      signed_by: item.signed_by || '',
+      flocking_type:       item.flocking_type      || '',
+      flocking_origin:     item.flocking_origin    || '',
+      flocking_detail:     item.flocking_detail    || item.printing || '',
+      flocking_player_id:  item.flocking_player_id || '',
+      condition_origin:    item.condition_origin   || '',
+      physical_state:      item.physical_state     || item.condition || '',
+      size:                item.size               || '',
+      purchase_cost:       item.purchase_cost      || '',
+      // Signed — full advanced fields
+      signed:              item.signed             || false,
+      signed_type:         item.signed_type        || '',
+      player_profile:      item.player_profile     || 'none',
+      signed_by:           item.signed_by          || '',
       signed_by_player_id: item.signed_by_player_id || '',
-      signed_proof: item.signed_proof || false,
-      notes: item.notes || '',
-      category: item.category || 'General',
+      signed_proof_level:  item.signed_proof_level
+                             ? item.signed_proof_level
+                             : item.signed_proof ? 'light' : 'none',
+      // Advanced extras
+      has_patch:           item.has_patch          || false,
+      is_rare:             item.is_rare            || false,
+      rare_reason:         item.rare_reason        || '',
+      // Always
+      notes:               item.notes              || '',
+      category:            item.category           || 'General',
     });
   };
 
+  // ─── saveEdit ───────────────────────────────────────────────────────────────
   const saveEdit = async () => {
     if (!detailItem) return;
     try {
@@ -234,7 +254,8 @@ export default function MyCollection() {
         } catch (e) { console.warn('createPlayerPending (flocking) failed:', e); }
       }
 
-      if (editForm.signed && editForm.signed_by && !resolvedSignedByPlayerId) {
+      if (editForm.signed && editForm.signed_by && !resolvedSignedByPlayerId &&
+          (editForm.signed_type === 'player_flocked' || editForm.signed_type === 'other')) {
         try {
           const res = await createPlayerPending({ full_name: editForm.signed_by });
           resolvedSignedByPlayerId = res.data?.player_id;
@@ -245,23 +266,43 @@ export default function MyCollection() {
       const mk = detailItem.master_kit;
       const seasonYear = parseSeasonYear(mk?.season);
       const est = calculateEstimation({
-        modelType: detailItem.version?.model || 'Replica',
-        competition: detailItem.version?.competition || '',
-        conditionOrigin: editForm.condition_origin || '',
-        physicalState: editForm.physical_state || '',
-        flockingOrigin: editForm.flocking_origin || '',
-        signed: editForm.signed || false,
-        signedProof: editForm.signed_proof || false,
+        mode: 'advanced',
+        modelType:        detailItem.version?.model       || 'Replica',
+        competition:      detailItem.version?.competition || '',
+        conditionOrigin:  editForm.condition_origin       || '',
+        physicalState:    editForm.physical_state         || '',
+        flockingOrigin:   editForm.flocking_origin        || 'None',
+        hasPatch:         editForm.has_patch              || false,
+        signed:           editForm.signed                 || false,
+        signedType:       editForm.signed_type            || '',
+        playerProfile:    editForm.player_profile         || 'none',
+        signedProofLevel: editForm.signed_proof_level     || 'none',
+        isRare:           editForm.is_rare                || false,
         seasonYear,
-        auraLevel: signedPlayerAuraLevel,
       });
 
       const data = {
-        ...editForm,
-        flocking_player_id: resolvedFlockingPlayerId || '',
+        flocking_type:       editForm.flocking_type,
+        flocking_origin:     editForm.flocking_origin,
+        flocking_detail:     editForm.flocking_detail,
+        flocking_player_id:  resolvedFlockingPlayerId || '',
+        condition_origin:    editForm.condition_origin,
+        physical_state:      editForm.physical_state,
+        size:                editForm.size,
+        purchase_cost:       editForm.purchase_cost ? parseFloat(editForm.purchase_cost) : null,
+        signed:              editForm.signed,
+        signed_type:         editForm.signed_type,
+        player_profile:      editForm.player_profile,
+        signed_by:           editForm.signed_by,
         signed_by_player_id: resolvedSignedByPlayerId || '',
-        purchase_cost: editForm.purchase_cost ? parseFloat(editForm.purchase_cost) : null,
-        estimated_price: est.estimatedPrice,
+        signed_proof:        editForm.signed_proof_level !== 'none',
+        signed_proof_level:  editForm.signed_proof_level,
+        has_patch:           editForm.has_patch,
+        is_rare:             editForm.is_rare,
+        rare_reason:         editForm.rare_reason,
+        notes:               editForm.notes,
+        category:            editForm.category,
+        estimated_price:     est.estimatedPrice,
       };
 
       await updateCollectionItem(detailItem.collection_id, data);
@@ -289,6 +330,8 @@ export default function MyCollection() {
   };
 
   const getEstimatedPrice = (item) => (item.estimated_price ? item.estimated_price : null);
+
+  const setField = (field, value) => setEditForm(prev => ({ ...prev, [field]: value }));
 
   return (
     <div className="animate-fade-in-up">
@@ -473,6 +516,7 @@ export default function MyCollection() {
         )}
       </div>
 
+      {/* ══ EDIT ITEM SHEET ══ */}
       <Sheet open={!!detailItem} onOpenChange={(open) => { if (!open) setDetailItem(null); }}>
         <SheetContent side="right" className="bg-background border-border w-full sm:max-w-lg overflow-y-auto" data-testid="item-detail-sheet">
           {detailItem && (
@@ -480,6 +524,8 @@ export default function MyCollection() {
               <SheetHeader className="mb-6">
                 <SheetTitle className="text-left tracking-tighter" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>EDIT ITEM</SheetTitle>
               </SheetHeader>
+
+              {/* Apercu */}
               <div className="mb-6">
                 <div className="flex gap-4 mb-4">
                   <img
@@ -497,137 +543,262 @@ export default function MyCollection() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 p-3 bg-secondary/30 border border-border mb-4" data-testid="item-current-values">
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Flocking</span><p className="text-xs">{detailItem.flocking_detail || detailItem.flocking_type || 'None'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Origin</span><p className="text-xs">{detailItem.condition_origin || 'None'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>State</span><p className="text-xs">{detailItem.physical_state || 'None'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Size</span><p className="text-xs">{detailItem.size || 'None'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Purchase Cost</span><p className="text-xs font-mono">{detailItem.purchase_cost ? `${detailItem.purchase_cost}€` : 'None'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Signed</span><p className="text-xs">{detailItem.signed ? detailItem.signed_by || 'Yes' : 'No'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Proof/Certificate</span><p className="text-xs">{detailItem.signed_proof ? 'Yes' : 'No'}</p></div>
-                  <div><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Estimated Price</span><p className="text-xs font-mono text-accent">{detailItem.estimated_price ? `${detailItem.estimated_price}€` : 'None'}</p></div>
-                  <div className="col-span-2"><span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Notes</span><p className="text-xs">{detailItem.notes || 'None'}</p></div>
-                </div>
                 <div className="h-px bg-border" />
               </div>
+
+              {/* Form */}
               <div className="space-y-4">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground" style={fieldStyle}>ITEM DETAILS</p>
-                <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>FLOCKING</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>Type</Label>
-                    <Select value={editForm.flocking_type || 'none'} onValueChange={(v) => setEditForm((p) => ({ ...p, flocking_type: v === 'none' ? '' : v }))}>
-                      <SelectTrigger className={inputClass} data-testid="detail-flocking-type"><SelectValue placeholder="None" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border"><SelectItem value="none">None</SelectItem>{FLOCKING_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
+
+                {/* Flocking */}
+                <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>Flocking</p>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>Origin</Label>
-                    <Select value={editForm.flocking_origin || 'none'} onValueChange={(v) => setEditForm((p) => ({ ...p, flocking_origin: v === 'none' ? '' : v }))}>
-                      <SelectTrigger className={inputClass} data-testid="detail-flocking-origin"><SelectValue placeholder="None" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border"><SelectItem value="none">None</SelectItem>{FLOCKING_ORIGINS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                    <Select value={editForm.flocking_origin || 'none'} onValueChange={v => {
+                      setField('flocking_origin', v === 'none' ? '' : v);
+                      if (v !== 'Official') { setField('flocking_detail', ''); setField('flocking_player_id', ''); }
+                    }}>
+                      <SelectTrigger className={inputClass}><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
+                        {FLOCKING_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>Player</Label>
-                    <EntityAutocomplete entityType="player" value={editForm.flocking_detail || ''} onChange={(val) => setEditForm((p) => ({ ...p, flocking_detail: val, flocking_player_id: '' }))} onSelect={(item) => setEditForm((p) => ({ ...p, flocking_detail: item.label, flocking_player_id: item.id }))} placeholder="e.g., Messi" className={inputClass} testId="detail-flocking-detail" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className={fieldLabel} style={fieldStyle}>Condition (Origin)</Label>
-                    <Select value={editForm.condition_origin || 'none'} onValueChange={(v) => setEditForm((p) => ({ ...p, condition_origin: v === 'none' ? '' : v }))}>
-                      <SelectTrigger className={inputClass} data-testid="detail-condition-origin"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border"><SelectItem value="none">None</SelectItem>{CONDITION_ORIGINS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <Label className={fieldLabel} style={fieldStyle}>Type</Label>
+                    <Select value={editForm.flocking_type || 'none'} onValueChange={v => setField('flocking_type', v === 'none' ? '' : v)}>
+                      <SelectTrigger className={inputClass}><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
+                        {FLOCKING_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
+                </div>
+
+                {editForm.flocking_origin === 'Official' && (
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Flocked Player</Label>
+                    <EntityAutocomplete
+                      entityType="player"
+                      value={editForm.flocking_detail}
+                      onChange={val => setField('flocking_detail', val)}
+                      onSelect={item => { setField('flocking_detail', item.label); setField('flocking_player_id', item.id); }}
+                      placeholder="e.g. Ronaldo 7"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+
+                {/* Origin + State */}
+                <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>Condition</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Origin</Label>
+                    <Select value={editForm.condition_origin || 'none'} onValueChange={v => setField('condition_origin', v === 'none' ? '' : v)}>
+                      <SelectTrigger className={inputClass}><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">—</SelectItem>
+                        {CONDITION_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>Physical State</Label>
-                    <Select value={editForm.physical_state || 'none'} onValueChange={(v) => setEditForm((p) => ({ ...p, physical_state: v === 'none' ? '' : v }))}>
-                      <SelectTrigger className={inputClass} data-testid="detail-physical-state"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border"><SelectItem value="none">None</SelectItem>{PHYSICAL_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <Select value={editForm.physical_state || 'none'} onValueChange={v => setField('physical_state', v === 'none' ? '' : v)}>
+                      <SelectTrigger className={inputClass}><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">—</SelectItem>
+                        {PHYSICAL_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
                 </div>
+
+                {/* Size + Purchase Cost */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>Size</Label>
-                    <Select value={editForm.size || 'none'} onValueChange={(v) => setEditForm((p) => ({ ...p, size: v === 'none' ? '' : v }))}>
-                      <SelectTrigger className={inputClass} data-testid="detail-size"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border"><SelectItem value="none">None</SelectItem>{SIZES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <Select value={editForm.size || 'none'} onValueChange={v => setField('size', v === 'none' ? '' : v)}>
+                      <SelectTrigger className={inputClass}><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">—</SelectItem>
+                        {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost (&euro;)</Label>
-                    <Input type="number" value={editForm.purchase_cost || ''} onChange={(e) => setEditForm((p) => ({ ...p, purchase_cost: e.target.value }))} placeholder="0" className={`${inputClass} font-mono`} data-testid="detail-purchase-cost" />
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost (€)</Label>
+                    <input
+                      type="number"
+                      value={editForm.purchase_cost}
+                      onChange={e => setField('purchase_cost', e.target.value)}
+                      placeholder="0"
+                      className={`${inputClass} border px-3 py-2 text-sm w-full`}
+                    />
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Switch checked={editForm.signed || false} onCheckedChange={(v) => setEditForm((p) => ({ ...p, signed: v }))} data-testid="detail-signed-switch" />
-                      <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
-                    </div>
-                    {editForm.signed && (
-                      <div className="flex-1">
-                        <EntityAutocomplete entityType="player" value={editForm.signed_by || ''} onChange={(val) => setEditForm((p) => ({ ...p, signed_by: val, signed_by_player_id: '' }))} onSelect={(item) => { setEditForm((p) => ({ ...p, signed_by: item.label, signed_by_player_id: item.id })); if (item.id) { getPlayerAura(item.id).then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0)).catch(() => setSignedPlayerAuraLevel(0)); } }} placeholder="Player name" className={inputClass} testId="detail-signed-by" />
-                      </div>
-                    )}
+
+                {/* Patch + Rare */}
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editForm.has_patch || false} onCheckedChange={v => setField('has_patch', v)} />
+                    <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fieldStyle}>Official Patch</Label>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editForm.is_rare || false} onCheckedChange={v => setField('is_rare', v)} />
+                    <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fieldStyle}>Rare Jersey</Label>
+                  </div>
+                </div>
+
+                {editForm.is_rare && (
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Why rare?</Label>
+                    <input
+                      type="text"
+                      value={editForm.rare_reason || ''}
+                      onChange={e => setField('rare_reason', e.target.value)}
+                      placeholder="Ex: limited edition, printing error..."
+                      className={`${inputClass} border px-3 py-2 text-xs w-full`}
+                    />
+                  </div>
+                )}
+
+                {/* Signed */}
+                <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>Signature</p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editForm.signed || false} onCheckedChange={v => {
+                      setField('signed', v);
+                      if (!v) {
+                        setField('signed_type', '');
+                        setField('player_profile', 'none');
+                        setField('signed_by', '');
+                        setField('signed_by_player_id', '');
+                        setField('signed_proof_level', 'none');
+                      }
+                    }} />
+                    <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fieldStyle}>Signed</Label>
+                  </div>
+
                   {editForm.signed && (
-                    <div className="flex items-center gap-2 ml-12">
-                      <Switch checked={editForm.signed_proof || false} onCheckedChange={(v) => setEditForm((p) => ({ ...p, signed_proof: v }))} data-testid="detail-signed-proof" />
-                      <Label className="text-[10px] text-muted-foreground" style={fieldStyle}>PROOF / CERTIFICATE</Label>
+                    <div className="space-y-3 pl-2 border-l-2 border-primary/30 ml-1">
+                      <div className="space-y-1">
+                        <Label className={fieldLabel} style={fieldStyle}>Signed by</Label>
+                        <Select value={editForm.signed_type || 'none'} onValueChange={v => {
+                          setField('signed_type', v === 'none' ? '' : v);
+                          setField('player_profile', 'none');
+                          setField('signed_by', '');
+                          setField('signed_by_player_id', '');
+                        }}>
+                          <SelectTrigger className={inputClass}><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            <SelectItem value="none">—</SelectItem>
+                            {SIGNED_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {(editForm.signed_type === 'player_flocked' || editForm.signed_type === 'other') && (
+                        <div className="space-y-1">
+                          <Label className={fieldLabel} style={fieldStyle}>
+                            {editForm.signed_type === 'player_flocked' ? 'Flocked player (signed)' : 'Specify'}
+                          </Label>
+                          <EntityAutocomplete
+                            entityType="player"
+                            value={editForm.signed_by}
+                            onChange={val => setField('signed_by', val)}
+                            onSelect={item => { setField('signed_by', item.label); setField('signed_by_player_id', item.id || ''); }}
+                            placeholder="e.g. Maldini"
+                            className={inputClass}
+                          />
+                        </div>
+                      )}
+
+                      {editForm.signed_type === 'player_flocked' && (
+                        <div className="space-y-1">
+                          <Label className={fieldLabel} style={fieldStyle}>Player Profile</Label>
+                          <Select value={editForm.player_profile || 'none'} onValueChange={v => setField('player_profile', v)}>
+                            <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                            <SelectContent className="bg-card border-border">
+                              {PLAYER_PROFILES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        <Label className={fieldLabel} style={fieldStyle}>Proof / Certificate</Label>
+                        <Select value={editForm.signed_proof_level || 'none'} onValueChange={v => setField('signed_proof_level', v)}>
+                          <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {PROOF_LEVELS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
+
+                {/* Notes */}
+                <div className="space-y-1">
                   <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
-                  <Textarea value={editForm.notes || ''} onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))} placeholder="Any notes..." className="bg-card border-border rounded-none min-h-[80px]" data-testid="detail-notes" />
+                  <Textarea
+                    value={editForm.notes || ''}
+                    onChange={e => setField('notes', e.target.value)}
+                    placeholder="Any notes, details, context..."
+                    className="bg-card border-border rounded-none min-h-[70px]"
+                  />
                 </div>
-                <EstimationBreakdown modelType={detailItem.version?.model || 'Replica'} competition={detailItem.version?.competition || ''} conditionOrigin={editForm.condition_origin || ''} physicalState={editForm.physical_state || ''} flockingOrigin={editForm.flocking_origin || ''} signed={editForm.signed || false} signedProof={editForm.signed_proof || false} seasonYear={parseSeasonYear(detailItem.master_kit?.season)} auraLevel={signedPlayerAuraLevel} />
+
+                {/* Estimation */}
+                <EstimationBreakdown
+                  mode="advanced"
+                  modelType={detailItem.version?.model || 'Replica'}
+                  competition={detailItem.version?.competition || ''}
+                  conditionOrigin={editForm.condition_origin || ''}
+                  physicalState={editForm.physical_state || ''}
+                  flockingOrigin={editForm.flocking_origin || 'None'}
+                  hasPatch={editForm.has_patch || false}
+                  signed={editForm.signed || false}
+                  signedType={editForm.signed_type || ''}
+                  playerProfile={editForm.player_profile || 'none'}
+                  signedProofLevel={editForm.signed_proof_level || 'none'}
+                  isRare={editForm.is_rare || false}
+                  seasonYear={parseSeasonYear(detailItem.master_kit?.season)}
+                />
               </div>
+
+              {/* Actions */}
               <div className="flex gap-2 mt-6">
-                <Button onClick={saveEdit} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 flex-1" data-testid="detail-save-btn"><Check className="w-4 h-4 mr-1" /> Save Changes</Button>
-                <Button variant="outline" onClick={() => handleRemove(detailItem.collection_id)} className="rounded-none text-destructive hover:text-destructive" data-testid="detail-remove-btn"><Trash2 className="w-4 h-4" /></Button>
+                <Button onClick={saveEdit} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 flex-1">Save</Button>
+                <Button variant="outline" onClick={() => setDetailItem(null)} className="rounded-none">Cancel</Button>
+                <Button variant="ghost" onClick={() => handleRemove(detailItem.collection_id)} className="rounded-none text-destructive hover:text-destructive px-3"><Trash2 className="w-4 h-4" /></Button>
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
 
+      {/* Add to list mini-panel */}
       {addToListItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setAddToListItem(null)} data-testid="add-to-list-modal">
-          <div className="bg-card border border-border w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm uppercase tracking-wider" style={fieldStyle}><BookMarked className="w-4 h-4 inline mr-1" /> Ajouter à une liste</h3>
-              <button onClick={() => setAddToListItem(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setAddToListItem(null)}>
+          <div className="bg-card border border-border w-full max-w-sm p-4 mb-4 mx-4" onClick={e => e.stopPropagation()}>
+            <p className="text-xs uppercase tracking-wider mb-3" style={fieldStyle}>Add to list</p>
             {lists.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-sm text-muted-foreground mb-4" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>Tu n'as pas encore de liste.</p>
-                <Button onClick={() => { setAddToListItem(null); setShowCreateList(true); }} className="rounded-none text-xs bg-primary text-primary-foreground"><Plus className="w-3.5 h-3.5 mr-1" /> Créer une liste</Button>
-              </div>
+              <p className="text-xs text-muted-foreground">No lists yet. Create one first.</p>
             ) : (
               <div className="space-y-2">
-                {lists.map(lst => {
-                  const alreadyIn = (lst.collection_ids || []).includes(addToListItem);
-                  return (
-                    <button key={lst.list_id} onClick={() => alreadyIn ? handleRemoveFromList(lst.list_id, addToListItem).then(() => setAddToListItem(null)) : handleAddToList(lst.list_id)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 border text-left text-xs transition-colors ${alreadyIn ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-primary/30'}`}
-                      data-testid={`add-to-list-option-${lst.list_id}`}>
-                      <span className="flex items-center gap-2" style={fieldStyle}>
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: lst.color || '#6366f1' }} />
-                        <span className="uppercase">{lst.name}</span>
-                        <span className="font-mono text-muted-foreground">{lst.item_count}</span>
-                      </span>
-                      {alreadyIn ? <span className="text-primary text-[10px] font-mono">DANS LA LISTE • retirer</span> : <Plus className="w-3.5 h-3.5 text-muted-foreground" />}
-                    </button>
-                  );
-                })}
-                <Button variant="outline" onClick={() => { setAddToListItem(null); setShowCreateList(true); }} className="w-full rounded-none text-xs mt-2"><Plus className="w-3.5 h-3.5 mr-1" /> Nouvelle liste</Button>
+                {lists.map(lst => (
+                  <button key={lst.list_id} onClick={() => handleAddToList(lst.list_id)} className="flex items-center gap-2 w-full text-left text-xs p-2 hover:bg-secondary transition-colors">
+                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: lst.color || '#6366f1' }} />
+                    {lst.name}
+                  </button>
+                ))}
               </div>
             )}
+            <Button variant="outline" onClick={() => setAddToListItem(null)} className="rounded-none w-full mt-3 text-xs h-8">Cancel</Button>
           </div>
         </div>
       )}

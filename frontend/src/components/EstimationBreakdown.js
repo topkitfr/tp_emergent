@@ -17,9 +17,11 @@ export default function EstimationBreakdown({
   hasPatch = false,
   signed = false,
   signedType = '',
+  playerProfile = 'none',
   signedProofLevel = 'none',
   isRare = false,
   seasonYear = 0,
+  // legacy auraLevel kept for old items rendered in MyCollection
   auraLevel = 0,
 }) {
   const [open, setOpen] = useState(false);
@@ -34,6 +36,7 @@ export default function EstimationBreakdown({
     hasPatch,
     signed,
     signedType,
+    playerProfile,
     signedProofLevel,
     isRare,
     seasonYear,
@@ -74,7 +77,12 @@ export default function EstimationBreakdown({
 
           {result.breakdown.map((b, i) => (
             <div key={i} className="flex justify-between text-[10px]">
-              <span className="text-muted-foreground">{b.label}</span>
+              <span className="text-muted-foreground flex items-center gap-1">
+                {b.source === 'version' && (
+                  <span className="text-[8px] text-primary/40 uppercase tracking-wider" style={fs}>version</span>
+                )}
+                {b.label}
+              </span>
               <span className={`font-mono ${
                 b.coeff > 0 ? 'text-green-500' : b.coeff < 0 ? 'text-destructive' : 'text-muted-foreground'
               }`}>
