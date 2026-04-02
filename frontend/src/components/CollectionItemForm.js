@@ -307,28 +307,19 @@ export default function CollectionItemForm({
           </div>
 
 
-          {/* Competition (readonly) + Origin */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Competition</Label>
-              <div className={`${inputCls} border px-3 py-2 text-xs text-muted-foreground flex items-center gap-2`}>
-                <span className="flex-1 truncate">{version?.competition || '—'}</span>
-                <span className="text-[9px] text-primary/50 uppercase tracking-wider" style={fs}>version</span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Origin (Condition)</Label>
-              <Select
-                value={form.condition_origin || 'none'}
-                onValueChange={v => set('condition_origin', v === 'none' ? '' : v)}
-              >
-                <SelectTrigger className={inputCls}><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">—</SelectItem>
-                  {CONDITION_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Origin (Condition) — pleine largeur */}
+          <div className="space-y-1">
+            <Label className={fieldLabel} style={fs}>Origin (Condition)</Label>
+            <Select
+              value={form.condition_origin || 'none'}
+              onValueChange={v => set('condition_origin', v === 'none' ? '' : v)}
+            >
+              <SelectTrigger className={inputCls}><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="none">—</SelectItem>
+                {CONDITION_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
 
