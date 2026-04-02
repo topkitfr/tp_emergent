@@ -56,6 +56,17 @@ function getConditionLabel(item) {
   return parts.join(' / ') || null;
 }
 
+/** Normalise un detail FastAPI/Pydantic en string lisible */
+function normalizeDetail(detail) {
+  if (!detail) return null;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(d => d?.msg || d?.message || JSON.stringify(d)).join(' · ');
+  }
+  if (typeof detail === 'object') return detail.msg || detail.message || JSON.stringify(detail);
+  return String(detail);
+}
+
 // ─── composant ──────────────────────────────────────────────────────────────
 export default function MyCollection() {
   const { user } = useAuth();
@@ -124,7 +135,7 @@ export default function MyCollection() {
       setNewListName('');
       setShowCreateList(false);
       toast.success(`Liste "${r.data.name}" créée`);
-    } catch (e) { toast.error(e.response?.data?.detail || 'Erreur'); }
+    } catch (e) { toast.error(normalizeDetail(e.response?.data?.detail) || 'Erreur'); }
     finally { setCreatingList(false); }
   };
 
@@ -144,7 +155,7 @@ export default function MyCollection() {
       setLists(prev => prev.map(l => l.list_id === listId ? { ...l, name: r.data.name } : l));
       setEditingListId(null);
       toast.success('Liste renommée');
-    } catch (e) { toast.error(e.response?.data?.detail || 'Erreur'); }
+    } catch (e) { toast.error(normalizeDetail(e.response?.data?.detail) || 'Erreur'); }
   };
 
   const handleAddToList = async (listId) => {
@@ -154,7 +165,7 @@ export default function MyCollection() {
       await fetchLists();
       setAddToListItem(null);
       toast.success('Ajouté à la liste');
-    } catch (e) { toast.error(e.response?.data?.detail || 'Déjà dans la liste'); }
+    } catch (e) { toast.error(normalizeDetail(e.response?.data?.detail) || 'Déjà dans la liste'); }
   };
 
   const handleRemoveFromList = async (listId, collectionId) => {
@@ -239,7 +250,8 @@ export default function MyCollection() {
       setDetailItem(null);
       fetchCollection();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to update');
+      const detail = normalizeDetail(err?.response?.data?.detail);
+      toast.error(detail || 'Failed to update');
     } finally {
       setSaving(false);
     }
