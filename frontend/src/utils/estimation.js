@@ -235,10 +235,17 @@ export function calculateEstimation({
       const age = Math.max(0, currentYear - seasonYear);
       const effectiveAge = Math.max(0, age - AGE_GRACE_YEARS);
       const ageC = parseFloat(Math.min(effectiveAge * AGE_COEFF_PER_YEAR, AGE_MAX).toFixed(2));
-      if (ageC > 0) {
-        coeffSum += ageC;
-        breakdown.push({ label: `Age: ${age} years (+${AGE_GRACE_YEARS}y grace)`, coeff: ageC });
-      }
+
+      // Toujours afficher la ligne dans le breakdown si la saison est connue,
+      // même si ageC = 0 (maillot récent dans la période de grâce)
+      coeffSum += ageC;
+      const cappedNote = ageC >= AGE_MAX ? ' (capped)' : '';
+      const graceNote  = age <= AGE_GRACE_YEARS ? ' — in grace period' : '';
+      breakdown.push({
+        label: `Vintage: season ${seasonYear} (${age}y)${graceNote}${cappedNote}`,
+        coeff: ageC,
+        source: 'master_kit',
+      });
     }
   }
 
