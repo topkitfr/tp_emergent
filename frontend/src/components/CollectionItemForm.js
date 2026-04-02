@@ -87,7 +87,7 @@ export function formFromItem(item) {
   let patches = [];
   if (Array.isArray(item.patches) && item.patches.length > 0) {
     patches = item.patches;
-  } else if (item.has_patch) {
+  } else if (item.has_patch || item.patch) {
     patches = ['competition'];
   }
 
@@ -106,6 +106,8 @@ export function formFromItem(item) {
     signed_other_text:   item.signed_other_text  || item.signed_by      || '',
     signed_player_id:    item.signed_by_player_id || '',
     player_profile:      item.player_profile     || 'none',
+    // Rétro-compat : si signed_proof_level existe on le reprend,
+    // sinon on tente de déduire depuis l'ancien champ booléen signed_proof
     signed_proof_level:  item.signed_proof_level
                            ? item.signed_proof_level
                            : item.signed_proof ? 'light' : 'none',
@@ -119,8 +121,20 @@ export function formFromItem(item) {
 /**
  * Prépare le payload API depuis le form.
  * estimation doit être calculé côté appelant (calculateEstimation).
+ *
+ * IMPORTANT – types attendus par Pydantic (CollectionAdd / CollectionUpdate) :
+ *   signed_proof       : str  "none" | "light" | "strong"  (PAS un booléen)
+ *   signed_proof_level : str  (idem)
+ *   patch              : bool  (PAS un tableau)
+ *   patches            : champ non reconnu par le backend → stocké dans notes ou ignoré
  */
 export function formToPayload(form, estimation) {
+  // signed_proof_level déjà une string dans le form ('none'|'light'|'strong')
+  const proofLevel = form.signed_proof_level || 'none';
+
+  // patch : bool — true si au moins un patch coché
+  const hasPatch = Array.isArray(form.patches) && form.patches.length > 0;
+
   return {
     physical_state:      form.physical_state                    || undefined,
     size:                form.size                              || undefined,
@@ -131,23 +145,24 @@ export function formToPayload(form, estimation) {
     flocking_player_id:  form.flocking_origin === 'Official'
                            ? (form.flocking_player_id || undefined) : undefined,
     condition_origin:    form.condition_origin                  || undefined,
-    patches:             form.patches.length > 0 ? form.patches : undefined,
-    patch_other_text:    form.patches.includes('other')
-                           ? (form.patch_other_text || undefined) : undefined,
+    // patch → booléen attendu par le backend
+    patch:               hasPatch || undefined,
     signed:              form.signed,
     signed_type:         form.signed ? (form.signed_type || undefined) : undefined,
-    signed_other_text:   form.signed && form.signed_type === 'other'
+    signed_other_detail: form.signed && form.signed_type === 'other'
                            ? (form.signed_other_text || undefined) : undefined,
-    player_profile:      form.signed && form.signed_type === 'player_flocked'
+    flocking_player_profile:
+                         form.signed && form.signed_type === 'player_flocked'
                            ? (form.player_profile || 'none') : undefined,
     signed_by_player_id: form.signed && form.signed_type === 'other'
                            ? (form.signed_player_id || undefined) : undefined,
-    signed_proof:        form.signed_proof_level !== 'none',
-    signed_proof_level:  form.signed ? form.signed_proof_level : undefined,
+    // signed_proof → STRING attendue par Pydantic (pas un booléen !)
+    signed_proof:        form.signed ? proofLevel : 'none',
+    signed_proof_level:  form.signed ? proofLevel : undefined,
     is_rare:             form.is_rare                           || undefined,
     rare_reason:         form.is_rare && form.rare_reason
                            ? form.rare_reason : undefined,
-    notes:               form.notes                             || undefined,
+    notes:               form.notes                            || undefined,
     estimated_price:     estimation?.estimatedPrice,
   };
 }
