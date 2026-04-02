@@ -17,6 +17,17 @@ function parseSeasonYear(season) {
   return match ? parseInt(match[1]) : 0;
 }
 
+/** Normalise un detail FastAPI/Pydantic en string lisible */
+function normalizeDetail(detail) {
+  if (!detail) return null;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(d => d?.msg || d?.message || JSON.stringify(d)).join(' · ');
+  }
+  if (typeof detail === 'object') return detail.msg || detail.message || JSON.stringify(detail);
+  return String(detail);
+}
+
 export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
   const kit   = version?.master_kit || {};
   const photo = version?.front_photo || kit?.front_photo;
@@ -89,7 +100,8 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
       if (err?.response?.status === 400) {
         setError('This version is already in your collection.');
       } else {
-        setError(err?.response?.data?.detail || 'An error occurred. Please try again.');
+        const detail = normalizeDetail(err?.response?.data?.detail);
+        setError(detail || 'An error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
