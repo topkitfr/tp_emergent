@@ -47,7 +47,6 @@ export const SIGNED_TYPE_COEFF = {
 };
 
 // Signature — profil joueur (uniquement si signed_type = player_flocked)
-// Remplace l'aura_level API pour une saisie manuelle explicite
 export const PLAYER_PROFILE_COEFF = {
   'legend': 0.75,   // Football Legend (Ronaldo, Zidane, Maldini...)
   'star': 0.25,     // Club Star (joueur majeur du club)
@@ -81,16 +80,17 @@ export const AGE_MAX = 1.0;
  * @param {object} params
  * @param {'basic'|'advanced'} params.mode
  * @param {'Authentic'|'Replica'|'Other'} params.modelType
- * @param {string} params.competition         — toujours depuis version, jamais saisi
+ * @param {string} params.competition         — depuis version, jamais saisi
  * @param {string} params.conditionOrigin     — advanced only
  * @param {string} params.physicalState
- * @param {'Official'|'Personalized'|'None'} params.flockingOrigin  — advanced only
+ * @param {'Official'|'Personalized'|'None'} params.flockingOrigin — advanced only
  * @param {boolean} params.hasPatch           — advanced only
  * @param {boolean} params.signed             — advanced only
  * @param {'player_flocked'|'team'|'other'|''} params.signedType   — advanced only
- * @param {'legend'|'star'|'none'} params.playerProfile             — advanced only, si signed_type = player_flocked
- * @param {'none'|'light'|'strong'} params.signedProofLevel        — advanced only
+ * @param {'legend'|'star'|'none'} params.playerProfile            — si signed_type = player_flocked
+ * @param {'none'|'light'|'strong'} params.signedProofLevel
  * @param {boolean} params.isRare             — advanced only
+ * @param {string} params.rareReason          — advanced only, text
  * @param {number} params.seasonYear          — 0 if unknown
  */
 export function calculateEstimation({
@@ -108,6 +108,7 @@ export function calculateEstimation({
   // legacy support
   signedProof = false,
   isRare = false,
+  rareReason = '',
   seasonYear = 0,
   // legacy auraLevel kept for backward compat with MyCollection old items
   auraLevel = 0,
@@ -116,14 +117,14 @@ export function calculateEstimation({
   let coeffSum = 0;
   const breakdown = [];
 
-  // ── Competition (basic + advanced) — toujours silent depuis version ────────
+  // ── Competition (basic + advanced) — depuis version ──────────────────────
   const compC = COMPETITION_COEFF[competition] ?? 0;
   if (compC !== 0) {
     coeffSum += compC;
     breakdown.push({ label: `Competition: ${competition}`, coeff: compC, source: 'version' });
   }
 
-  // ── Physical State (basic + advanced) ─────────────────────────────────────
+  // ── Physical State (basic + advanced) ────────────────────────────────────
   const stateC = STATE_COEFF[physicalState] ?? 0;
   coeffSum += stateC;
   if (physicalState) {
@@ -131,27 +132,27 @@ export function calculateEstimation({
   }
 
   if (mode === 'advanced') {
-    // ── Origin ────────────────────────────────────────────────────────────────
+    // ── Origin ──────────────────────────────────────────────────────────────
     const originC = ORIGIN_COEFF[conditionOrigin] ?? 0;
     coeffSum += originC;
     if (conditionOrigin) {
       breakdown.push({ label: `Origin: ${conditionOrigin}`, coeff: originC });
     }
 
-    // ── Flocking ──────────────────────────────────────────────────────────────
+    // ── Flocking ────────────────────────────────────────────────────────────
     const flockingC = FLOCKING_COEFF[flockingOrigin] ?? 0;
     coeffSum += flockingC;
     if (flockingOrigin && flockingOrigin !== 'None') {
       breakdown.push({ label: `Flocking: ${flockingOrigin}`, coeff: flockingC });
     }
 
-    // ── Patch ─────────────────────────────────────────────────────────────────
+    // ── Patch ───────────────────────────────────────────────────────────────
     if (hasPatch) {
       coeffSum += PATCH_COEFF;
       breakdown.push({ label: 'Official patch', coeff: PATCH_COEFF });
     }
 
-    // ── Signature ─────────────────────────────────────────────────────────────
+    // ── Signature ───────────────────────────────────────────────────────────
     if (signed && signedType) {
       const signedC = SIGNED_TYPE_COEFF[signedType] ?? 0;
       coeffSum += signedC;
@@ -164,7 +165,6 @@ export function calculateEstimation({
 
       // Player profile — uniquement si signed_type = player_flocked
       if (signedType === 'player_flocked') {
-        // Priorité : playerProfile manuel > fallback legacy auraLevel
         let profileKey = playerProfile && playerProfile !== 'none' ? playerProfile : null;
         if (!profileKey && auraLevel >= 4) profileKey = 'legend';
         else if (!profileKey && auraLevel >= 2) profileKey = 'star';
@@ -204,13 +204,13 @@ export function calculateEstimation({
       }
     }
 
-    // ── Rarity ────────────────────────────────────────────────────────────────
+    // ── Rarity ──────────────────────────────────────────────────────────────
     if (isRare) {
       coeffSum += RARITY_COEFF;
       breakdown.push({ label: 'Rare jersey', coeff: RARITY_COEFF });
     }
 
-    // ── Age (starts after 2-year grace period) ────────────────────────────────
+    // ── Age (starts after 2-year grace period) ────────────────────────────
     if (seasonYear > 0) {
       const currentYear = new Date().getFullYear();
       const age = Math.max(0, currentYear - seasonYear);
@@ -222,7 +222,6 @@ export function calculateEstimation({
       }
     }
   }
-  // Basic mode: pas de signed, pas d'origine, pas de flocage coeff, pas de rareté, pas d'âge
 
   const estimatedPrice = parseFloat((base * (1 + coeffSum)).toFixed(2));
 
