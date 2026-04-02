@@ -36,8 +36,12 @@ export const FLOCKING_COEFF = {
   'None': 0.0,
 };
 
-// Patch officiel de compétition
-export const PATCH_COEFF = 0.10;
+// Patches — multi-select, coeff appliqué par patch coché
+export const PATCH_OPTIONS = [
+  { value: 'competition', label: 'Competition patch', coeff: 0.10 },
+  { value: 'title_winning', label: 'Title winning patch', coeff: 0.10 },
+  { value: 'other', label: 'Other patch', coeff: 0.05 },
+];
 
 // Signature — type
 export const SIGNED_TYPE_COEFF = {
@@ -84,14 +88,17 @@ export const AGE_MAX = 1.0;
  * @param {string} params.conditionOrigin     — advanced only
  * @param {string} params.physicalState
  * @param {'Official'|'Personalized'|'None'} params.flockingOrigin — advanced only
- * @param {boolean} params.hasPatch           — advanced only
+ * @param {string[]} params.patches           — advanced only, array of PATCH_OPTIONS.value
+ * @param {string}   params.patchOtherText    — advanced only, si 'other' coché
  * @param {boolean} params.signed             — advanced only
  * @param {'player_flocked'|'team'|'other'|''} params.signedType   — advanced only
+ * @param {string}  params.signedOtherText    — advanced only, si type = 'other'
  * @param {'legend'|'star'|'none'} params.playerProfile            — si signed_type = player_flocked
  * @param {'none'|'light'|'strong'} params.signedProofLevel
  * @param {boolean} params.isRare             — advanced only
- * @param {string} params.rareReason          — advanced only, text
- * @param {number} params.seasonYear          — 0 if unknown
+ * @param {string}  params.rareReason         — advanced only, text
+ * @param {string}  params.otherInfo          — advanced only, text libre
+ * @param {number}  params.seasonYear         — 0 if unknown
  */
 export function calculateEstimation({
   mode = 'basic',
@@ -100,15 +107,19 @@ export function calculateEstimation({
   conditionOrigin = '',
   physicalState = '',
   flockingOrigin = 'None',
-  hasPatch = false,
+  patches = [],
+  patchOtherText = '',
   signed = false,
   signedType = '',
+  signedOtherText = '',
   playerProfile = 'none',
   signedProofLevel = 'none',
   // legacy support
   signedProof = false,
+  hasPatch = false,       // legacy compat
   isRare = false,
   rareReason = '',
+  otherInfo = '',
   seasonYear = 0,
   // legacy auraLevel kept for backward compat with MyCollection old items
   auraLevel = 0,
@@ -146,11 +157,19 @@ export function calculateEstimation({
       breakdown.push({ label: `Flocking: ${flockingOrigin}`, coeff: flockingC });
     }
 
-    // ── Patch ───────────────────────────────────────────────────────────────
-    if (hasPatch) {
-      coeffSum += PATCH_COEFF;
-      breakdown.push({ label: 'Official patch', coeff: PATCH_COEFF });
-    }
+    // ── Patches (multi) ─────────────────────────────────────────────────────
+    // Support nouveau format (array) + legacy (boolean hasPatch)
+    const patchList = Array.isArray(patches) && patches.length > 0
+      ? patches
+      : hasPatch ? ['competition'] : [];
+
+    patchList.forEach(pKey => {
+      const opt = PATCH_OPTIONS.find(o => o.value === pKey);
+      if (!opt) return;
+      coeffSum += opt.coeff;
+      const suffix = pKey === 'other' && patchOtherText ? ` (${patchOtherText})` : '';
+      breakdown.push({ label: `Patch: ${opt.label}${suffix}`, coeff: opt.coeff });
+    });
 
     // ── Signature ───────────────────────────────────────────────────────────
     if (signed && signedType) {
@@ -159,7 +178,7 @@ export function calculateEstimation({
       const signedLabel = {
         player_flocked: 'Signed by flocked player',
         team: 'Signed by the team',
-        other: 'Signed (other)',
+        other: `Signed: ${signedOtherText || 'other'}`,
       }[signedType] || 'Signed';
       breakdown.push({ label: signedLabel, coeff: signedC });
 
@@ -207,7 +226,7 @@ export function calculateEstimation({
     // ── Rarity ──────────────────────────────────────────────────────────────
     if (isRare) {
       coeffSum += RARITY_COEFF;
-      breakdown.push({ label: 'Rare jersey', coeff: RARITY_COEFF });
+      breakdown.push({ label: rareReason ? `Rare: ${rareReason}` : 'Rare jersey', coeff: RARITY_COEFF });
     }
 
     // ── Age (starts after 2-year grace period) ────────────────────────────
