@@ -220,21 +220,49 @@ class WishlistAdd(BaseModel):
 
 
 class EstimationRequest(BaseModel):
+    """
+    Requête d'estimation de prix d'un maillot.
+
+    mode : "basic" | "advanced"
+      - "basic"    : Modèle + Compétition + État physique uniquement
+      - "advanced" : Tous les critères (origine, flocage, patch, signature, rareté, ancienneté)
+
+    Logique flocage (côté UI) :
+      - flocking_origin == "Official"     -> afficher le champ joueur flocqué
+      - flocking_origin == "Personalized" -> NE PAS afficher le champ joueur
+      - flocking_origin == "None"         -> rien
+
+    Logique signature :
+      - signed_type == "player_flocked" -> joueur dont le nom est flocqué
+      - signed_type == "team"           -> toute l'équipe
+      - signed_type == "other"          -> préciser via signed_other_detail
+    """
+    # Champs communs basic + advanced
     model_type: str
     competition: Optional[str] = ""
-    condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
+
+    # Champs advanced uniquement
+    mode: Optional[str] = "advanced"          # "basic" | "advanced"
+    condition_origin: Optional[str] = ""
+    # Flocage : "Official" | "Personalized" | "None"
     flocking_origin: Optional[str] = ""
-    # Profil du joueur flocqué : "legend" | "star" | "none"
+    # Profil du joueur flocqué (utilisé uniquement si signé par le joueur flocqué)
+    # "football_legend" | "club_star" | "none"
     flocking_player_profile: Optional[str] = "none"
     signed: Optional[bool] = False
-    # signed_proof: "none" | "light" | "strong"
-    signed_proof: Optional[str] = "none"
     # signed_type: "player_flocked" | "team" | "other"
     signed_type: Optional[str] = ""
+    # Précision si signed_type == "other"
+    signed_other_detail: Optional[str] = ""
+    # signed_proof: "none" | "light" | "strong"
+    signed_proof: Optional[str] = "none"
+    # Année de début de saison (ex: 2018 pour la saison 2018/2019)
     season_year: Optional[int] = 0
     patch: Optional[bool] = False
     is_rare: Optional[bool] = False
+    # Raison de la rareté (texte libre, affiché dans le breakdown)
+    rare_reason: Optional[str] = ""
 
 
 # Entity models
