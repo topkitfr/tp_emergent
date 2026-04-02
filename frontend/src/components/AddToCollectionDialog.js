@@ -9,20 +9,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { proxyImageUrl, addToCollection, createPlayerPending, getPlayerAura } from '@/lib/api';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Zap, SlidersHorizontal } from 'lucide-react';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { calculateEstimation } from '@/utils/estimation';
 
-const CONDITION_ORIGINS = ['Club Stock', 'Match Prepared', 'Match Worn', 'Training', 'Shop'];
+const COMPETITIONS     = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
+const CONDITION_ORIGINS = ['Shop', 'Training', 'Club Stock', 'Match Prepared', 'Match Worn'];
 const PHYSICAL_STATES  = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
-const FLOCKING_TYPES   = ['Name+Number', 'Name', 'Number'];
 const FLOCKING_ORIGINS = ['Official', 'Personalized'];
-const SIZES            = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const SIGNED_TYPES     = [
+  { value: 'player_flocked', label: 'Signed by flocked player' },
+  { value: 'team',           label: 'Signed by the team' },
+  { value: 'other',          label: 'Other (specify)' },
+];
+const PROOF_LEVELS = [
+  { value: 'none',   label: 'No proof' },
+  { value: 'light',  label: 'Light certificate / weak provenance' },
+  { value: 'strong', label: 'Solid proof (photo/video + COA)' },
+];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
-const fieldLabel = 'text-xs uppercase tracking-wider';
-const fieldStyle = { fontFamily: 'Barlow Condensed' };
-const inputClass = 'bg-card border-border rounded-none';
+const fieldLabel = 'text-[10px] uppercase tracking-wider text-muted-foreground';
+const fs         = { fontFamily: 'Barlow Condensed' };
+const inputCls   = 'bg-card border-border rounded-none';
 
 function parseSeasonYear(season) {
   if (!season) return 0;
@@ -34,52 +44,74 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
   const kit   = version?.master_kit || {};
   const photo = version?.front_photo || kit?.front_photo;
 
+  // ─── Estimation mode ───────────────────────────────────────────────────────
+  const [mode, setMode] = useState(() =>
+    typeof window !== 'undefined' ? (window.__tkEstimationMode || 'basic') : 'basic'
+  );
+  const switchMode = (next) => {
+    if (typeof window !== 'undefined') window.__tkEstimationMode = next;
+    setMode(next);
+  };
+
+  // ─── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    size:                '',
-    condition_origin:    '',
+    // Basic
     physical_state:      '',
-    flocking_type:       '',
     flocking_origin:     '',
     flocking_detail:     '',
     flocking_player_id:  '',
     signed:              false,
-    signed_by:           '',
-    signed_by_player_id: '',
-    signed_proof:        false,
+    // Advanced extras
+    condition_origin:    '',
+    has_patch:           false,
+    signed_type:         '',
+    signed_details:      '',
+    signed_proof_level:  'none',
+    is_rare:             false,
+    rare_reason:         '',
+    estimation_notes:    '',
+    // Always
+    size:                '',
     purchase_cost:       '',
     notes:               '',
   });
-  const [loading,               setLoading]               = useState(false);
-  const [error,                 setError]                 = useState('');
+
   const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
+  // ─── Live estimation ───────────────────────────────────────────────────────
   const seasonYear = parseSeasonYear(kit?.season);
   const estimation = calculateEstimation({
-    modelType:       version?.model       || 'Replica',
-    competition:     version?.competition || '',
-    conditionOrigin: form.condition_origin,
-    physicalState:   form.physical_state,
-    flockingOrigin:  form.flocking_origin,
-    signed:          form.signed,
-    signedProof:     form.signed_proof,
+    mode,
+    modelType:        version?.model       || 'Replica',
+    competition:      version?.competition || '',
+    conditionOrigin:  form.condition_origin,
+    physicalState:    form.physical_state,
+    flockingOrigin:   form.flocking_origin || 'None',
+    hasPatch:         form.has_patch,
+    signed:           form.signed,
+    signedType:       form.signed_type,
+    signedProofLevel: form.signed_proof_level,
+    isRare:           form.is_rare,
     seasonYear,
-    auraLevel:       signedPlayerAuraLevel,
+    auraLevel:        signedPlayerAuraLevel,
   });
 
+  // ─── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
     try {
       let resolvedFlockingPlayerId = form.flocking_player_id;
-      let resolvedSignedByPlayerId = form.signed_by_player_id;
-
       if (form.flocking_detail && !resolvedFlockingPlayerId) {
         try { const r = await createPlayerPending({ full_name: form.flocking_detail }); resolvedFlockingPlayerId = r.data?.player_id; } catch {}
       }
-      if (form.signed && form.signed_by && !resolvedSignedByPlayerId) {
-        try { const r = await createPlayerPending({ full_name: form.signed_by }); resolvedSignedByPlayerId = r.data?.player_id; } catch {}
+      let resolvedSignedByPlayerId = '';
+      if (form.signed && form.signed_details && form.signed_type === 'player_flocked') {
+        try { const r = await createPlayerPending({ full_name: form.signed_details }); resolvedSignedByPlayerId = r.data?.player_id; } catch {}
       }
 
       await addToCollection({
@@ -87,14 +119,13 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         size:                form.size                || undefined,
         condition_origin:    form.condition_origin    || undefined,
         physical_state:      form.physical_state      || undefined,
-        flocking_type:       form.flocking_type       || undefined,
         flocking_origin:     form.flocking_origin     || undefined,
         flocking_detail:     form.flocking_detail     || undefined,
         flocking_player_id:  resolvedFlockingPlayerId || undefined,
         signed:              form.signed,
-        signed_by:           form.signed_by           || undefined,
+        signed_by:           form.signed_details      || undefined,
         signed_by_player_id: resolvedSignedByPlayerId || undefined,
-        signed_proof:        form.signed_proof,
+        signed_proof:        form.signed_proof_level !== 'none',
         purchase_cost:       form.purchase_cost ? parseFloat(form.purchase_cost) : undefined,
         estimated_price:     estimation.estimatedPrice,
         notes:               form.notes               || undefined,
@@ -111,15 +142,18 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     }
   };
 
+  // ─── Derived flags ─────────────────────────────────────────────────────────
+  const showFlockingPlayer = form.flocking_origin === 'Official';
+
   return (
     <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
       <SheetContent side="right" className="bg-background border-border w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="mb-6">
+        <SheetHeader className="mb-4">
           <SheetTitle className="text-left tracking-tighter" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>ADD TO COLLECTION</SheetTitle>
         </SheetHeader>
 
-        {/* Aperçu version */}
-        <div className="flex gap-4 mb-6">
+        {/* ── Aperçu version ── */}
+        <div className="flex gap-4 mb-4">
           <img
             src={proxyImageUrl(photo)}
             alt={kit.club}
@@ -127,157 +161,274 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
           />
           <div className="flex-1">
             <h3 className="text-lg font-semibold tracking-tight" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{kit.club}</h3>
-            <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.season} - {kit.kit_type}</p>
-            <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.brand}</p>
+            <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>{kit.season} — {kit.kit_type}</p>
+            <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>{kit.brand}</p>
             <div className="flex gap-2 mt-2">
-              <Badge variant="outline" className="rounded-none text-[10px]">{version?.model || 'None'}</Badge>
-              <Badge variant="outline" className="rounded-none text-[10px]">{version?.competition || 'None'}</Badge>
+              <Badge variant="outline" className="rounded-none text-[10px]">{version?.model || '—'}</Badge>
+              <Badge variant="outline" className="rounded-none text-[10px]">{version?.competition || '—'}</Badge>
             </div>
           </div>
         </div>
 
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* TOGGLE BASIC / ADVANCED — en tête du form                        */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div className="flex items-center gap-2 mb-5 border border-border p-1" style={fs}>
+          <button
+            onClick={() => switchMode('basic')}
+            className={`flex items-center gap-1.5 flex-1 justify-center text-[11px] uppercase tracking-wider py-1.5 transition-colors ${
+              mode === 'basic'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Zap className="w-3 h-3" />
+            Basic
+          </button>
+          <button
+            onClick={() => switchMode('advanced')}
+            className={`flex items-center gap-1.5 flex-1 justify-center text-[11px] uppercase tracking-wider py-1.5 transition-colors ${
+              mode === 'advanced'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <SlidersHorizontal className="w-3 h-3" />
+            Advanced
+          </button>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* FORM FIELDS                                                        */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
         <div className="space-y-4">
 
-          {/* Flocking */}
-          <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>FLOCKING</p>
-          <div className="grid grid-cols-3 gap-3">
+          {/* ── BASIC fields: Physical State + Flocking ── */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Type</Label>
-              <Select value={form.flocking_type || 'none'} onValueChange={v => set('flocking_type', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputClass}><SelectValue placeholder="None" /></SelectTrigger>
+              <Label className={fieldLabel} style={fs}>Physical State</Label>
+              <Select value={form.physical_state || 'none'} onValueChange={v => set('physical_state', v === 'none' ? '' : v)}>
+                <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">None</SelectItem>
-                  {FLOCKING_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  <SelectItem value="none">—</SelectItem>
+                  {PHYSICAL_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Origin</Label>
+              <Label className={fieldLabel} style={fs}>Flocking</Label>
               <Select value={form.flocking_origin || 'none'} onValueChange={v => set('flocking_origin', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputClass}><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectTrigger className={inputCls}><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   <SelectItem value="none">None</SelectItem>
                   {FLOCKING_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Flocked player — uniquement si Official */}
+          {showFlockingPlayer && (
             <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Player</Label>
+              <Label className={fieldLabel} style={fs}>Flocked Player</Label>
               <EntityAutocomplete
                 entityType="player"
                 value={form.flocking_detail}
                 onChange={val => set('flocking_detail', val)}
                 onSelect={item => { set('flocking_detail', item.label); set('flocking_player_id', item.id); }}
-                placeholder="e.g., Messi"
-                className={inputClass}
+                placeholder="e.g. Ronaldo 7"
+                className={inputCls}
               />
             </div>
+          )}
+
+          {/* ── BASIC: Signed ── */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch checked={form.signed} onCheckedChange={v => set('signed', v)} />
+              <Label className={`text-[11px] uppercase tracking-wider cursor-pointer`} style={fs}>Signed</Label>
+            </div>
+
+            {form.signed && mode === 'basic' && (
+              <div className="pl-10 flex items-center gap-2">
+                <Switch checked={form.signed_proof_level !== 'none'} onCheckedChange={v => set('signed_proof_level', v ? 'light' : 'none')} />
+                <Label className="text-[10px] text-muted-foreground" style={fs}>Proof / Certificate</Label>
+              </div>
+            )}
           </div>
 
-          {/* Condition */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Condition (Origin)</Label>
-              <Select value={form.condition_origin || 'none'} onValueChange={v => set('condition_origin', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputClass}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">None</SelectItem>
-                  {CONDITION_ORIGINS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Physical State</Label>
-              <Select value={form.physical_state || 'none'} onValueChange={v => set('physical_state', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputClass}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">None</SelectItem>
-                  {PHYSICAL_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          {/* ════════════════════════════════════════════════════════════════ */}
+          {/* ADVANCED ONLY fields                                             */}
+          {/* ════════════════════════════════════════════════════════════════ */}
+          {mode === 'advanced' && (
+            <>
+              {/* Séparateur visuel */}
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground" style={fs}>Advanced</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
 
-          {/* Size + Purchase Cost */}
+              {/* Competition + Origin */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className={fieldLabel} style={fs}>Competition</Label>
+                  <Select value={version?.competition || 'none'} disabled>
+                    <SelectTrigger className={`${inputCls} opacity-60`}><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="none">—</SelectItem>
+                      {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[9px] text-muted-foreground" style={fs}>From version</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className={fieldLabel} style={fs}>Origin (Condition)</Label>
+                  <Select value={form.condition_origin || 'none'} onValueChange={v => set('condition_origin', v === 'none' ? '' : v)}>
+                    <SelectTrigger className={inputCls}><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="none">—</SelectItem>
+                      {CONDITION_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Patch + Rare — toggles inline */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.has_patch} onCheckedChange={v => set('has_patch', v)} />
+                  <Label className={`text-[11px] uppercase tracking-wider cursor-pointer`} style={fs}>Official Patch</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.is_rare} onCheckedChange={v => set('is_rare', v)} />
+                  <Label className={`text-[11px] uppercase tracking-wider cursor-pointer`} style={fs}>Rare Jersey</Label>
+                </div>
+              </div>
+
+              {form.is_rare && (
+                <div className="space-y-1">
+                  <Label className={fieldLabel} style={fs}>Why rare? (optional)</Label>
+                  <Input
+                    value={form.rare_reason}
+                    onChange={e => set('rare_reason', e.target.value)}
+                    placeholder="Ex: limited edition, printing error, unreleased..."
+                    className={`${inputCls} text-xs`}
+                  />
+                </div>
+              )}
+
+              {/* Signature détaillée */}
+              {form.signed && (
+                <div className="space-y-2 pl-1 border-l-2 border-primary/30 ml-1">
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fs}>Signed by</Label>
+                    <Select value={form.signed_type || 'none'} onValueChange={v => set('signed_type', v === 'none' ? '' : v)}>
+                      <SelectTrigger className={inputCls}><SelectValue placeholder="Select..." /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">—</SelectItem>
+                        {SIGNED_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Champ joueur signataire — si player_flocked ou other */}
+                  {(form.signed_type === 'player_flocked' || form.signed_type === 'other') && (
+                    <div className="space-y-1">
+                      <Label className={fieldLabel} style={fs}>
+                        {form.signed_type === 'player_flocked' ? 'Flocked player (signed)' : 'Specify (signed by)'}
+                      </Label>
+                      <EntityAutocomplete
+                        entityType="player"
+                        value={form.signed_details}
+                        onChange={val => set('signed_details', val)}
+                        onSelect={item => {
+                          set('signed_details', item.label);
+                          if (item.id) {
+                            getPlayerAura(item.id)
+                              .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
+                              .catch(() => setSignedPlayerAuraLevel(0));
+                          }
+                        }}
+                        placeholder={form.signed_type === 'player_flocked' ? 'e.g. Maldini' : 'e.g. Zidane'}
+                        className={inputCls}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fs}>Proof / certificate</Label>
+                    <Select value={form.signed_proof_level} onValueChange={v => set('signed_proof_level', v)}>
+                      <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {PROOF_LEVELS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* Notes estimation — sans impact prix */}
+              <div className="space-y-1">
+                <Label className={fieldLabel} style={fs}>Other info <span className="normal-case text-muted-foreground">(no price impact)</span></Label>
+                <Textarea
+                  value={form.estimation_notes}
+                  onChange={e => set('estimation_notes', e.target.value)}
+                  placeholder="Ex: long sleeve, pre-season prototype, banned sponsor..."
+                  className="bg-card border-border rounded-none min-h-[60px] text-xs"
+                />
+              </div>
+            </>
+          )}
+
+          {/* ─── Toujours visible : Size + Purchase Cost ─── */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Size</Label>
+              <Label className={fieldLabel} style={fs}>Size</Label>
               <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputClass}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">—</SelectItem>
                   {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className={fieldLabel} style={fieldStyle}>Purchase Cost (€)</Label>
+              <Label className={fieldLabel} style={fs}>Purchase Cost (€)</Label>
               <Input
                 type="number"
                 value={form.purchase_cost}
                 onChange={e => set('purchase_cost', e.target.value)}
                 placeholder="0"
-                className={`${inputClass} font-mono`}
+                className={`${inputCls} font-mono`}
               />
             </div>
           </div>
 
-          {/* Signed */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch checked={form.signed} onCheckedChange={v => set('signed', v)} />
-                <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
-              </div>
-              {form.signed && (
-                <div className="flex-1">
-                  <EntityAutocomplete
-                    entityType="player"
-                    value={form.signed_by}
-                    onChange={val => set('signed_by', val)}
-                    onSelect={item => {
-                      set('signed_by', item.label);
-                      set('signed_by_player_id', item.id);
-                      if (item.id) {
-                        getPlayerAura(item.id)
-                          .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
-                          .catch(() => setSignedPlayerAuraLevel(0));
-                      }
-                    }}
-                    placeholder="Player name"
-                    className={inputClass}
-                  />
-                </div>
-              )}
-            </div>
-            {form.signed && (
-              <div className="flex items-center gap-2 ml-12">
-                <Switch checked={form.signed_proof} onCheckedChange={v => set('signed_proof', v)} />
-                <Label className="text-[10px] text-muted-foreground" style={fieldStyle}>PROOF / CERTIFICATE</Label>
-              </div>
-            )}
-          </div>
-
-          {/* Notes */}
+          {/* ─── Notes générales ─── */}
           <div className="space-y-1">
-            <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
+            <Label className={fieldLabel} style={fs}>Notes</Label>
             <Textarea
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
               placeholder="Any notes..."
-              className="bg-card border-border rounded-none min-h-[80px]"
+              className="bg-card border-border rounded-none min-h-[70px]"
             />
           </div>
 
-          {/* Estimation live */}
+          {/* ─── Estimation live — affichage seul ─── */}
           <EstimationBreakdown
+            mode={mode}
             modelType={version?.model || 'Replica'}
             competition={version?.competition || ''}
             conditionOrigin={form.condition_origin}
             physicalState={form.physical_state}
-            flockingOrigin={form.flocking_origin}
+            flockingOrigin={form.flocking_origin || 'None'}
+            hasPatch={form.has_patch}
             signed={form.signed}
-            signedProof={form.signed_proof}
+            signedType={form.signed_type}
+            signedProofLevel={form.signed_proof_level}
+            isRare={form.is_rare}
             seasonYear={seasonYear}
             auraLevel={signedPlayerAuraLevel}
           />
@@ -285,6 +436,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
 
+        {/* ─── Actions ─── */}
         <div className="flex gap-2 mt-6">
           <Button
             onClick={handleSubmit}
