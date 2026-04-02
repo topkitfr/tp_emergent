@@ -143,16 +143,19 @@ ESTIMATION_STATE_COEFF = {
     "Needs restoration": -0.50,
 }
 
+# Flocage : "Official" = +0.20 flat. "Personalized" = 0 (pas de champ joueur)
 ESTIMATION_FLOCKING_COEFF = {"Official": 0.20, "Personalized": 0.0, "None": 0.0}
 
 ESTIMATION_PATCH_COEFF = 0.10
 
+# Signature — type de signataire
 ESTIMATION_SIGNED_TYPE_COEFF = {
     "player_flocked": 0.80,
     "team": 1.00,
     "other": 0.40,
 }
 
+# Preuve / certificat
 ESTIMATION_SIGNED_PROOF_COEFF = {
     "none": 0.0,
     "light": 0.20,
@@ -165,19 +168,12 @@ ESTIMATION_AGE_DELAY_YEARS = 2
 ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
 
-# Profil du joueur flocqué — appliqué dès que flocking_origin == "Official",
-# qu'il soit signé ou non. Bonus supplémentaire si signé par le joueur.
-# Enum : "legend" | "star" | "none"
+# Profil du joueur flocqué — actif UNIQUEMENT quand signé par le joueur flocqué
+# (signed == True ET signed_type == "player_flocked")
+# Enum : "football_legend" | "club_star" | "none"
 ESTIMATION_PLAYER_PROFILE_COEFF: dict[str, float] = {
-    "legend": 0.60,   # Légende du foot (Pelé, Maradona, Zidane, Ronaldo, Messi…)
-    "star": 0.25,     # Star du club / icône de l'histoire du club
-    "none": 0.0,      # Joueur lambda / non précisé
-}
-
-# Bonus supplémentaire si le maillot est aussi signé PAR le joueur flocqué
-ESTIMATION_PLAYER_PROFILE_SIGNED_BONUS: dict[str, float] = {
-    "legend": 0.40,   # signature d'une légende = valeur encore plus importante
-    "star": 0.20,
+    "football_legend": 1.00,  # Légende mondiale du foot
+    "club_star": 0.50,        # Star / icône du club
     "none": 0.0,
 }
 
@@ -218,25 +214,11 @@ def calculate_estimation(
     if physical_state:
         breakdown.append({"label": f"State: {physical_state}", "coeff": state_c})
 
-    # Flocage
+    # Flocage : +0.20 flat si Official, 0 si Personalized ou None
     flocking_c = ESTIMATION_FLOCKING_COEFF.get(flocking_origin, 0.0)
     coeff_sum += flocking_c
     if flocking_origin and flocking_origin != "None":
         breakdown.append({"label": f"Flocking: {flocking_origin}", "coeff": flocking_c})
-
-    # Profil joueur flocqué — actif dès que flocage officiel, sans condition de signature
-    if flocking_origin == "Official":
-        profile_c = ESTIMATION_PLAYER_PROFILE_COEFF.get(flocking_player_profile or "none", 0.0)
-        if profile_c > 0:
-            coeff_sum += profile_c
-            profile_labels = {
-                "legend": "Flocked player: Legend",
-                "star": "Flocked player: Club star",
-            }
-            breakdown.append({
-                "label": profile_labels.get(flocking_player_profile, "Flocked player profile"),
-                "coeff": profile_c,
-            })
 
     # Patch
     if patch:
@@ -254,24 +236,25 @@ def calculate_estimation(
         }
         breakdown.append({"label": type_labels.get(signed_type, "Signed"), "coeff": signed_type_c})
 
+        # Proof
         proof_c = ESTIMATION_SIGNED_PROOF_COEFF.get(signed_proof, 0.0)
         coeff_sum += proof_c
         if proof_c > 0:
             proof_labels = {"light": "Certificate (light proof)", "strong": "Certificate (strong proof + COA)"}
             breakdown.append({"label": proof_labels.get(signed_proof, "Certificate"), "coeff": proof_c})
 
-        # Bonus supplémentaire si signé par le joueur flocqué lui-même
+        # Profil joueur — uniquement si signé par le joueur flocqué lui-même
         if signed_type == "player_flocked" and flocking_origin == "Official":
-            bonus_c = ESTIMATION_PLAYER_PROFILE_SIGNED_BONUS.get(flocking_player_profile or "none", 0.0)
-            if bonus_c > 0:
-                coeff_sum += bonus_c
-                bonus_labels = {
-                    "legend": "Signed by flocked legend (bonus)",
-                    "star": "Signed by flocked club star (bonus)",
+            profile_c = ESTIMATION_PLAYER_PROFILE_COEFF.get(flocking_player_profile or "none", 0.0)
+            if profile_c > 0:
+                coeff_sum += profile_c
+                profile_labels = {
+                    "football_legend": "Signed by flocked player: Football legend",
+                    "club_star": "Signed by flocked player: Club star",
                 }
                 breakdown.append({
-                    "label": bonus_labels.get(flocking_player_profile, "Signed by flocked player (bonus)"),
-                    "coeff": bonus_c,
+                    "label": profile_labels.get(flocking_player_profile, "Signed by flocked player profile"),
+                    "coeff": profile_c,
                 })
 
     # Rareté
