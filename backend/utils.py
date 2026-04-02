@@ -55,16 +55,6 @@ def slugify(text: str) -> str:
 
 # ─── Normalisation saison ─────────────────────────────────────────────────────
 def normalize_season(raw: str) -> str:
-    """
-    Normalise n'importe quel format de saison vers YYYY/YYYY.
-    Exemples :
-      '2025-2026'  → '2025/2026'
-      '2025.2026'  → '2025/2026'
-      '25/26'      → '2025/2026'
-      '2025 2026'  → '2025/2026'
-      '2025/2026'  → '2025/2026' (inchangé)
-      '2025'       → '2025/2026' (saison sur 1 an → on ajoute +1)
-    """
     if not raw:
         return raw
     raw = raw.strip()
@@ -109,7 +99,6 @@ async def get_or_create_team_by_name(name: str) -> str:
 
 # ─── Quota check ───────────────────────────────────────────────────────────────
 async def check_user_quota(db, user_id: str, sub_type: str) -> None:
-    """Lève HTTPException 429 si le quota 24h est dépassé pour ce type de soumission."""
     limit = QUOTA_PER_TYPE.get(sub_type)
     if not limit:
         return
@@ -154,44 +143,42 @@ ESTIMATION_STATE_COEFF = {
     "Needs restoration": -0.50,
 }
 
-# Flocage : seulement "Official" apporte de la valeur
 ESTIMATION_FLOCKING_COEFF = {"Official": 0.20, "Personalized": 0.0, "None": 0.0}
 
-# Patch de compétition officiel
 ESTIMATION_PATCH_COEFF = 0.10
 
-# Signature — type
 ESTIMATION_SIGNED_TYPE_COEFF = {
-    "player_flocked": 0.80,   # joueur flocqué sur le maillot
-    "team": 1.00,             # toute l'équipe
-    "other": 0.40,            # autre joueur(s)
+    "player_flocked": 0.80,
+    "team": 1.00,
+    "other": 0.40,
 }
 
-# Preuve / certificat — niveau
 ESTIMATION_SIGNED_PROOF_COEFF = {
     "none": 0.0,
-    "light": 0.20,            # certif léger / provenance faible
-    "strong": 0.40,           # photo/vidéo + COA crédible
+    "light": 0.20,
+    "strong": 0.40,
 }
 
-# Rareté
 ESTIMATION_RARITY_COEFF = 0.40
 
-# Ancienneté :
-# - délai de 2 ans avant que l'effet entre en jeu (encore trouvable neuf)
-# - +0.05 par année au-delà de ce délai, plafonné à +1.0
 ESTIMATION_AGE_DELAY_YEARS = 2
 ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
 
-# Profil du joueur flocqué (remplace aura_level pour l'estimation)
-# Valeurs : "legend" | "star" | "major" | "regular"
-# Appliqué uniquement quand le maillot est signé par le joueur flocqué
+# Profil du joueur flocqué — appliqué dès que flocking_origin == "Official",
+# qu'il soit signé ou non. Bonus supplémentaire si signé par le joueur.
+# Enum : "legend" | "star" | "none"
 ESTIMATION_PLAYER_PROFILE_COEFF: dict[str, float] = {
-    "legend": 1.00,   # Légende mondiale (Pelé, Maradona, Zidane, Ronaldo, Messi…)
-    "star": 0.60,     # Star du club / joueur majeur de l'histoire du club
-    "major": 0.30,    # Joueur notable mais pas une icône
-    "regular": 0.05,  # Joueur ordinaire
+    "legend": 0.60,   # Légende du foot (Pelé, Maradona, Zidane, Ronaldo, Messi…)
+    "star": 0.25,     # Star du club / icône de l'histoire du club
+    "none": 0.0,      # Joueur lambda / non précisé
+}
+
+# Bonus supplémentaire si le maillot est aussi signé PAR le joueur flocqué
+ESTIMATION_PLAYER_PROFILE_SIGNED_BONUS: dict[str, float] = {
+    "legend": 0.40,   # signature d'une légende = valeur encore plus importante
+    "star": 0.20,
+    "none": 0.0,
 }
 
 
@@ -202,13 +189,10 @@ def calculate_estimation(
     physical_state: str,
     flocking_origin: str,
     signed: bool,
-    # signed_proof : "none" | "light" | "strong"
     signed_proof: str,
     season_year: int,
-    # Profil du joueur flocqué : "legend" | "star" | "major" | "regular"
-    flocking_player_profile: str = "regular",
-    # Nouveaux champs
-    signed_type: str = "",        # "player_flocked" | "team" | "other"
+    flocking_player_profile: str = "none",
+    signed_type: str = "",
     patch: bool = False,
     is_rare: bool = False,
 ):
@@ -216,30 +200,50 @@ def calculate_estimation(
     coeff_sum = 0.0
     breakdown = []
 
+    # Competition
     comp_c = ESTIMATION_COMPETITION_COEFF.get(competition, 0.0)
     coeff_sum += comp_c
     if competition:
         breakdown.append({"label": f"Competition: {competition}", "coeff": comp_c})
 
+    # Origine
     origin_c = ESTIMATION_ORIGIN_COEFF.get(condition_origin, 0.0)
     coeff_sum += origin_c
     if condition_origin:
         breakdown.append({"label": f"Origin: {condition_origin}", "coeff": origin_c})
 
+    # État physique
     state_c = ESTIMATION_STATE_COEFF.get(physical_state, 0.0)
     coeff_sum += state_c
     if physical_state:
         breakdown.append({"label": f"State: {physical_state}", "coeff": state_c})
 
+    # Flocage
     flocking_c = ESTIMATION_FLOCKING_COEFF.get(flocking_origin, 0.0)
     coeff_sum += flocking_c
     if flocking_origin and flocking_origin != "None":
         breakdown.append({"label": f"Flocking: {flocking_origin}", "coeff": flocking_c})
 
+    # Profil joueur flocqué — actif dès que flocage officiel, sans condition de signature
+    if flocking_origin == "Official":
+        profile_c = ESTIMATION_PLAYER_PROFILE_COEFF.get(flocking_player_profile or "none", 0.0)
+        if profile_c > 0:
+            coeff_sum += profile_c
+            profile_labels = {
+                "legend": "Flocked player: Legend",
+                "star": "Flocked player: Club star",
+            }
+            breakdown.append({
+                "label": profile_labels.get(flocking_player_profile, "Flocked player profile"),
+                "coeff": profile_c,
+            })
+
+    # Patch
     if patch:
         coeff_sum += ESTIMATION_PATCH_COEFF
         breakdown.append({"label": "Official competition patch", "coeff": ESTIMATION_PATCH_COEFF})
 
+    # Signature
     if signed:
         signed_type_c = ESTIMATION_SIGNED_TYPE_COEFF.get(signed_type, 0.40)
         coeff_sum += signed_type_c
@@ -256,26 +260,26 @@ def calculate_estimation(
             proof_labels = {"light": "Certificate (light proof)", "strong": "Certificate (strong proof + COA)"}
             breakdown.append({"label": proof_labels.get(signed_proof, "Certificate"), "coeff": proof_c})
 
-        # Profil du joueur flocqué (uniquement si signé par lui)
-        if signed_type == "player_flocked":
-            profile_c = ESTIMATION_PLAYER_PROFILE_COEFF.get(flocking_player_profile or "regular", 0.05)
-            coeff_sum += profile_c
-            profile_labels = {
-                "legend": "Player profile: Legend",
-                "star": "Player profile: Club star",
-                "major": "Player profile: Major player",
-                "regular": "Player profile: Regular player",
-            }
-            breakdown.append({
-                "label": profile_labels.get(flocking_player_profile or "regular", "Player profile"),
-                "coeff": profile_c,
-            })
+        # Bonus supplémentaire si signé par le joueur flocqué lui-même
+        if signed_type == "player_flocked" and flocking_origin == "Official":
+            bonus_c = ESTIMATION_PLAYER_PROFILE_SIGNED_BONUS.get(flocking_player_profile or "none", 0.0)
+            if bonus_c > 0:
+                coeff_sum += bonus_c
+                bonus_labels = {
+                    "legend": "Signed by flocked legend (bonus)",
+                    "star": "Signed by flocked club star (bonus)",
+                }
+                breakdown.append({
+                    "label": bonus_labels.get(flocking_player_profile, "Signed by flocked player (bonus)"),
+                    "coeff": bonus_c,
+                })
 
+    # Rareté
     if is_rare:
         coeff_sum += ESTIMATION_RARITY_COEFF
         breakdown.append({"label": "Rare shirt", "coeff": ESTIMATION_RARITY_COEFF})
 
-    # Ancienneté : on ne commence à compter qu'après ESTIMATION_AGE_DELAY_YEARS
+    # Ancienneté
     current_year = datetime.now(timezone.utc).year
     age = max(0, current_year - season_year) if season_year else 0
     effective_age = max(0, age - ESTIMATION_AGE_DELAY_YEARS)
@@ -294,7 +298,7 @@ def calculate_estimation(
     }
 
 
-async def calculate_estimation_for_collection_item(
+def calculate_estimation_for_collection_item(
     model_type: str,
     competition: str,
     condition_origin: str,
@@ -303,7 +307,7 @@ async def calculate_estimation_for_collection_item(
     signed: bool,
     signed_proof: str,
     season_year: int,
-    flocking_player_profile: str = "regular",
+    flocking_player_profile: str = "none",
     signed_type: str = "",
     patch: bool = False,
     is_rare: bool = False,

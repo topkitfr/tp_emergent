@@ -86,9 +86,9 @@ class CollectionAdd(BaseModel):
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
     flocking_player_id: Optional[str] = ""
-    # Profil du joueur flocqué (remplace aura_level côté estimation)
-    # Enum: "legend" | "star" | "major" | "regular"
-    flocking_player_profile: Optional[str] = "regular"
+    # Profil du joueur flocqué : "legend" | "star" | "none"
+    # "legend" = légende mondiale, "star" = star du club, "none" = joueur lambda / pas précisé
+    flocking_player_profile: Optional[str] = "none"
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -99,14 +99,12 @@ class CollectionAdd(BaseModel):
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
     signed_by_player_id: Optional[str] = ""
-    # signed_proof: niveau de preuve : "none" | "light" | "strong"
+    # signed_proof: "none" | "light" | "strong"
     signed_proof: Optional[str] = "none"
     # signed_type: "player_flocked" | "team" | "other"
     signed_type: Optional[str] = ""
     signed_other_detail: Optional[str] = ""
-    # patch de compétition officiel
     patch: Optional[bool] = False
-    # maillot rare
     is_rare: Optional[bool] = False
     rare_reason: Optional[str] = ""
     condition: Optional[str] = ""
@@ -152,7 +150,7 @@ class CollectionOut(BaseModel):
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
     flocking_player_id: Optional[str] = ""
-    flocking_player_profile: Optional[str] = "regular"
+    flocking_player_profile: Optional[str] = "none"
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -227,8 +225,8 @@ class EstimationRequest(BaseModel):
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     flocking_origin: Optional[str] = ""
-    # Profil du joueur flocqué : "legend" | "star" | "major" | "regular"
-    flocking_player_profile: Optional[str] = "regular"
+    # Profil du joueur flocqué : "legend" | "star" | "none"
+    flocking_player_profile: Optional[str] = "none"
     signed: Optional[bool] = False
     # signed_proof: "none" | "light" | "strong"
     signed_proof: Optional[str] = "none"
@@ -316,7 +314,7 @@ class BrandOut(BaseModel):
 class PlayerCreate(BaseModel):
     full_name: str
     nationality: Optional[str] = ""
-    birth_date: Optional[str] = ""     # ex: "15/06/1987"
+    birth_date: Optional[str] = ""
     birth_year: Optional[int] = None
     positions: Optional[List[str]] = []
     preferred_number: Optional[int] = None
