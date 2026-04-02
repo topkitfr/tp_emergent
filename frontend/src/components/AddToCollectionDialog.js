@@ -14,11 +14,11 @@ import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { calculateEstimation } from '@/utils/estimation';
 
-const COMPETITIONS     = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
+const COMPETITIONS      = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const CONDITION_ORIGINS = ['Shop', 'Training', 'Club Stock', 'Match Prepared', 'Match Worn'];
-const PHYSICAL_STATES  = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
-const FLOCKING_ORIGINS = ['Official', 'Personalized'];
-const SIGNED_TYPES     = [
+const PHYSICAL_STATES   = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
+const FLOCKING_ORIGINS  = ['Official', 'Personalized'];
+const SIGNED_TYPES      = [
   { value: 'player_flocked', label: 'Signed by flocked player' },
   { value: 'team',           label: 'Signed by the team' },
   { value: 'other',          label: 'Other (specify)' },
@@ -55,24 +55,24 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
 
   // ─── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    // Basic
+    // ── Basic
     physical_state:      '',
     flocking_origin:     '',
     flocking_detail:     '',
     flocking_player_id:  '',
+    size:                '',
+    purchase_cost:       '',
     signed:              false,
-    // Advanced extras
+    signed_proof_level:  'none',
+    // ── Advanced extras
     condition_origin:    '',
     has_patch:           false,
     signed_type:         '',
     signed_details:      '',
-    signed_proof_level:  'none',
     is_rare:             false,
     rare_reason:         '',
     estimation_notes:    '',
-    // Always
-    size:                '',
-    purchase_cost:       '',
+    // ── Always
     notes:               '',
   });
 
@@ -142,7 +142,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     }
   };
 
-  // ─── Derived flags ─────────────────────────────────────────────────────────
   const showFlockingPlayer = form.flocking_origin === 'Official';
 
   return (
@@ -170,9 +169,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* TOGGLE BASIC / ADVANCED — en tête du form                        */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* ══ TOGGLE BASIC / ADVANCED ══ */}
         <div className="flex items-center gap-2 mb-5 border border-border p-1" style={fs}>
           <button
             onClick={() => switchMode('basic')}
@@ -198,12 +195,11 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* FORM FIELDS                                                        */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
         <div className="space-y-4">
 
-          {/* ── BASIC fields: Physical State + Flocking ── */}
+          {/* ══ BASIC FIELDS ══ */}
+
+          {/* Row 1 : Physical State + Flocking */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className={fieldLabel} style={fs}>Physical State</Label>
@@ -242,34 +238,57 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* ── BASIC: Signed ── */}
+          {/* Row 2 : Size + Purchase Cost */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className={fieldLabel} style={fs}>Size</Label>
+              <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
+                <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="none">—</SelectItem>
+                  {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className={fieldLabel} style={fs}>Purchase Cost (€)</Label>
+              <Input
+                type="number"
+                value={form.purchase_cost}
+                onChange={e => set('purchase_cost', e.target.value)}
+                placeholder="0"
+                className={`${inputCls} font-mono`}
+              />
+            </div>
+          </div>
+
+          {/* Signed */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Switch checked={form.signed} onCheckedChange={v => set('signed', v)} />
-              <Label className={`text-[11px] uppercase tracking-wider cursor-pointer`} style={fs}>Signed</Label>
+              <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Signed</Label>
             </div>
-
             {form.signed && mode === 'basic' && (
               <div className="pl-10 flex items-center gap-2">
-                <Switch checked={form.signed_proof_level !== 'none'} onCheckedChange={v => set('signed_proof_level', v ? 'light' : 'none')} />
+                <Switch
+                  checked={form.signed_proof_level !== 'none'}
+                  onCheckedChange={v => set('signed_proof_level', v ? 'light' : 'none')}
+                />
                 <Label className="text-[10px] text-muted-foreground" style={fs}>Proof / Certificate</Label>
               </div>
             )}
           </div>
 
-          {/* ════════════════════════════════════════════════════════════════ */}
-          {/* ADVANCED ONLY fields                                             */}
-          {/* ════════════════════════════════════════════════════════════════ */}
+          {/* ══ ADVANCED ONLY ══ */}
           {mode === 'advanced' && (
             <>
-              {/* Séparateur visuel */}
               <div className="flex items-center gap-2">
                 <div className="h-px flex-1 bg-border" />
                 <span className="text-[9px] uppercase tracking-widest text-muted-foreground" style={fs}>Advanced</span>
                 <div className="h-px flex-1 bg-border" />
               </div>
 
-              {/* Competition + Origin */}
+              {/* Competition (readonly) + Origin */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Competition</Label>
@@ -294,15 +313,15 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 </div>
               </div>
 
-              {/* Patch + Rare — toggles inline */}
+              {/* Patch + Rare */}
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <Switch checked={form.has_patch} onCheckedChange={v => set('has_patch', v)} />
-                  <Label className={`text-[11px] uppercase tracking-wider cursor-pointer`} style={fs}>Official Patch</Label>
+                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Official Patch</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={form.is_rare} onCheckedChange={v => set('is_rare', v)} />
-                  <Label className={`text-[11px] uppercase tracking-wider cursor-pointer`} style={fs}>Rare Jersey</Label>
+                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Rare Jersey</Label>
                 </div>
               </div>
 
@@ -332,7 +351,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                     </Select>
                   </div>
 
-                  {/* Champ joueur signataire — si player_flocked ou other */}
                   {(form.signed_type === 'player_flocked' || form.signed_type === 'other') && (
                     <div className="space-y-1">
                       <Label className={fieldLabel} style={fs}>
@@ -368,7 +386,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 </div>
               )}
 
-              {/* Notes estimation — sans impact prix */}
+              {/* Other info */}
               <div className="space-y-1">
                 <Label className={fieldLabel} style={fs}>Other info <span className="normal-case text-muted-foreground">(no price impact)</span></Label>
                 <Textarea
@@ -381,31 +399,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </>
           )}
 
-          {/* ─── Toujours visible : Size + Purchase Cost ─── */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Size</Label>
-              <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
-                <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="none">—</SelectItem>
-                  {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Purchase Cost (€)</Label>
-              <Input
-                type="number"
-                value={form.purchase_cost}
-                onChange={e => set('purchase_cost', e.target.value)}
-                placeholder="0"
-                className={`${inputCls} font-mono`}
-              />
-            </div>
-          </div>
-
-          {/* ─── Notes générales ─── */}
+          {/* ── Notes générales ── */}
           <div className="space-y-1">
             <Label className={fieldLabel} style={fs}>Notes</Label>
             <Textarea
@@ -416,7 +410,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             />
           </div>
 
-          {/* ─── Estimation live — affichage seul ─── */}
+          {/* ── Estimation live ── */}
           <EstimationBreakdown
             mode={mode}
             modelType={version?.model || 'Replica'}
@@ -436,7 +430,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
 
-        {/* ─── Actions ─── */}
+        {/* ── Actions ── */}
         <div className="flex gap-2 mt-6">
           <Button
             onClick={handleSubmit}
