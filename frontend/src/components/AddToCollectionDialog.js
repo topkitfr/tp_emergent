@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { proxyImageUrl, addToCollection, createPlayerPending, getPlayerAura } from '@/lib/api';
+import { proxyImageUrl, addToCollection, createPlayerPending } from '@/lib/api';
 import { Check, Loader2, Zap, SlidersHorizontal } from 'lucide-react';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
@@ -126,10 +126,18 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         flocking_origin:     form.flocking_origin     || undefined,
         flocking_detail:     form.flocking_detail     || undefined,
         flocking_player_id:  resolvedFlockingPlayerId || undefined,
+        has_patch:           form.has_patch           || undefined,
         signed:              form.signed,
+        signed_type:         form.signed_type         || undefined,
+        player_profile:      form.signed && form.signed_type === 'player_flocked'
+                               ? (form.player_profile || 'none')
+                               : undefined,
         signed_by:           form.signed_details      || undefined,
         signed_by_player_id: resolvedSignedByPlayerId || undefined,
-        signed_proof:        form.signed_proof_level !== 'none',
+        // signed_proof_level sent as string ('none' | 'light' | 'strong')
+        signed_proof_level:  form.signed ? form.signed_proof_level : undefined,
+        is_rare:             form.is_rare             || undefined,
+        rare_reason:         form.is_rare && form.rare_reason ? form.rare_reason : undefined,
         estimated_price:     estimation.estimatedPrice,
         notes:               form.notes               || undefined,
       });
@@ -350,7 +358,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                       </Select>
                     </div>
 
-                    {/* Nom / précision */}
+                    {/* Nom / précision — uniquement si player_flocked ou other (pas team) */}
                     {showSignedDetails && (
                       <div className="space-y-1">
                         <Label className={fieldLabel} style={fs}>
