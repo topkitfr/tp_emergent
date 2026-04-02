@@ -14,8 +14,11 @@ async def estimate_price(req: EstimationRequest):
         physical_state=req.physical_state or "",
         flocking_origin=req.flocking_origin or "",
         signed=req.signed or False,
-        signed_proof=req.signed_proof or False,
+        signed_proof=req.signed_proof or "none",
         season_year=req.season_year or 0,
         flocking_player_id=req.flocking_player_id or None,
+        signed_type=req.signed_type or "",
+        patch=req.patch or False,
+        is_rare=req.is_rare or False,
     )
     return result

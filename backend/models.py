@@ -96,7 +96,16 @@ class CollectionAdd(BaseModel):
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
     signed_by_player_id: Optional[str] = ""
-    signed_proof: Optional[bool] = False
+    # signed_proof: niveau de preuve : "none" | "light" | "strong"
+    signed_proof: Optional[str] = "none"
+    # signed_type: "player_flocked" | "team" | "other"
+    signed_type: Optional[str] = ""
+    signed_other_detail: Optional[str] = ""
+    # patch de compétition officiel
+    patch: Optional[bool] = False
+    # maillot rare
+    is_rare: Optional[bool] = False
+    rare_reason: Optional[str] = ""
     condition: Optional[str] = ""
     printing: Optional[str] = ""
 
@@ -118,7 +127,12 @@ class CollectionUpdate(BaseModel):
     signed: Optional[bool] = None
     signed_by: Optional[str] = None
     signed_by_player_id: Optional[str] = None
-    signed_proof: Optional[bool] = None
+    signed_proof: Optional[str] = None
+    signed_type: Optional[str] = None
+    signed_other_detail: Optional[str] = None
+    patch: Optional[bool] = None
+    is_rare: Optional[bool] = None
+    rare_reason: Optional[str] = None
     condition: Optional[str] = None
     printing: Optional[str] = None
 
@@ -144,7 +158,12 @@ class CollectionOut(BaseModel):
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
     signed_by_player_id: Optional[str] = ""
-    signed_proof: Optional[bool] = False
+    signed_proof: Optional[str] = "none"
+    signed_type: Optional[str] = ""
+    signed_other_detail: Optional[str] = ""
+    patch: Optional[bool] = False
+    is_rare: Optional[bool] = False
+    rare_reason: Optional[str] = ""
     condition: Optional[str] = ""
     printing: Optional[str] = ""
     added_at: Optional[str] = None
@@ -204,9 +223,14 @@ class EstimationRequest(BaseModel):
     physical_state: Optional[str] = ""
     flocking_origin: Optional[str] = ""
     signed: Optional[bool] = False
-    signed_proof: Optional[bool] = False
+    # signed_proof: "none" | "light" | "strong"
+    signed_proof: Optional[str] = "none"
+    # signed_type: "player_flocked" | "team" | "other"
+    signed_type: Optional[str] = ""
     season_year: Optional[int] = 0
-    flocking_player_id: Optional[str] = ""  # nouveau
+    flocking_player_id: Optional[str] = ""
+    patch: Optional[bool] = False
+    is_rare: Optional[bool] = False
 
 
 # Entity models
