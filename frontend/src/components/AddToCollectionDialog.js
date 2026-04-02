@@ -14,7 +14,6 @@ import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { calculateEstimation } from '@/utils/estimation';
 
-const COMPETITIONS      = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const CONDITION_ORIGINS = ['Shop', 'Training', 'Club Stock', 'Match Prepared', 'Match Worn'];
 const PHYSICAL_STATES   = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
 const FLOCKING_ORIGINS  = ['Official', 'Personalized'];
@@ -27,6 +26,11 @@ const PROOF_LEVELS = [
   { value: 'none',   label: 'No proof' },
   { value: 'light',  label: 'Light certificate / weak provenance' },
   { value: 'strong', label: 'Solid proof (photo/video + COA)' },
+];
+const PLAYER_PROFILES = [
+  { value: 'legend', label: 'Football Legend' },
+  { value: 'star',   label: 'Club Star' },
+  { value: 'none',   label: 'Standard player' },
 ];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
@@ -61,21 +65,21 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     flocking_detail:     '',
     flocking_player_id:  '',
     size:                '',
-    signed:              false,
-    signed_proof_level:  'none',
     // ── Advanced extras
     condition_origin:    '',
     has_patch:           false,
+    signed:              false,
     signed_type:         '',
+    player_profile:      'none',
     signed_details:      '',
+    signed_player_id:    '',
+    signed_proof_level:  'none',
     is_rare:             false,
     rare_reason:         '',
-    estimation_notes:    '',
     // ── Always
     notes:               '',
   });
 
-  const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
@@ -93,10 +97,10 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     hasPatch:         form.has_patch,
     signed:           form.signed,
     signedType:       form.signed_type,
+    playerProfile:    form.player_profile,
     signedProofLevel: form.signed_proof_level,
     isRare:           form.is_rare,
     seasonYear,
-    auraLevel:        signedPlayerAuraLevel,
   });
 
   // ─── Submit ────────────────────────────────────────────────────────────────
@@ -108,8 +112,9 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
       if (form.flocking_detail && !resolvedFlockingPlayerId) {
         try { const r = await createPlayerPending({ full_name: form.flocking_detail }); resolvedFlockingPlayerId = r.data?.player_id; } catch {}
       }
-      let resolvedSignedByPlayerId = '';
-      if (form.signed && form.signed_details && form.signed_type === 'player_flocked') {
+      let resolvedSignedByPlayerId = form.signed_player_id || '';
+      if (form.signed && form.signed_details && !resolvedSignedByPlayerId &&
+          (form.signed_type === 'player_flocked' || form.signed_type === 'other')) {
         try { const r = await createPlayerPending({ full_name: form.signed_details }); resolvedSignedByPlayerId = r.data?.player_id; } catch {}
       }
 
@@ -141,6 +146,8 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
   };
 
   const showFlockingPlayer = form.flocking_origin === 'Official';
+  const showPlayerProfile  = form.signed && form.signed_type === 'player_flocked';
+  const showSignedDetails  = form.signed && (form.signed_type === 'player_flocked' || form.signed_type === 'other');
 
   return (
     <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -211,7 +218,13 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </div>
             <div className="space-y-1">
               <Label className={fieldLabel} style={fs}>Flocking</Label>
-              <Select value={form.flocking_origin || 'none'} onValueChange={v => set('flocking_origin', v === 'none' ? '' : v)}>
+              <Select value={form.flocking_origin || 'none'} onValueChange={v => {
+                set('flocking_origin', v === 'none' ? '' : v);
+                if (v !== 'Official') {
+                  set('flocking_detail', '');
+                  set('flocking_player_id', '');
+                }
+              }}>
                 <SelectTrigger className={inputCls}><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   <SelectItem value="none">None</SelectItem>
@@ -236,7 +249,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* Size seul */}
+          {/* Size */}
           <div className="space-y-1">
             <Label className={fieldLabel} style={fs}>Size</Label>
             <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
@@ -248,23 +261,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </Select>
           </div>
 
-          {/* Signed */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Switch checked={form.signed} onCheckedChange={v => set('signed', v)} />
-              <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Signed</Label>
-            </div>
-            {form.signed && mode === 'basic' && (
-              <div className="pl-10 flex items-center gap-2">
-                <Switch
-                  checked={form.signed_proof_level !== 'none'}
-                  onCheckedChange={v => set('signed_proof_level', v ? 'light' : 'none')}
-                />
-                <Label className="text-[10px] text-muted-foreground" style={fs}>Proof / Certificate</Label>
-              </div>
-            )}
-          </div>
-
           {/* ══ ADVANCED ONLY ══ */}
           {mode === 'advanced' && (
             <>
@@ -274,18 +270,14 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 <div className="h-px flex-1 bg-border" />
               </div>
 
-              {/* Competition (readonly) + Origin */}
+              {/* Competition (readonly display) + Origin */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Competition</Label>
-                  <Select value={version?.competition || 'none'} disabled>
-                    <SelectTrigger className={`${inputCls} opacity-60`}><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="none">—</SelectItem>
-                      {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[9px] text-muted-foreground" style={fs}>From version</p>
+                  <div className={`${inputCls} border px-3 py-2 text-xs text-muted-foreground flex items-center gap-2`}>
+                    <span className="flex-1 truncate">{version?.competition || '—'}</span>
+                    <span className="text-[9px] text-primary/50 uppercase tracking-wider" style={fs}>from version</span>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Origin (Condition)</Label>
@@ -313,7 +305,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
 
               {form.is_rare && (
                 <div className="space-y-1">
-                  <Label className={fieldLabel} style={fs}>Why rare? (optional)</Label>
+                  <Label className={fieldLabel} style={fs}>Why rare? <span className="normal-case text-muted-foreground/70">(optional)</span></Label>
                   <Input
                     value={form.rare_reason}
                     onChange={e => set('rare_reason', e.target.value)}
@@ -323,75 +315,97 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 </div>
               )}
 
-              {/* Signature détaillée */}
-              {form.signed && (
-                <div className="space-y-2 pl-1 border-l-2 border-primary/30 ml-1">
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fs}>Signed by</Label>
-                    <Select value={form.signed_type || 'none'} onValueChange={v => set('signed_type', v === 'none' ? '' : v)}>
-                      <SelectTrigger className={inputCls}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="none">—</SelectItem>
-                        {SIGNED_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {(form.signed_type === 'player_flocked' || form.signed_type === 'other') && (
-                    <div className="space-y-1">
-                      <Label className={fieldLabel} style={fs}>
-                        {form.signed_type === 'player_flocked' ? 'Flocked player (signed)' : 'Specify (signed by)'}
-                      </Label>
-                      <EntityAutocomplete
-                        entityType="player"
-                        value={form.signed_details}
-                        onChange={val => set('signed_details', val)}
-                        onSelect={item => {
-                          set('signed_details', item.label);
-                          if (item.id) {
-                            getPlayerAura(item.id)
-                              .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
-                              .catch(() => setSignedPlayerAuraLevel(0));
-                          }
-                        }}
-                        placeholder={form.signed_type === 'player_flocked' ? 'e.g. Maldini' : 'e.g. Zidane'}
-                        className={inputCls}
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fs}>Proof / certificate</Label>
-                    <Select value={form.signed_proof_level} onValueChange={v => set('signed_proof_level', v)}>
-                      <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {PROOF_LEVELS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* ── Signature ── */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.signed} onCheckedChange={v => {
+                    set('signed', v);
+                    if (!v) {
+                      set('signed_type', '');
+                      set('player_profile', 'none');
+                      set('signed_details', '');
+                      set('signed_player_id', '');
+                      set('signed_proof_level', 'none');
+                    }
+                  }} />
+                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Signed</Label>
                 </div>
-              )}
 
-              {/* Other info */}
-              <div className="space-y-1">
-                <Label className={fieldLabel} style={fs}>Other info <span className="normal-case text-muted-foreground">(no price impact)</span></Label>
-                <Textarea
-                  value={form.estimation_notes}
-                  onChange={e => set('estimation_notes', e.target.value)}
-                  placeholder="Ex: long sleeve, pre-season prototype, banned sponsor..."
-                  className="bg-card border-border rounded-none min-h-[60px] text-xs"
-                />
+                {form.signed && (
+                  <div className="space-y-3 pl-2 border-l-2 border-primary/30 ml-1">
+                    {/* Signed by */}
+                    <div className="space-y-1">
+                      <Label className={fieldLabel} style={fs}>Signed by</Label>
+                      <Select value={form.signed_type || 'none'} onValueChange={v => {
+                        set('signed_type', v === 'none' ? '' : v);
+                        set('player_profile', 'none');
+                        set('signed_details', '');
+                        set('signed_player_id', '');
+                      }}>
+                        <SelectTrigger className={inputCls}><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="none">—</SelectItem>
+                          {SIGNED_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Nom / précision */}
+                    {showSignedDetails && (
+                      <div className="space-y-1">
+                        <Label className={fieldLabel} style={fs}>
+                          {form.signed_type === 'player_flocked' ? 'Flocked player (signed)' : 'Specify (signed by)'}
+                        </Label>
+                        <EntityAutocomplete
+                          entityType="player"
+                          value={form.signed_details}
+                          onChange={val => set('signed_details', val)}
+                          onSelect={item => {
+                            set('signed_details', item.label);
+                            set('signed_player_id', item.id || '');
+                          }}
+                          placeholder={form.signed_type === 'player_flocked' ? 'e.g. Maldini' : 'e.g. Zidane'}
+                          className={inputCls}
+                        />
+                      </div>
+                    )}
+
+                    {/* Player Profile — uniquement si player_flocked */}
+                    {showPlayerProfile && (
+                      <div className="space-y-1">
+                        <Label className={fieldLabel} style={fs}>Player Profile</Label>
+                        <Select value={form.player_profile} onValueChange={v => set('player_profile', v)}>
+                          <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {PLAYER_PROFILES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Proof */}
+                    <div className="space-y-1">
+                      <Label className={fieldLabel} style={fs}>Proof / Certificate</Label>
+                      <Select value={form.signed_proof_level} onValueChange={v => set('signed_proof_level', v)}>
+                        <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {PROOF_LEVELS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
 
-          {/* ── Notes générales ── */}
+          {/* ── Notes (Basic + Advanced) ── */}
           <div className="space-y-1">
             <Label className={fieldLabel} style={fs}>Notes</Label>
             <Textarea
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
-              placeholder="Any notes..."
+              placeholder="Any notes, details, context..."
               className="bg-card border-border rounded-none min-h-[70px]"
             />
           </div>
@@ -407,10 +421,10 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             hasPatch={form.has_patch}
             signed={form.signed}
             signedType={form.signed_type}
+            playerProfile={form.player_profile}
             signedProofLevel={form.signed_proof_level}
             isRare={form.is_rare}
             seasonYear={seasonYear}
-            auraLevel={signedPlayerAuraLevel}
           />
 
           {error && <p className="text-sm text-destructive">{error}</p>}

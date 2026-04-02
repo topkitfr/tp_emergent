@@ -46,6 +46,20 @@ export const SIGNED_TYPE_COEFF = {
   'other': 0.40,            // Autre(s) joueur(s)
 };
 
+// Signature — profil joueur (uniquement si signed_type = player_flocked)
+// Remplace l'aura_level API pour une saisie manuelle explicite
+export const PLAYER_PROFILE_COEFF = {
+  'legend': 0.75,   // Football Legend (Ronaldo, Zidane, Maldini...)
+  'star': 0.25,     // Club Star (joueur majeur du club)
+  'none': 0.0,      // Standard / autre
+};
+
+export const PLAYER_PROFILE_LABELS = {
+  'legend': 'Football Legend',
+  'star': 'Club Star',
+  'none': 'Standard player',
+};
+
 // Signature — qualité de la preuve
 export const SIGNED_PROOF_COEFF = {
   'none': 0.0,
@@ -61,26 +75,23 @@ export const AGE_GRACE_YEARS = 2;
 export const AGE_COEFF_PER_YEAR = 0.05;
 export const AGE_MAX = 1.0;
 
-// Aura joueur (uniquement signé)
-export const AURA_COEFF = { 1: 0.05, 2: 0.25, 3: 0.50, 4: 0.75, 5: 1.00 };
-
 // ─── Main function ────────────────────────────────────────────────────────────
 
 /**
  * @param {object} params
  * @param {'basic'|'advanced'} params.mode
  * @param {'Authentic'|'Replica'|'Other'} params.modelType
- * @param {string} params.competition
- * @param {string} params.conditionOrigin          — advanced only
+ * @param {string} params.competition         — toujours depuis version, jamais saisi
+ * @param {string} params.conditionOrigin     — advanced only
  * @param {string} params.physicalState
  * @param {'Official'|'Personalized'|'None'} params.flockingOrigin  — advanced only
- * @param {boolean} params.hasPatch                — advanced only
- * @param {boolean} params.signed
+ * @param {boolean} params.hasPatch           — advanced only
+ * @param {boolean} params.signed             — advanced only
  * @param {'player_flocked'|'team'|'other'|''} params.signedType   — advanced only
+ * @param {'legend'|'star'|'none'} params.playerProfile             — advanced only, si signed_type = player_flocked
  * @param {'none'|'light'|'strong'} params.signedProofLevel        — advanced only
- * @param {boolean} params.isRare                  — advanced only
- * @param {number} params.seasonYear               — 0 if unknown
- * @param {number} params.auraLevel                — 0–5, advanced only
+ * @param {boolean} params.isRare             — advanced only
+ * @param {number} params.seasonYear          — 0 if unknown
  */
 export function calculateEstimation({
   mode = 'basic',
@@ -92,22 +103,24 @@ export function calculateEstimation({
   hasPatch = false,
   signed = false,
   signedType = '',
+  playerProfile = 'none',
   signedProofLevel = 'none',
   // legacy support
   signedProof = false,
   isRare = false,
   seasonYear = 0,
+  // legacy auraLevel kept for backward compat with MyCollection old items
   auraLevel = 0,
 }) {
   const base = BASE_PRICES[modelType] || 60;
   let coeffSum = 0;
   const breakdown = [];
 
-  // ── Competition (basic + advanced) ────────────────────────────────────────
+  // ── Competition (basic + advanced) — toujours silent depuis version ────────
   const compC = COMPETITION_COEFF[competition] ?? 0;
-  coeffSum += compC;
-  if (competition && compC !== 0) {
-    breakdown.push({ label: `Competition: ${competition}`, coeff: compC });
+  if (compC !== 0) {
+    coeffSum += compC;
+    breakdown.push({ label: `Competition: ${competition}`, coeff: compC, source: 'version' });
   }
 
   // ── Physical State (basic + advanced) ─────────────────────────────────────
@@ -149,7 +162,26 @@ export function calculateEstimation({
       }[signedType] || 'Signed';
       breakdown.push({ label: signedLabel, coeff: signedC });
 
-      // Proof level — support legacy boolean signedProof
+      // Player profile — uniquement si signed_type = player_flocked
+      if (signedType === 'player_flocked') {
+        // Priorité : playerProfile manuel > fallback legacy auraLevel
+        let profileKey = playerProfile && playerProfile !== 'none' ? playerProfile : null;
+        if (!profileKey && auraLevel >= 4) profileKey = 'legend';
+        else if (!profileKey && auraLevel >= 2) profileKey = 'star';
+
+        if (profileKey) {
+          const profileC = PLAYER_PROFILE_COEFF[profileKey] ?? 0;
+          if (profileC > 0) {
+            coeffSum += profileC;
+            breakdown.push({
+              label: `Player profile: ${PLAYER_PROFILE_LABELS[profileKey]}`,
+              coeff: profileC,
+            });
+          }
+        }
+      }
+
+      // Proof level
       const proofLevel = signedProofLevel !== 'none'
         ? signedProofLevel
         : signedProof ? 'light' : 'none';
@@ -160,13 +192,6 @@ export function calculateEstimation({
           ? 'Proof: solid (photo/video + COA)'
           : 'Proof: light certificate';
         breakdown.push({ label: proofLabel, coeff: proofC });
-      }
-
-      // Aura
-      const auraC = AURA_COEFF[auraLevel] ?? 0;
-      if (auraLevel >= 1 && auraC > 0) {
-        coeffSum += auraC;
-        breakdown.push({ label: `Aura ${'★'.repeat(auraLevel)} (level ${auraLevel})`, coeff: auraC });
       }
     } else if (signed && !signedType) {
       // Legacy fallback: signed = true but no type (old items)
@@ -196,18 +221,8 @@ export function calculateEstimation({
         breakdown.push({ label: `Age: ${age} years (+${AGE_GRACE_YEARS}y grace)`, coeff: ageC });
       }
     }
-  } else {
-    // ── Basic mode: legacy signed support ─────────────────────────────────────
-    if (signed) {
-      const legacyC = 0.80;
-      coeffSum += legacyC;
-      breakdown.push({ label: 'Signed', coeff: legacyC });
-      if (signedProof) {
-        coeffSum += SIGNED_PROOF_COEFF.light;
-        breakdown.push({ label: 'Proof/Certificate', coeff: SIGNED_PROOF_COEFF.light });
-      }
-    }
   }
+  // Basic mode: pas de signed, pas d'origine, pas de flocage coeff, pas de rareté, pas d'âge
 
   const estimatedPrice = parseFloat((base * (1 + coeffSum)).toFixed(2));
 
