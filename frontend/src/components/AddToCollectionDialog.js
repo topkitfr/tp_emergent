@@ -12,15 +12,12 @@ import { proxyImageUrl, addToCollection, createPlayerPending } from '@/lib/api';
 import { Check, Loader2, Zap, SlidersHorizontal } from 'lucide-react';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
-import { calculateEstimation } from '@/utils/estimation';
+import { calculateEstimation, PATCH_OPTIONS } from '@/utils/estimation';
 
 const CONDITION_ORIGINS = ['Shop', 'Training', 'Club Stock', 'Match Prepared', 'Match Worn'];
 const PHYSICAL_STATES   = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
-// Flocage : None / Official / Personalized
-// Official → affiche le champ joueur
-// Personalized → ne pas afficher le champ joueur
 const FLOCKING_OPTIONS = [
   { value: 'none',         label: 'None' },
   { value: 'Official',     label: 'Official (name + number)' },
@@ -59,7 +56,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
   const kit   = version?.master_kit || {};
   const photo = version?.front_photo || kit?.front_photo;
 
-  // ─── Estimation mode ──────────────────────────────────────────────────────
+  // ── Estimation mode ───────────────────────────────────────────────────────────
   const [mode, setMode] = useState(() =>
     typeof window !== 'undefined' ? (window.__tkEstimationMode || 'basic') : 'basic'
   );
@@ -68,29 +65,32 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     setMode(next);
   };
 
-  // ─── Form state ───────────────────────────────────────────────────────────
+  // ── Form state ───────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    // ── Basic
+    // Basic
     physical_state:      '',
     size:                '',
-    // ── Flocking
-    flocking_origin:     'none',   // 'none' | 'Official' | 'Personalized'
-    flocking_detail:     '',       // nom du joueur si Official
+    // Flocking
+    flocking_origin:     'none',
+    flocking_detail:     '',
     flocking_player_id:  '',
-    // ── Advanced extras
+    // Advanced
     condition_origin:    '',
-    has_patch:           false,
+    patches:             [],       // array de PATCH_OPTIONS.value
+    patch_other_text:    '',
     // Signature
     signed:              false,
-    signed_type:         '',      // 'player_flocked' | 'team' | 'other'
-    signed_details:      '',      // nom si player_flocked ou other
+    signed_type:         '',
+    signed_other_text:   '',      // précision si type = 'other'
     signed_player_id:    '',
-    player_profile:      'none',  // 'legend' | 'star' | 'none'
+    player_profile:      'none',
     signed_proof_level:  'none',
     // Rarity
     is_rare:             false,
     rare_reason:         '',
-    // Always
+    // Other info
+    other_info:          '',
+    // Notes
     notes:               '',
   });
 
@@ -99,7 +99,17 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  // ─── Live estimation ──────────────────────────────────────────────────────
+  // Toggle patch dans le tableau
+  const togglePatch = (val) => {
+    setForm(f => ({
+      ...f,
+      patches: f.patches.includes(val)
+        ? f.patches.filter(p => p !== val)
+        : [...f.patches, val],
+    }));
+  };
+
+  // ── Live estimation ───────────────────────────────────────────────────────────
   const seasonYear = parseSeasonYear(kit?.season);
   const estimation = calculateEstimation({
     mode,
@@ -108,9 +118,11 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     conditionOrigin:  form.condition_origin,
     physicalState:    form.physical_state,
     flockingOrigin:   form.flocking_origin === 'none' ? 'None' : form.flocking_origin,
-    hasPatch:         form.has_patch,
+    patches:          form.patches,
+    patchOtherText:   form.patch_other_text,
     signed:           form.signed,
     signedType:       form.signed_type,
+    signedOtherText:  form.signed_other_text,
     playerProfile:    form.player_profile,
     signedProofLevel: form.signed_proof_level,
     isRare:           form.is_rare,
@@ -118,7 +130,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     seasonYear,
   });
 
-  // ─── Submit ───────────────────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
@@ -131,15 +143,17 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         } catch {}
       }
 
+      // Pour signed_type = 'other', signed_other_text contient le nom
+      // Pour signed_type = 'player_flocked', le joueur est le joueur flocqué (pas de champ séparé)
       let resolvedSignedByPlayerId = form.signed_player_id || '';
       if (
         form.signed &&
-        form.signed_details &&
+        form.signed_other_text &&
         !resolvedSignedByPlayerId &&
-        (form.signed_type === 'player_flocked' || form.signed_type === 'other')
+        form.signed_type === 'other'
       ) {
         try {
-          const r = await createPlayerPending({ full_name: form.signed_details });
+          const r = await createPlayerPending({ full_name: form.signed_other_text });
           resolvedSignedByPlayerId = r.data?.player_id;
         } catch {}
       }
@@ -152,17 +166,19 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         flocking_origin:     form.flocking_origin !== 'none' ? form.flocking_origin : undefined,
         flocking_detail:     form.flocking_origin === 'Official' ? (form.flocking_detail || undefined) : undefined,
         flocking_player_id:  form.flocking_origin === 'Official' ? (resolvedFlockingPlayerId || undefined) : undefined,
-        has_patch:           form.has_patch                       || undefined,
+        patches:             form.patches.length > 0 ? form.patches : undefined,
+        patch_other_text:    form.patches.includes('other') ? (form.patch_other_text || undefined) : undefined,
         signed:              form.signed,
         signed_type:         form.signed ? (form.signed_type      || undefined) : undefined,
+        signed_other_text:   form.signed && form.signed_type === 'other' ? (form.signed_other_text || undefined) : undefined,
         player_profile:      form.signed && form.signed_type === 'player_flocked'
                                ? (form.player_profile || 'none')
                                : undefined,
-        signed_by:           form.signed ? (form.signed_details   || undefined) : undefined,
-        signed_by_player_id: form.signed ? (resolvedSignedByPlayerId || undefined) : undefined,
+        signed_by_player_id: form.signed && form.signed_type === 'other' ? (resolvedSignedByPlayerId || undefined) : undefined,
         signed_proof_level:  form.signed ? form.signed_proof_level : undefined,
         is_rare:             form.is_rare                         || undefined,
         rare_reason:         form.is_rare && form.rare_reason ? form.rare_reason : undefined,
+        other_info:          form.other_info                      || undefined,
         estimated_price:     estimation.estimatedPrice,
         notes:               form.notes                           || undefined,
       });
@@ -178,12 +194,10 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     }
   };
 
-  // ─── Derived UI flags ─────────────────────────────────────────────────────
-  // Champ joueur flocqué : UNIQUEMENT si Official (pas si Personalized)
+  // ── Derived UI flags ─────────────────────────────────────────────────────────
   const showFlockingPlayer = form.flocking_origin === 'Official';
-  // Champ nom signataire : uniquement si player_flocked ou other (pas team)
-  const showSignedDetails  = form.signed && (form.signed_type === 'player_flocked' || form.signed_type === 'other');
-  // Profil joueur : uniquement si signé par le joueur flocqué
+  // Pas de champ "signed_details" pour player_flocked (le joueur est déjà connu via le flocage)
+  const showSignedOther    = form.signed && form.signed_type === 'other';
   const showPlayerProfile  = form.signed && form.signed_type === 'player_flocked';
 
   return (
@@ -331,7 +345,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 <div className="h-px flex-1 bg-border" />
               </div>
 
-              {/* Competition (readonly from version) + Origin */}
+              {/* Competition (readonly) + Origin */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Competition</Label>
@@ -355,35 +369,50 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 </div>
               </div>
 
-              {/* Patch + Rare (switches) */}
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.has_patch} onCheckedChange={v => set('has_patch', v)} />
-                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Official Patch</Label>
+              {/* Patches (checkboxes) */}
+              <div className="space-y-1">
+                <Label className={fieldLabel} style={fs}>Patches</Label>
+                <div className="flex flex-col gap-1.5">
+                  {PATCH_OPTIONS.map(opt => (
+                    <label key={opt.value} className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={form.patches.includes(opt.value)}
+                        onChange={() => togglePatch(opt.value)}
+                        className="accent-primary w-3.5 h-3.5"
+                      />
+                      <span style={fs} className="uppercase tracking-wide text-[11px]">{opt.label}</span>
+                      <span className="text-muted-foreground text-[10px]">+{opt.coeff}</span>
+                    </label>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.is_rare} onCheckedChange={v => set('is_rare', v)} />
-                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Rare Jersey</Label>
-                </div>
+                {form.patches.includes('other') && (
+                  <Input
+                    value={form.patch_other_text}
+                    onChange={e => set('patch_other_text', e.target.value)}
+                    placeholder="Specify patch…"
+                    className={`${inputCls} text-xs mt-1`}
+                  />
+                )}
               </div>
 
-              {/* Rare — précision */}
-              {form.is_rare && (
-                <div className="space-y-1">
-                  <Label className={fieldLabel} style={fs}>
-                    Why rare?{' '}
-                    <span className="normal-case text-muted-foreground/70">(optional)</span>
-                  </Label>
+              {/* Rare Jersey */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.is_rare} onCheckedChange={v => { set('is_rare', v); if (!v) set('rare_reason', ''); }} />
+                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Rare Jersey</Label>
+                </div>
+                {form.is_rare && (
                   <Input
                     value={form.rare_reason}
                     onChange={e => set('rare_reason', e.target.value)}
-                    placeholder="Ex: limited edition, printing error, unreleased..."
+                    placeholder="Ex: limited edition, printing error, unreleased…"
                     className={`${inputCls} text-xs`}
                   />
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* ── Signature ── */}
+              {/* Signature */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -393,7 +422,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                       if (!v) {
                         set('signed_type', '');
                         set('player_profile', 'none');
-                        set('signed_details', '');
+                        set('signed_other_text', '');
                         set('signed_player_id', '');
                         set('signed_proof_level', 'none');
                       }
@@ -413,11 +442,11 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                         onValueChange={v => {
                           set('signed_type', v === 'none' ? '' : v);
                           set('player_profile', 'none');
-                          set('signed_details', '');
+                          set('signed_other_text', '');
                           set('signed_player_id', '');
                         }}
                       >
-                        <SelectTrigger className={inputCls}><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectTrigger className={inputCls}><SelectValue placeholder="Select…" /></SelectTrigger>
                         <SelectContent className="bg-card border-border">
                           <SelectItem value="none">—</SelectItem>
                           {SIGNED_TYPES.map(t => (
@@ -427,23 +456,19 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                       </Select>
                     </div>
 
-                    {/* Nom / précision — si player_flocked ou other (PAS team) */}
-                    {showSignedDetails && (
+                    {/* Précision si type = 'other' UNIQUEMENT — pas pour player_flocked */}
+                    {showSignedOther && (
                       <div className="space-y-1">
-                        <Label className={fieldLabel} style={fs}>
-                          {form.signed_type === 'player_flocked'
-                            ? 'Flocked player (who signed)'
-                            : 'Specify (signed by)'}
-                        </Label>
+                        <Label className={fieldLabel} style={fs}>Specify (signed by)</Label>
                         <EntityAutocomplete
                           entityType="player"
-                          value={form.signed_details}
-                          onChange={val => set('signed_details', val)}
+                          value={form.signed_other_text}
+                          onChange={val => set('signed_other_text', val)}
                           onSelect={item => {
-                            set('signed_details', item.label);
+                            set('signed_other_text', item.label);
                             set('signed_player_id', item.id || '');
                           }}
-                          placeholder={form.signed_type === 'player_flocked' ? 'e.g. Maldini' : 'e.g. Zidane'}
+                          placeholder="e.g. Zidane"
                           className={inputCls}
                         />
                       </div>
@@ -467,7 +492,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                       </div>
                     )}
 
-                    {/* Preuve / certificat */}
+                    {/* Preuve */}
                     <div className="space-y-1">
                       <Label className={fieldLabel} style={fs}>Proof / Certificate</Label>
                       <Select
@@ -485,6 +510,20 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                   </div>
                 )}
               </div>
+
+              {/* Other info */}
+              <div className="space-y-1">
+                <Label className={fieldLabel} style={fs}>
+                  Other info
+                  <span className="normal-case text-muted-foreground/60 ml-1">(no effect on price)</span>
+                </Label>
+                <Input
+                  value={form.other_info}
+                  onChange={e => set('other_info', e.target.value)}
+                  placeholder="Long sleeve, prototype, banned sponsor…"
+                  className={`${inputCls} text-xs`}
+                />
+              </div>
             </>
           )}
 
@@ -499,7 +538,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             />
           </div>
 
-          {/* ── Estimation live ── */}
+          {/* ── Estimation live (display-only) ── */}
           <EstimationBreakdown
             mode={mode}
             modelType={version?.model || 'Replica'}
@@ -507,12 +546,15 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             conditionOrigin={form.condition_origin}
             physicalState={form.physical_state}
             flockingOrigin={form.flocking_origin === 'none' ? 'None' : form.flocking_origin}
-            hasPatch={form.has_patch}
+            patches={form.patches}
+            patchOtherText={form.patch_other_text}
             signed={form.signed}
             signedType={form.signed_type}
+            signedOtherText={form.signed_other_text}
             playerProfile={form.player_profile}
             signedProofLevel={form.signed_proof_level}
             isRare={form.is_rare}
+            rareReason={form.rare_reason}
             seasonYear={seasonYear}
           />
 
