@@ -86,6 +86,9 @@ class CollectionAdd(BaseModel):
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
     flocking_player_id: Optional[str] = ""
+    # Profil du joueur flocqué (remplace aura_level côté estimation)
+    # Enum: "legend" | "star" | "major" | "regular"
+    flocking_player_profile: Optional[str] = "regular"
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -117,6 +120,7 @@ class CollectionUpdate(BaseModel):
     flocking_origin: Optional[str] = None
     flocking_detail: Optional[str] = None
     flocking_player_id: Optional[str] = None
+    flocking_player_profile: Optional[str] = None
     condition_origin: Optional[str] = None
     physical_state: Optional[str] = None
     size: Optional[str] = None
@@ -148,6 +152,7 @@ class CollectionOut(BaseModel):
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
     flocking_player_id: Optional[str] = ""
+    flocking_player_profile: Optional[str] = "regular"
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -222,13 +227,14 @@ class EstimationRequest(BaseModel):
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     flocking_origin: Optional[str] = ""
+    # Profil du joueur flocqué : "legend" | "star" | "major" | "regular"
+    flocking_player_profile: Optional[str] = "regular"
     signed: Optional[bool] = False
     # signed_proof: "none" | "light" | "strong"
     signed_proof: Optional[str] = "none"
     # signed_type: "player_flocked" | "team" | "other"
     signed_type: Optional[str] = ""
     season_year: Optional[int] = 0
-    flocking_player_id: Optional[str] = ""
     patch: Optional[bool] = False
     is_rare: Optional[bool] = False
 
@@ -316,7 +322,7 @@ class PlayerCreate(BaseModel):
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
-    aura_level: Optional[int] = 1      # 1-5 étoiles d'aura, par défaut 1
+    aura_level: Optional[int] = 1      # conservé pour compat DB, non utilisé dans l'estimation
 
 
 class PlayerOut(BaseModel):
@@ -332,7 +338,7 @@ class PlayerOut(BaseModel):
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
-    aura_level: Optional[int] = 1      # 1-5 étoiles d'aura, par défaut 1
+    aura_level: Optional[int] = 1      # conservé pour compat DB, non utilisé dans l'estimation
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -344,5 +350,4 @@ class PlayerOut(BaseModel):
             return []
         if isinstance(v, list):
             return v
-        # single string → wrap in list
         return [v]

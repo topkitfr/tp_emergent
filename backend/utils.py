@@ -68,11 +68,9 @@ def normalize_season(raw: str) -> str:
     if not raw:
         return raw
     raw = raw.strip()
-    # Séparateur → on split
     parts = re.split(r"[\-\./ ]+", raw)
     if len(parts) == 2:
         y1, y2 = parts
-        # Format court : 25/26 → 2025/2026
         if len(y1) == 2:
             y1 = "20" + y1
         if len(y2) == 2:
@@ -82,7 +80,6 @@ def normalize_season(raw: str) -> str:
         except ValueError:
             return raw
     elif len(parts) == 1:
-        # Une seule année : 2025 → 2025/2026
         try:
             y = int(parts[0])
             return f"{y}/{y + 1}"
@@ -187,8 +184,15 @@ ESTIMATION_AGE_DELAY_YEARS = 2
 ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
 
-# Aura joueur (utilisé uniquement quand le maillot est signé par le joueur flocqué)
-ESTIMATION_AURA_COEFF = {1: 0.05, 2: 0.25, 3: 0.50, 4: 0.75, 5: 1.00}
+# Profil du joueur flocqué (remplace aura_level pour l'estimation)
+# Valeurs : "legend" | "star" | "major" | "regular"
+# Appliqué uniquement quand le maillot est signé par le joueur flocqué
+ESTIMATION_PLAYER_PROFILE_COEFF: dict[str, float] = {
+    "legend": 1.00,   # Légende mondiale (Pelé, Maradona, Zidane, Ronaldo, Messi…)
+    "star": 0.60,     # Star du club / joueur majeur de l'histoire du club
+    "major": 0.30,    # Joueur notable mais pas une icône
+    "regular": 0.05,  # Joueur ordinaire
+}
 
 
 def calculate_estimation(
@@ -198,10 +202,11 @@ def calculate_estimation(
     physical_state: str,
     flocking_origin: str,
     signed: bool,
-    # signed_proof est maintenant un niveau : "none" | "light" | "strong"
+    # signed_proof : "none" | "light" | "strong"
     signed_proof: str,
     season_year: int,
-    aura_level: int = 0,
+    # Profil du joueur flocqué : "legend" | "star" | "major" | "regular"
+    flocking_player_profile: str = "regular",
     # Nouveaux champs
     signed_type: str = "",        # "player_flocked" | "team" | "other"
     patch: bool = False,
@@ -251,13 +256,20 @@ def calculate_estimation(
             proof_labels = {"light": "Certificate (light proof)", "strong": "Certificate (strong proof + COA)"}
             breakdown.append({"label": proof_labels.get(signed_proof, "Certificate"), "coeff": proof_c})
 
-        # Aura du joueur flocqué (uniquement si signé par lui)
+        # Profil du joueur flocqué (uniquement si signé par lui)
         if signed_type == "player_flocked":
-            aura_c = ESTIMATION_AURA_COEFF.get(aura_level, 0.0)
-            if aura_level >= 1 and aura_c > 0:
-                coeff_sum += aura_c
-                stars = "★" * aura_level
-                breakdown.append({"label": f"Player aura {stars} (level {aura_level})", "coeff": aura_c})
+            profile_c = ESTIMATION_PLAYER_PROFILE_COEFF.get(flocking_player_profile or "regular", 0.05)
+            coeff_sum += profile_c
+            profile_labels = {
+                "legend": "Player profile: Legend",
+                "star": "Player profile: Club star",
+                "major": "Player profile: Major player",
+                "regular": "Player profile: Regular player",
+            }
+            breakdown.append({
+                "label": profile_labels.get(flocking_player_profile or "regular", "Player profile"),
+                "coeff": profile_c,
+            })
 
     if is_rare:
         coeff_sum += ESTIMATION_RARITY_COEFF
@@ -282,21 +294,6 @@ def calculate_estimation(
     }
 
 
-async def get_player_aura_level_from_flocking(flocking_player_id: Optional[str]) -> int:
-    if not flocking_player_id:
-        return 0
-    player = await db.players.find_one(
-        {"player_id": flocking_player_id},
-        {"_id": 0, "aura_level": 1},
-    )
-    if not player:
-        return 0
-    try:
-        return int(player.get("aura_level") or 0)
-    except (TypeError, ValueError):
-        return 0
-
-
 async def calculate_estimation_for_collection_item(
     model_type: str,
     competition: str,
@@ -306,15 +303,11 @@ async def calculate_estimation_for_collection_item(
     signed: bool,
     signed_proof: str,
     season_year: int,
-    flocking_player_id: Optional[str] = None,
+    flocking_player_profile: str = "regular",
     signed_type: str = "",
     patch: bool = False,
     is_rare: bool = False,
 ):
-    aura_level = 0
-    # On récupère l'aura uniquement si signé par le joueur flocqué
-    if signed and signed_type == "player_flocked" and flocking_player_id:
-        aura_level = await get_player_aura_level_from_flocking(flocking_player_id)
     return calculate_estimation(
         model_type=model_type,
         competition=competition,
@@ -324,7 +317,7 @@ async def calculate_estimation_for_collection_item(
         signed=signed,
         signed_proof=signed_proof,
         season_year=season_year,
-        aura_level=aura_level,
+        flocking_player_profile=flocking_player_profile,
         signed_type=signed_type,
         patch=patch,
         is_rare=is_rare,
