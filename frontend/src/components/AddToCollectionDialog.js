@@ -88,9 +88,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
     // Rarity
     is_rare:             false,
     rare_reason:         '',
-    // Other info
-    other_info:          '',
-    // Notes
+    // Notes (visible en Basic et Advanced)
     notes:               '',
   });
 
@@ -143,8 +141,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         } catch {}
       }
 
-      // Pour signed_type = 'other', signed_other_text contient le nom
-      // Pour signed_type = 'player_flocked', le joueur est le joueur flocqué (pas de champ séparé)
       let resolvedSignedByPlayerId = form.signed_player_id || '';
       if (
         form.signed &&
@@ -178,7 +174,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         signed_proof_level:  form.signed ? form.signed_proof_level : undefined,
         is_rare:             form.is_rare                         || undefined,
         rare_reason:         form.is_rare && form.rare_reason ? form.rare_reason : undefined,
-        other_info:          form.other_info                      || undefined,
         estimated_price:     estimation.estimatedPrice,
         notes:               form.notes                           || undefined,
       });
@@ -196,9 +191,26 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
 
   // ── Derived UI flags ─────────────────────────────────────────────────────────
   const showFlockingPlayer = form.flocking_origin === 'Official';
-  // Pas de champ "signed_details" pour player_flocked (le joueur est déjà connu via le flocage)
   const showSignedOther    = form.signed && form.signed_type === 'other';
   const showPlayerProfile  = form.signed && form.signed_type === 'player_flocked';
+
+  // ── Bloc Flocked Player (réutilisé en Basic ET Advanced) ─────────────────────
+  const FlockingPlayerBlock = showFlockingPlayer ? (
+    <div className="space-y-1">
+      <Label className={fieldLabel} style={fs}>Flocked Player</Label>
+      <EntityAutocomplete
+        entityType="player"
+        value={form.flocking_detail}
+        onChange={val => set('flocking_detail', val)}
+        onSelect={item => {
+          set('flocking_detail', item.label);
+          set('flocking_player_id', item.id);
+        }}
+        placeholder="e.g. Ronaldo 7"
+        className={inputCls}
+      />
+    </div>
+  ) : null;
 
   return (
     <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -265,7 +277,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
 
         <div className="space-y-4">
 
-          {/* ══ BASIC FIELDS ══ */}
+          {/* ══ BASIC FIELDS (communs aux deux modes) ══ */}
 
           {/* Row 1 : Physical State + Flocking */}
           <div className="grid grid-cols-2 gap-3">
@@ -303,23 +315,8 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Joueur flocqué — UNIQUEMENT si Official */}
-          {showFlockingPlayer && (
-            <div className="space-y-1">
-              <Label className={fieldLabel} style={fs}>Flocked Player</Label>
-              <EntityAutocomplete
-                entityType="player"
-                value={form.flocking_detail}
-                onChange={val => set('flocking_detail', val)}
-                onSelect={item => {
-                  set('flocking_detail', item.label);
-                  set('flocking_player_id', item.id);
-                }}
-                placeholder="e.g. Ronaldo 7"
-                className={inputCls}
-              />
-            </div>
-          )}
+          {/* Joueur flocqué — visible si Official (Basic ET Advanced) */}
+          {FlockingPlayerBlock}
 
           {/* Size */}
           <div className="space-y-1">
@@ -396,22 +393,6 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 )}
               </div>
 
-              {/* Rare Jersey */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.is_rare} onCheckedChange={v => { set('is_rare', v); if (!v) set('rare_reason', ''); }} />
-                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Rare Jersey</Label>
-                </div>
-                {form.is_rare && (
-                  <Input
-                    value={form.rare_reason}
-                    onChange={e => set('rare_reason', e.target.value)}
-                    placeholder="Ex: limited edition, printing error, unreleased…"
-                    className={`${inputCls} text-xs`}
-                  />
-                )}
-              </div>
-
               {/* Signature */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -456,7 +437,7 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                       </Select>
                     </div>
 
-                    {/* Précision si type = 'other' UNIQUEMENT — pas pour player_flocked */}
+                    {/* Précision si type = 'other' */}
                     {showSignedOther && (
                       <div className="space-y-1">
                         <Label className={fieldLabel} style={fs}>Specify (signed by)</Label>
@@ -511,29 +492,36 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
                 )}
               </div>
 
-              {/* Other info */}
-              <div className="space-y-1">
-                <Label className={fieldLabel} style={fs}>
-                  Other info
-                  <span className="normal-case text-muted-foreground/60 ml-1">(no effect on price)</span>
-                </Label>
-                <Input
-                  value={form.other_info}
-                  onChange={e => set('other_info', e.target.value)}
-                  placeholder="Long sleeve, prototype, banned sponsor…"
-                  className={`${inputCls} text-xs`}
-                />
+              {/* Rare Jersey */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.is_rare} onCheckedChange={v => { set('is_rare', v); if (!v) set('rare_reason', ''); }} />
+                  <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Rare Jersey</Label>
+                </div>
+                {form.is_rare && (
+                  <Input
+                    value={form.rare_reason}
+                    onChange={e => set('rare_reason', e.target.value)}
+                    placeholder="Ex: limited edition, printing error, unreleased…"
+                    className={`${inputCls} text-xs`}
+                  />
+                )}
               </div>
             </>
           )}
 
           {/* ── Notes (Basic + Advanced) ── */}
           <div className="space-y-1">
-            <Label className={fieldLabel} style={fs}>Notes</Label>
+            <Label className={fieldLabel} style={fs}>
+              Notes
+              {mode === 'advanced' && (
+                <span className="normal-case text-muted-foreground/60 ml-1">(no effect on price)</span>
+              )}
+            </Label>
             <Textarea
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
-              placeholder="Any notes, details, context..."
+              placeholder="Any notes, details, context…"
               className="bg-card border-border rounded-none min-h-[70px]"
             />
           </div>
