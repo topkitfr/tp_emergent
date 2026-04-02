@@ -11,6 +11,7 @@
 //   seasonYear    : number — année de saison parsée depuis master_kit
 //   showEstimation: bool (default true)
 
+
 import { Zap, SlidersHorizontal } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -21,9 +22,11 @@ import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { PATCH_OPTIONS } from '@/utils/estimation';
 
+
 export const PHYSICAL_STATES   = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
 export const CONDITION_ORIGINS = ['Shop', 'Training', 'Club Stock', 'Match Prepared', 'Match Worn'];
 export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
 
 export const FLOCKING_OPTIONS = [
   { value: 'none',         label: 'None' },
@@ -31,11 +34,13 @@ export const FLOCKING_OPTIONS = [
   { value: 'Personalized', label: 'Personalized' },
 ];
 
+
 export const SIGNED_TYPES = [
   { value: 'player_flocked', label: 'Signed by flocked player' },
   { value: 'team',           label: 'Signed by the team' },
   { value: 'other',          label: 'Other (specify)' },
 ];
+
 
 export const PROOF_LEVELS = [
   { value: 'none',   label: 'No proof' },
@@ -43,11 +48,13 @@ export const PROOF_LEVELS = [
   { value: 'strong', label: 'Solid proof (photo/video + COA)' },
 ];
 
+
 export const PLAYER_PROFILES = [
   { value: 'legend', label: '⭐ Football Legend' },
   { value: 'star',   label: '🔥 Club Star' },
   { value: 'none',   label: 'Standard player' },
 ];
+
 
 /** État initial vide — à utiliser dans useState */
 export const INITIAL_FORM_STATE = {
@@ -70,6 +77,7 @@ export const INITIAL_FORM_STATE = {
   notes:               '',
 };
 
+
 /**
  * Reconstruit un INITIAL_FORM_STATE à partir d'un item de collection existant.
  * Gère la rétro-compatibilité (champs anciens).
@@ -82,6 +90,7 @@ export function formFromItem(item) {
   } else if (item.has_patch) {
     patches = ['competition'];
   }
+
 
   return {
     physical_state:      item.physical_state     || item.condition      || '',
@@ -105,6 +114,7 @@ export function formFromItem(item) {
     notes:               item.notes              || '',
   };
 }
+
 
 /**
  * Prépare le payload API depuis le form.
@@ -142,10 +152,12 @@ export function formToPayload(form, estimation) {
   };
 }
 
+
 // ─── Styles helpers ──────────────────────────────────────────────────────────
 const fieldLabel = 'text-[10px] uppercase tracking-wider text-muted-foreground';
 const fs         = { fontFamily: 'Barlow Condensed' };
 const inputCls   = 'bg-card border-border rounded-none';
+
 
 // ─── Composant principal ─────────────────────────────────────────────────────
 export default function CollectionItemForm({
@@ -159,6 +171,7 @@ export default function CollectionItemForm({
 }) {
   const set = (field, value) => onChange(field, value);
 
+
   const togglePatch = (val) => {
     const next = form.patches.includes(val)
       ? form.patches.filter(p => p !== val)
@@ -166,12 +179,18 @@ export default function CollectionItemForm({
     set('patches', next);
   };
 
+
+  // Logique d'affichage conditionnel
   const showFlockingPlayer = form.flocking_origin === 'Official';
   const showSignedOther    = form.signed && form.signed_type === 'other';
   const showPlayerProfile  = form.signed && form.signed_type === 'player_flocked';
+  // Si flocage perso → ne pas afficher le champ joueur (uniquement pour officiel)
+  const isPersonalized     = form.flocking_origin === 'Personalized';
+
 
   return (
     <div className="space-y-4">
+
 
       {/* ══ TOGGLE BASIC / ADVANCED ══ */}
       {onModeChange && (
@@ -203,6 +222,7 @@ export default function CollectionItemForm({
         </div>
       )}
 
+
       {/* ══ BASIC — Physical State + Flocking ══ */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
@@ -219,12 +239,14 @@ export default function CollectionItemForm({
           </Select>
         </div>
 
+
         <div className="space-y-1">
           <Label className={fieldLabel} style={fs}>Flocking</Label>
           <Select
             value={form.flocking_origin}
             onValueChange={v => {
               set('flocking_origin', v);
+              // Reset champs joueur si on quitte Official
               if (v !== 'Official') {
                 set('flocking_detail', '');
                 set('flocking_player_id', '');
@@ -239,8 +261,9 @@ export default function CollectionItemForm({
         </div>
       </div>
 
-      {/* Joueur flocqué — uniquement si Official */}
-      {showFlockingPlayer && (
+
+      {/* Joueur flocqué — uniquement si Official (jamais si Personalized) */}
+      {showFlockingPlayer && !isPersonalized && (
         <div className="space-y-1">
           <Label className={fieldLabel} style={fs}>Flocked Player</Label>
           <EntityAutocomplete
@@ -257,6 +280,7 @@ export default function CollectionItemForm({
         </div>
       )}
 
+
       {/* Size */}
       <div className="space-y-1">
         <Label className={fieldLabel} style={fs}>Size</Label>
@@ -272,6 +296,7 @@ export default function CollectionItemForm({
         </Select>
       </div>
 
+
       {/* ══ ADVANCED ONLY ══ */}
       {mode === 'advanced' && (
         <>
@@ -280,6 +305,7 @@ export default function CollectionItemForm({
             <span className="text-[9px] uppercase tracking-widest text-muted-foreground" style={fs}>Advanced</span>
             <div className="h-px flex-1 bg-border" />
           </div>
+
 
           {/* Competition (readonly) + Origin */}
           <div className="grid grid-cols-2 gap-3">
@@ -304,6 +330,7 @@ export default function CollectionItemForm({
               </Select>
             </div>
           </div>
+
 
           {/* Patches */}
           <div className="space-y-1">
@@ -332,7 +359,8 @@ export default function CollectionItemForm({
             )}
           </div>
 
-          {/* Signature */}
+
+          {/* ── Signature ── */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Switch
@@ -351,8 +379,11 @@ export default function CollectionItemForm({
               <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Signed</Label>
             </div>
 
+
             {form.signed && (
               <div className="space-y-3 pl-2 border-l-2 border-primary/30 ml-1">
+
+                {/* Type de signature */}
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Signed by</Label>
                   <Select
@@ -374,23 +405,7 @@ export default function CollectionItemForm({
                   </Select>
                 </div>
 
-                {showSignedOther && (
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fs}>Specify (signed by)</Label>
-                    <EntityAutocomplete
-                      entityType="player"
-                      value={form.signed_other_text}
-                      onChange={val => set('signed_other_text', val)}
-                      onSelect={item => {
-                        set('signed_other_text', item.label);
-                        set('signed_player_id', item.id || '');
-                      }}
-                      placeholder="e.g. Zidane"
-                      className={inputCls}
-                    />
-                  </div>
-                )}
-
+                {/* Signed by flocked player → profil joueur */}
                 {showPlayerProfile && (
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fs}>Player Profile</Label>
@@ -408,6 +423,25 @@ export default function CollectionItemForm({
                   </div>
                 )}
 
+                {/* Signed by other → autocomplete joueur + précision */}
+                {showSignedOther && (
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fs}>Signed by (specify)</Label>
+                    <EntityAutocomplete
+                      entityType="player"
+                      value={form.signed_other_text}
+                      onChange={val => set('signed_other_text', val)}
+                      onSelect={item => {
+                        set('signed_other_text', item.label);
+                        set('signed_player_id', item.id || '');
+                      }}
+                      placeholder="e.g. Zidane, Ronaldo…"
+                      className={inputCls}
+                    />
+                  </div>
+                )}
+
+                {/* Preuve / certificat */}
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Proof / Certificate</Label>
                   <Select
@@ -426,7 +460,8 @@ export default function CollectionItemForm({
             )}
           </div>
 
-          {/* Rare Jersey */}
+
+          {/* ── Rare Jersey ── */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Switch
@@ -447,6 +482,7 @@ export default function CollectionItemForm({
         </>
       )}
 
+
       {/* Notes (Basic + Advanced) */}
       <div className="space-y-1">
         <Label className={fieldLabel} style={fs}>
@@ -462,6 +498,7 @@ export default function CollectionItemForm({
           className="bg-card border-border rounded-none min-h-[70px]"
         />
       </div>
+
 
       {/* Estimation live */}
       {showEstimation && (
