@@ -20,6 +20,59 @@ const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = 'bg-card border-border rounded-none';
 
 /**
+ * Mapping position API-Football → codes Topkit.
+ * API-Football renvoie des strings en anglais (ex: "Goalkeeper", "Midfielder").
+ * On essaie d'abord un match exact, puis un match partiel.
+ */
+const API_POSITION_MAP = {
+  // Gardien
+  'Goalkeeper': ['GK'],
+  // Défenseurs
+  'Defender': ['CB'],
+  'Centre-Back': ['CB'],
+  'Center Back': ['CB'],
+  'Left Back': ['LB'],
+  'Right Back': ['RB'],
+  'Left Wing Back': ['LWB'],
+  'Right Wing Back': ['RWB'],
+  // Milieux
+  'Midfielder': ['CM'],
+  'Defensive Midfielder': ['CDM'],
+  'Central Midfielder': ['CM'],
+  'Attacking Midfielder': ['CAM'],
+  'Left Midfielder': ['LM'],
+  'Right Midfielder': ['RM'],
+  // Ailiers
+  'Left Winger': ['LW'],
+  'Right Winger': ['RW'],
+  // Attaquants
+  'Attacker': ['ST'],
+  'Centre Forward': ['CF'],
+  'Center Forward': ['CF'],
+  'Striker': ['ST'],
+  'Forward': ['ST'],
+  'Second Striker': ['SS'],
+};
+
+/**
+ * Convertit une position API-Football en tableau de codes Topkit.
+ * Fallback : tableau vide si non reconnu.
+ */
+function mapApiPosition(apiPosition) {
+  if (!apiPosition) return [];
+  // Match exact
+  if (API_POSITION_MAP[apiPosition]) return API_POSITION_MAP[apiPosition];
+  // Match partiel (insensible à la casse)
+  const lower = apiPosition.toLowerCase();
+  for (const [key, val] of Object.entries(API_POSITION_MAP)) {
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return val;
+    }
+  }
+  return [];
+}
+
+/**
  * ApiFootballSearch — champ de recherche live API-Football avec dropdown auto-fill.
  * Props:
  *   onSelect(player) : appelé quand l'utilisateur choisit un résultat
@@ -104,7 +157,7 @@ function ApiFootballSearch({ onSelect, selectedName }) {
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate" style={fieldStyle}>{p.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {[p.nationality, p.birth_date].filter(Boolean).join(' · ')}
+                  {[p.nationality, p.birth_date, p.position].filter(Boolean).join(' · ')}
                 </p>
               </div>
               <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0 font-mono">
@@ -156,6 +209,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
 
   /** Auto-fill le formulaire depuis un résultat API-Football */
   const handleApiSelect = (player) => {
+    const mappedPositions = mapApiPosition(player.position);
     setForm(prev => ({
       ...prev,
       full_name:      player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim(),
@@ -163,6 +217,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       birth_date:     player.birth_date  || prev.birth_date  || '',
       photo_url:      player.photo       || prev.photo_url   || '',
       apifootball_id: player.apifootball_id,
+      positions:      mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
     }));
     setApiSelectedName(player.name || player.firstname);
   };

@@ -233,6 +233,7 @@ async def search_players_by_name(name: str) -> List[dict]:
                 "photo": player.get("photo", ""),
                 "height": player.get("height", ""),
                 "weight": player.get("weight", ""),
+                "position": player.get("position", ""),
             })
         return results
 
