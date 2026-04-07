@@ -1,14 +1,15 @@
 // frontend/src/components/EntityDetailPage.js
 // Layout unifié pour toutes les pages détail d'entités (Team, League, Brand, Player, Sponsor)
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Shirt } from 'lucide-react';
+import { ArrowLeft, Pencil, Shirt, Trophy, RefreshCw } from 'lucide-react';
 import JerseyCard from '@/components/JerseyCard';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { proxyImageUrl } from '@/lib/api';
+import { proxyImageUrl, getPlayerScoring, enrichPlayer } from '@/lib/api';
+import { toast } from 'sonner';
 
 /**
  * EntityDetailPage — layout unifié pour toutes les pages détail d'entités.
@@ -52,8 +53,42 @@ export default function EntityDetailPage({
   const { user } = useAuth();
   const [showEdit, setShowEdit] = useState(false);
 
-  const canEdit = !!user; // tout utilisateur connecté peut suggérer une édition
+  // ── Scoring API-Football (players uniquement) ──
+  const [scoring, setScoring] = useState(null);
+  const [scoringLoading, setScoringLoading] = useState(false);
+  const [enrichLoading, setEnrichLoading] = useState(false);
 
+  const fetchScoring = useCallback(async () => {
+    if (entityType !== 'player' || !entityId) return;
+    setScoringLoading(true);
+    try {
+      const res = await getPlayerScoring(entityId);
+      setScoring(res.data);
+    } catch {
+      // pas de scoring disponible — pas d'erreur affichée
+      setScoring(null);
+    } finally {
+      setScoringLoading(false);
+    }
+  }, [entityType, entityId]);
+
+  useEffect(() => { fetchScoring(); }, [fetchScoring]);
+
+  const handleEnrich = async () => {
+    if (!entityId) return;
+    setEnrichLoading(true);
+    try {
+      await enrichPlayer(entityId);
+      toast.success('Enrichissement lancé — le scoring sera mis à jour sous peu.');
+      setTimeout(fetchScoring, 3000);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || 'Enrichissement échoué');
+    } finally {
+      setEnrichLoading(false);
+    }
+  };
+
+  const canEdit = !!user;
   const isPending = entity?.status === 'pending' || entity?.status === 'for_review';
 
   // Filtrage des kits en local
@@ -157,6 +192,96 @@ export default function EntityDetailPage({
           </div>
         </div>
       </div>
+
+      {/* ── Scoring API-Football (players only) ── */}
+      {entityType === 'player' && (
+        <div className="border-b border-border px-4 lg:px-8 py-5">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-muted-foreground" />
+                <span
+                  className="text-xs uppercase tracking-wider text-muted-foreground"
+                  style={{ fontFamily: 'Barlow Condensed, sans-serif' }}
+                >
+                  Palmarès & Scoring
+                </span>
+              </div>
+              {user && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEnrich}
+                  disabled={enrichLoading || !entity?.apifootball_id}
+                  className="rounded-none border-border hover:border-primary/50 h-7 text-xs gap-1.5"
+                  title={!entity?.apifootball_id ? 'API-Football ID manquant' : ''}
+                >
+                  <RefreshCw className={`w-3 h-3 ${enrichLoading ? 'animate-spin' : ''}`} />
+                  Enrichir
+                </Button>
+              )}
+            </div>
+
+            {scoringLoading ? (
+              <div className="flex gap-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-10 w-24 bg-card animate-pulse border border-border" />
+                ))}
+              </div>
+            ) : scoring ? (
+              <div className="flex flex-wrap gap-6">
+                {scoring.score_palmares != null && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5"
+                      style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Score Palmarès</p>
+                    <p className="text-2xl font-mono tracking-tight">
+                      {Math.round(scoring.score_palmares)}
+                      <span className="text-xs text-muted-foreground ml-1">pts</span>
+                    </p>
+                  </div>
+                )}
+                {scoring.note != null && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5"
+                      style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Aura Score</p>
+                    <p className="text-2xl font-mono tracking-tight">{scoring.note.toFixed(1)}</p>
+                  </div>
+                )}
+                {scoring.nb_trophees != null && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5"
+                      style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Trophées</p>
+                    <p className="text-2xl font-mono tracking-tight">{scoring.nb_trophees}</p>
+                  </div>
+                )}
+                {scoring.nb_clubs != null && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5"
+                      style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Clubs</p>
+                    <p className="text-2xl font-mono tracking-tight">{scoring.nb_clubs}</p>
+                  </div>
+                )}
+                {scoring.updated_at && (
+                  <div className="self-end">
+                    <p className="text-[10px] text-muted-foreground/60"
+                      style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                      Mis à jour le {new Date(scoring.updated_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                  {entity?.apifootball_id
+                    ? 'Aucun scoring disponible. Cliquez sur Enrichir pour lancer le calcul.'
+                    : 'Aucun API-Football ID associé à ce joueur.'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Kits Grid ── */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
