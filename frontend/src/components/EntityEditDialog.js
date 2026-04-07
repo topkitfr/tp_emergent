@@ -67,6 +67,7 @@ const ENTITY_CONFIGS = {
       { key: 'nationality',      label: 'Nationality' },
       { key: 'birth_date',       label: 'Date of Birth (DD/MM/YYYY)' },
       { key: 'preferred_number', label: 'Preferred Number',       type: 'number' },
+      { key: 'apifootball_id',   label: 'API-Football ID',        type: 'number' },
       { key: 'positions',        label: 'Positions',              type: 'positions', span: 2 },
       { key: 'bio',              label: 'Bio',                    type: 'textarea',  span: 2 },
     ],
