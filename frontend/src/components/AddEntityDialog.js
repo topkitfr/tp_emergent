@@ -117,7 +117,7 @@ function ApiFootballSearch({ onSelect, selectedName }) {
 
       {open && results.length === 0 && !loading && query.length >= 3 && (
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border px-3 py-2 text-xs text-muted-foreground">
-          No results found for « {query} »
+          No results found for « {query} »
         </div>
       )}
 
@@ -257,11 +257,11 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>Date of Birth (DD/MM/YYYY)</Label>
+                  <Label className={fieldLabel} style={fieldStyle}>Date of Birth</Label>
                   <Input
                     value={form.birth_date || ''}
                     onChange={e => set('birth_date', e.target.value)}
-                    placeholder="23/06/1972"
+                    placeholder="DD/MM/YYYY"
                     className={inputClass}
                   />
                 </div>
@@ -278,10 +278,11 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
                   <Input
+                    type="number"
                     value={form.apifootball_id || ''}
-                    readOnly
-                    className={`${inputClass} text-muted-foreground bg-muted cursor-default`}
-                    placeholder="Auto-filled via search above"
+                    onChange={e => set('apifootball_id', e.target.value ? parseInt(e.target.value) : '')}
+                    className={inputClass}
+                    placeholder="Auto-filled above, or enter manually"
                   />
                 </div>
                 <div className="col-span-2 space-y-1.5">
@@ -326,7 +327,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <ImageUpload
                     value={form.photo_url || ''}
                     onChange={url => set('photo_url', url)}
-                    placeholder="Player photo URL or upload"
+                    folder="player"
                   />
                 </div>
               </div>
@@ -338,12 +339,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Team Name *</Label>
-                <Input
-                  value={form.name || ''}
-                  onChange={e => set('name', e.target.value)}
-                  placeholder="Real Madrid"
-                  className={inputClass}
-                />
+                <Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="FC Barcelona" className={inputClass} />
               </div>
               <div className="space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Country</Label>
@@ -351,23 +347,19 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
               </div>
               <div className="space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>City</Label>
-                <Input value={form.city || ''} onChange={e => set('city', e.target.value)} placeholder="Madrid" className={inputClass} />
+                <Input value={form.city || ''} onChange={e => set('city', e.target.value)} placeholder="Barcelona" className={inputClass} />
               </div>
               <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Founded Year</Label>
-                <Input type="number" value={form.founded || ''} onChange={e => set('founded', e.target.value ? parseInt(e.target.value) : '')} placeholder="1902" className={inputClass} />
+                <Label className={fieldLabel} style={fieldStyle}>Founded</Label>
+                <Input type="number" value={form.founded || ''} onChange={e => set('founded', e.target.value ? parseInt(e.target.value) : '')} placeholder="1899" className={inputClass} />
               </div>
               <div className="space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Primary Color</Label>
-                <Input value={form.primary_color || ''} onChange={e => set('primary_color', e.target.value)} placeholder="#FFFFFF" className={inputClass} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Secondary Color</Label>
-                <Input value={form.secondary_color || ''} onChange={e => set('secondary_color', e.target.value)} placeholder="#000000" className={inputClass} />
+                <Input value={form.primary_color || ''} onChange={e => set('primary_color', e.target.value)} placeholder="#A50044" className={inputClass} />
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Crest / Badge</Label>
-                <ImageUpload value={form.crest_url || ''} onChange={url => set('crest_url', url)} placeholder="Badge URL or upload" />
+                <ImageUpload value={form.crest_url || ''} onChange={url => set('crest_url', url)} folder="team" />
               </div>
             </div>
           )}
@@ -384,12 +376,12 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <Input value={form.country || ''} onChange={e => set('country', e.target.value)} placeholder="Germany" className={inputClass} />
               </div>
               <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Founded Year</Label>
+                <Label className={fieldLabel} style={fieldStyle}>Founded</Label>
                 <Input type="number" value={form.founded || ''} onChange={e => set('founded', e.target.value ? parseInt(e.target.value) : '')} placeholder="1949" className={inputClass} />
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
-                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} placeholder="Logo URL or upload" />
+                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="brand" />
               </div>
             </div>
           )}
@@ -408,23 +400,23 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
               <div className="space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Level</Label>
                 <Select value={form.level || ''} onValueChange={v => set('level', v)}>
-                  <SelectTrigger className={`${inputClass} h-10`}>
+                  <SelectTrigger className={`${inputClass} h-9`}>
                     <SelectValue placeholder="Select level" />
                   </SelectTrigger>
                   <SelectContent>
                     {LEAGUE_LEVELS.map(l => (
-                      <SelectItem key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</SelectItem>
+                      <SelectItem key={l} value={l}>{l}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Organizer</Label>
-                <Input value={form.organizer || ''} onChange={e => set('organizer', e.target.value)} placeholder="The FA" className={inputClass} />
+                <Input value={form.organizer || ''} onChange={e => set('organizer', e.target.value)} placeholder="UEFA" className={inputClass} />
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
-                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} placeholder="Logo URL or upload" />
+                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="league" />
               </div>
             </div>
           )}
@@ -446,20 +438,22 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
-                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} placeholder="Logo URL or upload" />
+                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="sponsor" />
               </div>
             </div>
           )}
 
         </div>
 
-        <div className="px-6 py-4 border-t border-border flex gap-3">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
+            className="rounded-none"
           >
-            {loading ? 'Submitting…' : 'Submit for Review'}
+            {loading && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
+            Submit for Review
           </Button>
           <Button variant="outline" onClick={handleClose} className="rounded-none">
             Cancel
