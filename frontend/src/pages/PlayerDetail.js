@@ -1,15 +1,32 @@
 // frontend/src/pages/PlayerDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { User, Globe, Calendar, Shirt } from 'lucide-react';
+import { User, Globe, Calendar, Shirt, Trophy, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { getPlayer, proxyImageUrl, followEntity, unfollowEntity, isFollowing, votePlayerAura, getPlayerAura } from '@/lib/api';
+import {
+  getPlayer, proxyImageUrl, followEntity, unfollowEntity,
+  isFollowing, votePlayerAura, getPlayerAura,
+  getPlayerScoring, enrichPlayer,
+} from '@/lib/api';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { useAuth } from '@/contexts/AuthContext';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const PLACE_LABELS = { '1st': '🥇 Winner', '2nd': '🥈 Runner-up', '3rd': '🥉 Third place' };
+const placeLabel = (p) => PLACE_LABELS[p] || p;
+
+const SCORE_TIER = (s) => {
+  if (s >= 800) return { label: 'Légende', color: '#f59e0b' };
+  if (s >= 500) return { label: 'Elite',   color: '#a855f7' };
+  if (s >= 200) return { label: 'Confirmé', color: '#3b82f6' };
+  if (s >= 50)  return { label: 'Pro',      color: '#22c55e' };
+  return              { label: 'Émergent',  color: '#6b7280' };
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function PlayerDetail() {
   const { id } = useParams();
   const { user: authUser } = useAuth();
@@ -18,7 +35,13 @@ export default function PlayerDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [following, setFollowing]   = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [aura, setAura]             = useState(null); // { aura_level, aura_avg, aura_votes, your_vote }
+  const [aura, setAura]             = useState(null);
+
+  // Scoring / palmarès
+  const [scoring, setScoring]         = useState(null);
+  const [scoringLoading, setScoringLoading] = useState(false);
+  const [enrichLoading, setEnrichLoading]   = useState(false);
+  const [enrichError, setEnrichError]       = useState(null);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -28,7 +51,15 @@ export default function PlayerDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Load follow status + aura when player is loaded
+  // Charger scoring quand player est dispo
+  const loadScoring = useCallback((pid) => {
+    setScoringLoading(true);
+    getPlayerScoring(pid)
+      .then(r => setScoring(r.data))
+      .catch(() => setScoring(null))
+      .finally(() => setScoringLoading(false));
+  }, []);
+
   useEffect(() => {
     if (!player) return;
     const pid = player.player_id;
@@ -36,7 +67,8 @@ export default function PlayerDetail() {
       isFollowing('player', pid).then(r => setFollowing(r.data?.following || false)).catch(() => {});
     }
     getPlayerAura(pid).then(r => setAura(r.data)).catch(() => {});
-  }, [player, authUser]);
+    loadScoring(pid);
+  }, [player, authUser, loadScoring]);
 
   const handleFollow = async () => {
     if (!authUser || !player) return;
@@ -49,11 +81,8 @@ export default function PlayerDetail() {
         await followEntity({ target_type: 'player', target_id: player.player_id });
         setFollowing(true);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setFollowLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setFollowLoading(false); }
   };
 
   const handleAuraVote = async (score) => {
@@ -61,10 +90,21 @@ export default function PlayerDetail() {
     try {
       const res = await votePlayerAura(player.player_id, score);
       setAura(res.data);
-      // Mettre à jour aura_level sur le player local
       setPlayer(p => ({ ...p, aura_level: res.data.aura_level }));
+    } catch (e) { console.error(e); }
+  };
+
+  const handleEnrich = async () => {
+    if (!player) return;
+    setEnrichLoading(true);
+    setEnrichError(null);
+    try {
+      await enrichPlayer(player.player_id, player.apifootball_id, aura?.aura_avg || 0);
+      loadScoring(player.player_id);
     } catch (e) {
-      console.error(e);
+      setEnrichError(e?.response?.data?.detail || 'Erreur lors de l\'enrichissement');
+    } finally {
+      setEnrichLoading(false);
     }
   };
 
@@ -79,8 +119,8 @@ export default function PlayerDetail() {
 
   const isPending = player.status === 'pending' || player.status === 'for_review';
   const canEdit   = !!authUser;
+  const isAdmin   = authUser?.role === 'admin';
 
-  // Déduplique les MasterKits depuis les versions floquées, groupés par équipe
   const versions = player.versions || [];
   const kitsSeen = new Set();
   const byTeam   = {};
@@ -95,8 +135,19 @@ export default function PlayerDetail() {
   for (const team of Object.keys(byTeam)) {
     byTeam[team].sort((a, b) => (b.season || '').localeCompare(a.season || ''));
   }
-
   const kitCount = kitsSeen.size;
+
+  // Palmarès groupé par compétition
+  const trophies = scoring?.trophies || player.apifootball_trophies || [];
+  const byComp   = {};
+  for (const t of trophies) {
+    const key = t.league || t.competition || 'Unknown';
+    if (!byComp[key]) byComp[key] = [];
+    byComp[key].push(t);
+  }
+
+  const scorePalmares = scoring?.score_palmares ?? player.score_palmares ?? null;
+  const tier = scorePalmares !== null ? SCORE_TIER(scorePalmares) : null;
 
   return (
     <div className="animate-fade-in-up" data-testid="player-detail-page">
@@ -115,7 +166,6 @@ export default function PlayerDetail() {
           </Link>
 
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            {/* Photo */}
             <div className="shrink-0 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border w-24 h-24">
               {player.photo_url
                 ? <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-24 h-24 object-cover rounded-full" />
@@ -123,7 +173,6 @@ export default function PlayerDetail() {
               }
             </div>
 
-            {/* Infos */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -185,7 +234,6 @@ export default function PlayerDetail() {
                 </div>
               </div>
 
-              {/* Badges */}
               <div className="flex flex-wrap gap-2 mt-3">
                 {player.positions?.map(p => (
                   <Badge key={p} variant="outline" className="rounded-none">{p}</Badge>
@@ -201,13 +249,22 @@ export default function PlayerDetail() {
                 >
                   {player.status === 'approved' ? 'Approved' : player.status === 'for_review' ? 'For Review' : 'Pending'}
                 </Badge>
+                {/* Badge tier palmarès dans le header */}
+                {tier && (
+                  <Badge
+                    variant="outline"
+                    className="rounded-none text-[10px] uppercase tracking-wider"
+                    style={{ borderColor: tier.color, color: tier.color }}
+                  >
+                    {tier.label} · {scorePalmares.toFixed(0)} pts
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Career in shirts ── */}
       {/* ── Aura communautaire ── */}
       <div className="border-b border-border px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
@@ -251,6 +308,140 @@ export default function PlayerDetail() {
         </div>
       </div>
 
+      {/* ── Palmarès API-Football ── */}
+      <div className="border-b border-border px-4 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto">
+
+          {/* En-tête section */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
+                PALMARÈS — API FOOTBALL
+              </h3>
+              {tier && (
+                <span
+                  className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 border"
+                  style={{ borderColor: tier.color, color: tier.color, fontFamily: 'Barlow Condensed' }}
+                >
+                  {tier.label}
+                </span>
+              )}
+              {player.apifootball_id && (
+                <span className="text-xs text-muted-foreground font-mono">#{player.apifootball_id}</span>
+              )}
+            </div>
+
+            {/* Bouton enrich — admin ou si apifootball_id présent */}
+            {(isAdmin || player.apifootball_id) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEnrich}
+                disabled={enrichLoading || !player.apifootball_id}
+                className="rounded-none border-border hover:border-primary/50 text-xs gap-1.5"
+                title={!player.apifootball_id ? 'Aucun ID API-Football lié' : 'Rafraîchir le palmarès'}
+              >
+                <RefreshCw className={`w-3 h-3 ${enrichLoading ? 'animate-spin' : ''}`} />
+                {enrichLoading ? 'Enrichissement...' : 'Enrich'}
+              </Button>
+            )}
+          </div>
+
+          {enrichError && (
+            <p className="text-xs text-destructive mb-3" style={{ fontFamily: 'DM Sans' }}>{enrichError}</p>
+          )}
+
+          {/* Score + stats */}
+          {scoringLoading ? (
+            <div className="flex gap-6 animate-pulse">
+              {[80, 60, 100].map((w, i) => (
+                <div key={i} className="h-8 bg-muted rounded" style={{ width: w }} />
+              ))}
+            </div>
+          ) : scorePalmares !== null ? (
+            <>
+              {/* KPIs */}
+              <div className="flex flex-wrap gap-6 mb-5">
+                <div>
+                  <p className="text-2xl font-bold font-mono" style={{ color: tier?.color }}>
+                    {scorePalmares.toFixed(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
+                    Score Palmarès
+                  </p>
+                </div>
+                {trophies.length > 0 && (
+                  <div>
+                    <p className="text-2xl font-bold font-mono text-foreground">
+                      {trophies.filter(t => t.place === '1st').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
+                      Titres
+                    </p>
+                  </div>
+                )}
+                {trophies.length > 0 && (
+                  <div>
+                    <p className="text-2xl font-bold font-mono text-foreground">{trophies.length}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
+                      Entrées Palmarès
+                    </p>
+                  </div>
+                )}
+                {scoring?.updated_at && (
+                  <div className="ml-auto self-end">
+                    <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>
+                      Mis à jour le {new Date(scoring.updated_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Liste des trophées groupés par compétition */}
+              {trophies.length > 0 ? (
+                <div className="space-y-4">
+                  {Object.entries(byComp).map(([comp, entries]) => (
+                    <div key={comp}>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
+                        {comp}
+                      </p>
+                      <div className="space-y-1">
+                        {entries.map((t, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between px-3 py-2 border border-border bg-card text-sm"
+                          >
+                            <span style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                              {placeLabel(t.place)}
+                            </span>
+                            <span className="font-mono text-xs text-muted-foreground">{t.season}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>
+                  Aucun trophée enregistré pour ce joueur.
+                </p>
+              )}
+            </>
+          ) : (
+            /* Pas encore enrichi */
+            <div className="flex flex-col items-center justify-center py-8 border border-dashed border-border text-center gap-3">
+              <Trophy className="w-8 h-8 text-muted-foreground opacity-30" />
+              <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                {player.apifootball_id
+                  ? 'Palmarès non encore chargé — cliquez sur Enrich'
+                  : 'Aucun ID API-Football lié à ce joueur'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Career in Shirts ── */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         <h2 className="text-lg tracking-tighter mb-6">CAREER IN SHIRTS</h2>
 
@@ -319,6 +510,7 @@ export default function PlayerDetail() {
             positions:        player.positions?.join(', ') || '',
             preferred_number: player.preferred_number,
             photo_url:        player.photo_url,
+            apifootball_id:   player.apifootball_id || '',
           }}
           onSuccess={loadData}
         />
