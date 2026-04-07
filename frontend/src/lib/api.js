@@ -6,19 +6,13 @@ const API = `${BACKEND_URL}/api`;
 
 export const proxyImageUrl = (url) => {
   if (!url) return '';
-
   if (url.startsWith('/api/uploads/') || url.startsWith('/api/images/')) {
     return `${BACKEND_URL}${url}`;
   }
-
   const apiImagesPattern = /^\/api\/images\/.+$|^https?:\/\/[^/]+(\/api\/images\/.+)$/;
   const match = url.match(apiImagesPattern);
-  if (match?.[1]) {
-    return `${BACKEND_URL}${match[1]}`;
-  }
-
+  if (match?.[1]) return `${BACKEND_URL}${match[1]}`;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
-
   return url;
 };
 
@@ -28,7 +22,6 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ─── Intercepteur de réponse — gestion globale des erreurs ───────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -36,11 +29,6 @@ api.interceptors.response.use(
       const retryAfter = error.response.headers?.['retry-after'];
       error.message = `Trop de requêtes. Réessayez dans ${retryAfter || 60} secondes.`;
     }
-    if (
-      error.response?.status === 401 &&
-      !error.config?.url?.includes('/auth/me') &&
-      !error.config?.url?.includes('/auth/login')
-    ) {}
     return Promise.reject(error);
   }
 );
@@ -118,7 +106,7 @@ export const getUserPublicCollection = (userId) => api.get(`/users/${userId}/pub
 export const getUserPublicSubmissions = (userId) => api.get(`/users/${userId}/public-submissions`);
 export const getUserPublicFollows = (userId) => api.get(`/users/${userId}/public-follows`);
 
-// ── Listes personnalisées ────────────────────────────────────────────────
+// Listes personnalisées
 export const getUserLists = () => api.get('/lists');
 export const getListDetail = (listId) => api.get(`/lists/${listId}`);
 export const createList = (data) => api.post('/lists', data);
@@ -183,13 +171,11 @@ export const togglePlayerFollow = (playerId, followed) =>
     ? followEntity({ entity_type: 'player', entity_id: playerId })
     : unfollowEntity({ entity_type: 'player', entity_id: playerId });
 
-// ── Scoring API-Football ─────────────────────────────────────────────
-/** Recherche un joueur sur API-Football (pour auto-complétion / pré-remplissage) */
+// Scoring API-Football
 export const searchApiFootballPlayers = (name) =>
   api.get('/scoring/players/api-search', { params: { name } });
-/** Récupère le scoring palmarès stocké en base pour un joueur */
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
-/** Lance l'enrichissement API-Football pour un joueur */
+export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
   api.post(`/scoring/players/enrich`, {
     player_id: playerId,
@@ -205,22 +191,18 @@ export const createTeamPending = (data, parentSubmissionId = null) =>
   api.post('/teams/pending', data, {
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
   });
-
 export const createBrandPending = (data, parentSubmissionId = null) =>
   api.post('/brands/pending', data, {
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
   });
-
 export const createLeaguePending = (data, parentSubmissionId = null) =>
   api.post('/leagues/pending', data, {
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
   });
-
 export const createPlayerPending = (data, parentSubmissionId = null) =>
   api.post('/players/pending', data, {
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
   });
-
 export const createSponsorPending = (data, parentSubmissionId = null) =>
   api.post('/sponsors/pending', data, {
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},

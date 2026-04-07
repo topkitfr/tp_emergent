@@ -3,6 +3,7 @@
 Endpoints utilisés :
   - GET /players/profiles?search={name}  → recherche joueur
   - GET /trophies?player={id}            → palmarès complet
+  - GET /transfers?player={id}           → historique de clubs
 
 Doc : https://api-sports.io/documentation/football/v3
 """
@@ -77,11 +78,7 @@ def compute_note(score_palmares: float, aura: float) -> float:
 
 
 async def search_players_by_name(name: str) -> List[dict]:
-    """Recherche des joueurs via /players/profiles.
-
-    Retourne les champs nécessaires au pré-remplissage du formulaire Topkit :
-    apifootball_id, name, firstname, lastname, nationality, birth_date, photo.
-    """
+    """Recherche des joueurs via /players/profiles."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(
             f"{BASE_URL}/players/profiles",
@@ -97,16 +94,14 @@ async def search_players_by_name(name: str) -> List[dict]:
             player = p.get("player")
             if not player:
                 continue
-            # Formater la date de naissance en DD/MM/YYYY si présente
             raw_dob = player.get("birth", {}).get("date", "") if isinstance(player.get("birth"), dict) else ""
             birth_date_formatted = ""
             if raw_dob:
                 try:
-                    parts = raw_dob.split("-")  # YYYY-MM-DD
+                    parts = raw_dob.split("-")
                     birth_date_formatted = f"{parts[2]}/{parts[1]}/{parts[0]}"
                 except Exception:
                     birth_date_formatted = raw_dob
-
             results.append({
                 "apifootball_id": str(player["id"]),
                 "name": player.get("name", ""),
@@ -144,3 +139,42 @@ async def lookup_honours(player_id: str) -> List[dict]:
             }
             for t in trophies
         ]
+
+
+async def lookup_career(player_id: str) -> List[dict]:
+    """Récupère l'historique de clubs d'un joueur via /transfers.
+
+    Retourne une liste ordonnée (du plus récent au plus ancien) :
+      club, team_id, date_start, date_end, type ("IN"/"OUT")
+    On ne garde que les transferts IN pour reconstituer la carrière.
+    """
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(
+            f"{BASE_URL}/transfers",
+            params={"player": player_id},
+            headers=_headers(),
+        )
+        if r.status_code == 404:
+            return []
+        r.raise_for_status()
+        data = r.json().get("response") or []
+
+    entries = []
+    for item in data:
+        transfers = item.get("transfers") or []
+        for t in transfers:
+            team_in = t.get("teams", {}).get("in", {})
+            team_out = t.get("teams", {}).get("out", {})
+            date = t.get("date", "")  # YYYY-MM-DD or YYYY
+            entries.append({
+                "club": team_in.get("name", ""),
+                "team_id": team_in.get("id"),
+                "team_logo": team_in.get("logo", ""),
+                "from_club": team_out.get("name", ""),
+                "date": date,
+                "type": t.get("type", ""),
+            })
+
+    # Trier par date décroissante, filtrer les arrivées uniquement
+    entries.sort(key=lambda x: x["date"] or "", reverse=True)
+    return entries
