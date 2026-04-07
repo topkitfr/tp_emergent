@@ -15,8 +15,10 @@ import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const PLACE_LABELS = { '1st': '🥇 Winner', '2nd': '🥈 Runner-up', '3rd': '🥉 Third place' };
-const placeLabel = (p) => PLACE_LABELS[p] || p;
+const isTitle = (t) => {
+  const p = (t.place || '').toLowerCase();
+  return p === '1st' || p === 'winner';
+};
 
 const SCORE_TIER = (s) => {
   if (s >= 800) return { label: 'Légende', color: '#f59e0b' };
@@ -148,10 +150,11 @@ export default function PlayerDetail() {
   }
   const kitCount = kitsSeen.size;
 
-  // Palmarès
-  const trophies = scoring?.trophies || player.honours || [];
-  const byComp   = {};
-  for (const t of trophies) {
+  // Palmarès — titres uniquement (place === '1st' ou 'winner')
+  const allTrophies = scoring?.trophies || player.honours || [];
+  const titles = allTrophies.filter(isTitle);
+  const byComp = {};
+  for (const t of titles) {
     const key = t.league || t.honour || t.strHonour || 'Unknown';
     if (!byComp[key]) byComp[key] = [];
     byComp[key].push(t);
@@ -270,7 +273,7 @@ export default function PlayerDetail() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>PALMARÈS — API FOOTBALL</h3>
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>PALMARÈS — TITRES REMPORTÉS</h3>
               {tier && <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 border" style={{ borderColor: tier.color, color: tier.color, fontFamily: 'Barlow Condensed' }}>{tier.label}</span>}
               {player.apifootball_id && <span className="text-xs text-muted-foreground font-mono">#{player.apifootball_id}</span>}
             </div>
@@ -292,25 +295,17 @@ export default function PlayerDetail() {
                   <p className="text-2xl font-bold font-mono" style={{ color: tier?.color }}>{scorePalmares.toFixed(0)}</p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Score Palmarès</p>
                 </div>
-                {trophies.length > 0 && (
-                  <div>
-                    <p className="text-2xl font-bold font-mono">{trophies.filter(t => t.place === '1st' || t.place?.toLowerCase() === 'winner').length}</p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Titres</p>
-                  </div>
-                )}
-                {trophies.length > 0 && (
-                  <div>
-                    <p className="text-2xl font-bold font-mono">{trophies.length}</p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Entrées Palmarès</p>
-                  </div>
-                )}
+                <div>
+                  <p className="text-2xl font-bold font-mono">{titles.length}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Titres</p>
+                </div>
                 {scoring?.updated_at && (
                   <div className="ml-auto self-end">
                     <p className="text-xs text-muted-foreground">Mis à jour le {new Date(scoring.updated_at).toLocaleDateString('fr-FR')}</p>
                   </div>
                 )}
               </div>
-              {trophies.length > 0 ? (
+              {titles.length > 0 ? (
                 <div className="space-y-4">
                   {Object.entries(byComp).map(([comp, entries]) => (
                     <div key={comp}>
@@ -318,7 +313,10 @@ export default function PlayerDetail() {
                       <div className="space-y-1">
                         {entries.map((t, i) => (
                           <div key={i} className="flex items-center justify-between px-3 py-2 border border-border bg-card text-sm">
-                            <span style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{placeLabel(t.place)}</span>
+                            <span className="flex items-center gap-2" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                              <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                              Vainqueur
+                            </span>
                             <span className="font-mono text-xs text-muted-foreground">{t.season || t.strSeason}</span>
                           </div>
                         ))}
@@ -327,7 +325,7 @@ export default function PlayerDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Aucun trophée enregistré pour ce joueur.</p>
+                <p className="text-sm text-muted-foreground">Aucun titre remporté pour ce joueur.</p>
               )}
             </>
           ) : (
