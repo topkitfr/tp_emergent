@@ -19,6 +19,49 @@ const AURA_LEVELS = [1, 2, 3, 4, 5];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
 const FOOT_OPTIONS = ['right', 'left', 'both'];
 
+/**
+ * Normalise les positions renvoyées par API-Football ("Midfielder", "Attacker", etc.)
+ * vers les codes Topkit (CM, CF, etc.).
+ * API-Football renvoie un seul string de position principale.
+ */
+const API_POSITION_MAP = {
+  // Gardien
+  'Goalkeeper': ['GK'],
+  // Défenseurs
+  'Defender':   ['CB'],
+  'Centre-Back': ['CB'],
+  'Left Back':  ['LB'],
+  'Right Back': ['RB'],
+  'Left Wing Back': ['LWB'],
+  'Right Wing Back': ['RWB'],
+  // Milieux
+  'Midfielder': ['CM'],
+  'Central Midfield': ['CM'],
+  'Defensive Midfield': ['CDM'],
+  'Attacking Midfield': ['CAM'],
+  'Left Midfield': ['LM'],
+  'Right Midfield': ['RM'],
+  // Attaquants
+  'Attacker':   ['CF'],
+  'Forward':    ['CF'],
+  'Centre Forward': ['CF'],
+  'Striker':    ['ST'],
+  'Left Winger': ['LW'],
+  'Right Winger': ['RW'],
+  'Second Striker': ['SS'],
+};
+
+/** Convertit une position API-Football en tableau de codes Topkit */
+function normalizePositions(apiPosition) {
+  if (!apiPosition) return [];
+  // Si c'est déjà un tableau (backend enrichi), on filtre les codes valides
+  if (Array.isArray(apiPosition)) {
+    return apiPosition.filter(p => POSITIONS.includes(p));
+  }
+  // Sinon c'est un string — on cherche dans le map
+  return API_POSITION_MAP[apiPosition] || [];
+}
+
 const ENTITY_CONFIGS = {
   team: {
     label: 'Team', nameField: 'name',
@@ -66,7 +109,6 @@ const ENTITY_CONFIGS = {
     folder: 'player',
     // apifootball_id intentionally excluded — filled silently via autofill, hidden from user
     fields: [
-      // --- Autofill banner (type spécial, rendu en dehors de la grille)
       { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
       // --- Identité
       { key: 'full_name',        label: 'Full Name',           required: true, span: 2 },
@@ -84,10 +126,6 @@ const ENTITY_CONFIGS = {
   },
 };
 
-/**
- * ApiFootballSearchField — barre de recherche live avec dropdown.
- * Remplit automatiquement TOUS les champs joueur + cache apifootball_id.
- */
 function ApiFootballSearchField({ filledName, onFill }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -147,7 +185,6 @@ function ApiFootballSearchField({ filledName, onFill }) {
         </span>
       </div>
 
-      {/* Dropdown résultats */}
       {open && results.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-popover border border-border shadow-lg max-h-64 overflow-y-auto">
           {results.map((p) => (
@@ -162,7 +199,7 @@ function ApiFootballSearchField({ filledName, onFill }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate" style={labelStyle}>{p.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {[p.nationality, p.birth_date].filter(Boolean).join(' · ')}
+                  {[p.nationality, p.birth_date, p.position].filter(Boolean).join(' · ')}
                 </p>
               </div>
             </li>
@@ -174,7 +211,6 @@ function ApiFootballSearchField({ filledName, onFill }) {
         <div className="text-xs text-muted-foreground px-1 mt-1">No results for « {query} »</div>
       )}
 
-      {/* Confirmation autofill */}
       {filledName && (
         <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -182,7 +218,6 @@ function ApiFootballSearchField({ filledName, onFill }) {
         </div>
       )}
 
-      {/* Séparateur visuel */}
       <div className="flex items-center gap-2 pt-1">
         <div className="flex-1 border-t border-border" />
         <span className="text-[10px] text-muted-foreground uppercase tracking-widest" style={labelStyle}>or fill manually</span>
@@ -213,16 +248,23 @@ export default function EntityEditDialog({
   /** Auto-fill depuis résultat API-Football — remplit TOUT ce qu'on a */
   const handleApiFill = (player) => {
     setApiFillName(player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || '');
+
+    // Normalise le poste API-Football vers les codes Topkit
+    // API-Football peut renvoyer player.position (string) ou player.positions (tableau)
+    const normalizedPositions = normalizePositions(player.positions || player.position);
+
     setForm(prev => ({
       ...prev,
       full_name:        player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
-      nationality:      player.nationality   || prev.nationality   || '',
-      birth_date:       player.birth_date    || prev.birth_date    || '',
-      photo_url:        player.photo         || prev.photo_url     || '',
-      height:           player.height        ?? prev.height        ?? '',
-      weight:           player.weight        ?? prev.weight        ?? '',
+      nationality:      player.nationality    || prev.nationality    || '',
+      birth_date:       player.birth_date     || prev.birth_date     || '',
+      photo_url:        player.photo          || prev.photo_url      || '',
+      height:           player.height         ?? prev.height         ?? '',
+      weight:           player.weight         ?? prev.weight         ?? '',
       preferred_foot:   player.preferred_foot || prev.preferred_foot || '',
       preferred_number: player.preferred_number ?? prev.preferred_number ?? '',
+      // Positions : on garde celles déjà sélectionnées si l'API n'en renvoie pas
+      positions:        normalizedPositions.length > 0 ? normalizedPositions : (prev.positions || []),
       // apifootball_id stocké silencieusement
       apifootball_id:   player.apifootball_id,
     }));
@@ -246,7 +288,6 @@ export default function EntityEditDialog({
         }
       }
       if (mode === 'edit' && entityId) payload.entity_id = entityId;
-      // Nettoyer les clés internes
       delete payload._apifootball_search;
       await createSubmission({ submission_type: entityType, data: payload });
       toast.success(
@@ -290,7 +331,6 @@ export default function EntityEditDialog({
   };
 
   const renderField = (f) => {
-    // Champ de recherche API-Football (rendu spécial avec état partagé)
     if (f.type === 'apifootball_search') {
       return (
         <ApiFootballSearchField
@@ -414,11 +454,9 @@ export default function EntityEditDialog({
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => {
-              // Le champ search API-Football a son propre wrapper sm:col-span-2 interne
               if (f.type === 'apifootball_search') {
                 return renderField(f);
               }
-
               return (
                 <div
                   key={f.key}
@@ -435,7 +473,6 @@ export default function EntityEditDialog({
             })}
           </div>
 
-          {/* Image upload */}
           <div className="space-y-1">
             <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
               {config.imageLabel}
@@ -463,7 +500,6 @@ export default function EntityEditDialog({
             {submitting ? 'Submitting...' : mode === 'create' ? 'Submit for Review' : 'Submit Edit'}
           </Button>
 
-          {/* Removal section — mode edit uniquement */}
           {mode === 'edit' && entityId && (
             <div className="border-t border-border pt-4">
               {!showRemoval ? (
