@@ -136,6 +136,16 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
+                  <Input
+                    type="number"
+                    value={form.apifootball_id || ''}
+                    onChange={e => set('apifootball_id', e.target.value ? parseInt(e.target.value) : '')}
+                    placeholder="193313"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Positions</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {POSITIONS.map(pos => (
