@@ -8,7 +8,7 @@ import logging
 import time
 from collections import defaultdict
 
-from .database import db, client  # ← CORRIGÉ : import relatif
+from .database import db, client
 
 from .routers.beta import router as beta_router
 from .routers.auth import router as auth_router
@@ -27,6 +27,8 @@ from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
 from .routers.players_scoring import router as players_scoring_router
+from .routers.leagues_api import router as leagues_api_router
+from .routers.awards import router as awards_router
 from .middleware import maintenance_middleware
 
 
@@ -59,7 +61,6 @@ async def health():
     return {"status": "ok"}
 
 
-# ─── CORS en PREMIER ─────────────────────────────────────────────────────────
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
     "http://localhost:3000,http://127.0.0.1:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
@@ -73,12 +74,8 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
-
-# ─── Maintenance Middleware ───────────────────────────────────────────────────
 app.middleware("http")(maintenance_middleware)
 
-
-# ─── Rate Limiting (simple in-memory) ────────────────────────────────────────
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
@@ -97,31 +94,24 @@ DEFAULT_RATE_LIMIT = (200, 60)
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
     path = request.url.path
-
     limit, window = DEFAULT_RATE_LIMIT
     for prefix, (lim, win) in RATE_LIMITS.items():
         if path.startswith(prefix):
             limit, window = lim, win
             break
-
     key = f"{client_ip}:{path}"
     now = time.time()
-    _rate_limit_store[key] = [
-        t for t in _rate_limit_store[key] if now - t < window
-    ]
-
+    _rate_limit_store[key] = [t for t in _rate_limit_store[key] if now - t < window]
     if len(_rate_limit_store[key]) >= limit:
         return JSONResponse(
             status_code=429,
             content={"detail": "Too many requests. Please slow down."},
             headers={"Retry-After": str(window)},
         )
-
     _rate_limit_store[key].append(now)
     return await call_next(request)
 
 
-# ─── Security Headers + CORS sur erreurs 500 ─────────────────────────────────
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
     try:
@@ -144,9 +134,7 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = (
-        "camera=(), microphone=(), geolocation=()"
-    )
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     try:
         del response.headers["server"]
     except KeyError:
@@ -173,7 +161,9 @@ app.include_router(admin_panel_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 app.include_router(beta_router, prefix="/api/beta", tags=["beta"])
-app.include_router(players_scoring_router)  # ← scoring joueur TheSportsDB
+app.include_router(players_scoring_router)
+app.include_router(leagues_api_router)   # ← recherche leagues DB-first
+app.include_router(awards_router)        # ← CRUD awards individuels
 
 
 @app.on_event("startup")
@@ -197,30 +187,30 @@ async def create_indexes():
     await db.leagues.create_index("league_id", unique=True, sparse=True)
     await db.leagues.create_index("slug", unique=True)
     await db.leagues.create_index("name")
+    await db.leagues.create_index("apifootball_league_id", sparse=True)
     await db.brands.create_index("brand_id", unique=True, sparse=True)
     await db.brands.create_index("slug", unique=True)
     await db.brands.create_index("name")
     await db.players.create_index("player_id", unique=True, sparse=True)
     await db.players.create_index("slug", unique=True)
     await db.players.create_index("full_name")
+    # Index awards
+    await db.awards.create_index("award_id", unique=True, sparse=True)
+    await db.awards.create_index("name")
 
     await db.notifications.create_index("user_id")
     await db.notifications.create_index([("user_id", 1), ("read", 1)])
     await db.notifications.create_index("created_at")
-
     await db.submissions.create_index([("submitted_by", 1), ("submission_type", 1), ("created_at", 1)])
     await db.users.create_index("is_banned")
     await db.users.create_index("role")
-
     await db.password_resets.create_index("token", unique=True)
     await db.password_resets.create_index("email")
     await db.password_resets.create_index("user_id")
     await db.password_resets.create_index("expires_at")
-
     await db.user_sessions.create_index("session_token", unique=True, sparse=True)
     await db.user_sessions.create_index("user_id")
     await db.user_sessions.create_index("expires_at")
-
     await db.reports.create_index([("reported_by", 1), ("target_id", 1), ("status", 1)])
     await db.reports.create_index("status")
     await db.reports.create_index("created_at")
@@ -233,5 +223,4 @@ async def create_indexes():
         f"Startup cleanup: {deleted_sessions.deleted_count} sessions expirées, "
         f"{deleted_resets.deleted_count} reset tokens expirés supprimés"
     )
-
     logger.info("Indexes created successfully")

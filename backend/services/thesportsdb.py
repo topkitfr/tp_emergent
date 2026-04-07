@@ -1,9 +1,10 @@
 """Client async API-Football (api-sports.io) — free tier (100 req/day).
 
 Endpoints utilisés :
-  - GET /players/profiles?search={name}  → recherche joueur
+  - GET /players/profiles?search={name}  → recherche joueur (DB-first)
   - GET /trophies?player={id}            → palmarès complet
   - GET /transfers?player={id}           → historique de clubs
+  - GET /leagues?search={name}           → recherche compétition (DB-first)
 
 Doc : https://api-sports.io/documentation/football/v3
 """
@@ -15,6 +16,7 @@ import os
 BASE_URL = "https://v3.football.api-sports.io"
 API_KEY = os.environ.get("API_FOOTBALL_KEY", "92000910b07df3b860baa17aa7f0ef7d")
 
+# ── Poids des compétitions (fallback si pas en DB) ────────────────────────────
 HONOUR_WEIGHTS: dict[str, float] = {
     "world cup": 20.0,
     "coupe du monde": 20.0,
@@ -30,7 +32,7 @@ HONOUR_WEIGHTS: dict[str, float] = {
     "bundesliga": 7.0,
     "serie a": 7.0,
     "ligue 1": 6.0,
-    "primera division": 7.0,
+    "primeira division": 7.0,
     "fa cup": 4.0,
     "copa del rey": 4.0,
     "dfb pokal": 4.0,
@@ -40,11 +42,29 @@ HONOUR_WEIGHTS: dict[str, float] = {
     "supercopa": 2.0,
     "super cup": 2.0,
     "community shield": 2.0,
+    "intercontinental": 8.0,
+    "nations league": 6.0,
+}
+
+# Poids des awards individuels (fallback si pas en DB)
+AWARD_WEIGHTS: dict[str, float] = {
     "ballon d'or": 8.0,
     "ballon dor": 8.0,
+    "the best": 5.0,
     "fifa best": 5.0,
     "golden boot": 3.0,
     "golden ball": 3.0,
+    "golden glove": 2.0,
+    "best player": 3.0,
+    "player of the year": 3.0,
+}
+
+# Multiplicateur selon place
+PLACE_MULTIPLIER: dict[str, float] = {
+    "winner": 1.0,
+    "2nd place": 0.15,
+    "runner-up": 0.15,
+    "3rd place": 0.05,
 }
 
 DEFAULT_HONOUR_WEIGHT = 1.5
@@ -55,26 +75,125 @@ def _headers() -> dict:
     return {"x-apisports-key": API_KEY}
 
 
-def compute_score_palmares(honours: List[dict]) -> float:
-    """Calcule le score palmarès pondéré (uniquement les victoires)."""
-    total = 0.0
+def _dedup_honours(honours: List[dict]) -> List[dict]:
+    """Supprime les doublons sans saison quand le même titre existe avec une saison.
+
+    API-Football retourne parfois une entrée avec season=null en doublon
+    d'une entrée avec saison renseignée.
+    """
+    # Indexer les titres ayant une saison renseignée
+    has_season: set[tuple] = set()
     for h in honours:
-        if (h.get("place") or "").lower() != "winner":
+        season = (h.get("strSeason") or h.get("season") or "").strip()
+        league = (h.get("strHonour") or h.get("league") or "").strip()
+        place = (h.get("place") or "").strip()
+        if season:
+            has_season.add((league.lower(), place.lower()))
+
+    result = []
+    for h in honours:
+        season = (h.get("strSeason") or h.get("season") or "").strip()
+        league = (h.get("strHonour") or h.get("league") or "").strip()
+        place = (h.get("place") or "").strip()
+        # Si pas de saison mais qu'il existe une version avec saison → skip
+        if not season and (league.lower(), place.lower()) in has_season:
+            continue
+        result.append(h)
+    return result
+
+
+def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | None = None) -> float:
+    """Calcule le score palmarès pondéré.
+
+    - Titres collectifs : API-Football /trophies, filtrés par place (Winner = 100%, 2nd Place = 15%)
+    - Titres individuels : saisie manuelle, pondérés par AWARD_WEIGHTS
+    """
+    # Dédupliquer avant calcul
+    clean_honours = _dedup_honours(honours)
+
+    total = 0.0
+    for h in clean_honours:
+        place = (h.get("place") or "").lower().strip()
+        multiplier = PLACE_MULTIPLIER.get(place, 0.0)
+        if multiplier == 0.0:
             continue
         honour_name = (h.get("strHonour") or h.get("league") or "").lower()
-        weight = DEFAULT_HONOUR_WEIGHT
+        # Poids depuis DB via scoring_weight si dispo, sinon HONOUR_WEIGHTS
+        weight = h.get("scoring_weight") or DEFAULT_HONOUR_WEIGHT
         for keyword, w in HONOUR_WEIGHTS.items():
             if keyword in honour_name:
                 weight = w
                 break
-        total += weight
+        total += weight * multiplier
+
+    # Trophées individuels
+    for award in (individual_awards or []):
+        award_name = (award.get("award_name") or "").lower()
+        # Poids depuis DB award si dispo, sinon AWARD_WEIGHTS
+        weight = award.get("scoring_weight") or DEFAULT_HONOUR_WEIGHT
+        for keyword, w in AWARD_WEIGHTS.items():
+            if keyword in award_name:
+                weight = w
+                break
+        count = award.get("count") or 1
+        total += weight * count
+
     return round(total, 2)
 
 
 def compute_note(score_palmares: float, aura: float) -> float:
+    """Note finale sur 100 : 50% palmarès + 50% aura."""
     palmares_part = min(score_palmares / SCORE_MESSI_REF, 1.0) * 50.0
     aura_part = min(aura / 100.0, 1.0) * 50.0
     return round(palmares_part + aura_part, 1)
+
+
+# ── Recherche joueur (DB-first) ───────────────────────────────────────────────
+
+async def search_players_db_first(name: str, db) -> dict:
+    """Recherche un joueur : DB en premier, API-Football en fallback.
+
+    Retourne:
+      {
+        "db_results": [...],      # joueurs trouvés en DB (badge "in_db")
+        "api_results": [...],     # résultats API-Football
+      }
+    """
+    import unicodedata
+
+    def norm(s: str) -> str:
+        s = s.lower().strip()
+        s = unicodedata.normalize("NFD", s)
+        return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+    name_norm = norm(name)
+
+    # 1. Cherche en DB (regex insensible accents)
+    cursor = db["players"].find(
+        {"full_name": {"$regex": name, "$options": "i"}},
+        {"player_id": 1, "full_name": 1, "nationality": 1,
+         "birth_date": 1, "photo_url": 1, "apifootball_id": 1, "note": 1}
+    ).limit(10)
+    db_players = await cursor.to_list(length=10)
+
+    db_results = [
+        {
+            "source": "db",
+            "player_id": p["player_id"],
+            "apifootball_id": p.get("apifootball_id", ""),
+            "name": p["full_name"],
+            "nationality": p.get("nationality", ""),
+            "birth_date": p.get("birth_date", ""),
+            "photo": p.get("photo_url", ""),
+            "note": p.get("note", 0.0),
+        }
+        for p in db_players
+    ]
+
+    # 2. API-Football fallback
+    api_results = await search_players_by_name(name)
+
+    return {"db_results": db_results, "api_results": api_results}
 
 
 async def search_players_by_name(name: str) -> List[dict]:
@@ -103,6 +222,7 @@ async def search_players_by_name(name: str) -> List[dict]:
                 except Exception:
                     birth_date_formatted = raw_dob
             results.append({
+                "source": "api",
                 "apifootball_id": str(player["id"]),
                 "name": player.get("name", ""),
                 "firstname": player.get("firstname", ""),
@@ -115,6 +235,61 @@ async def search_players_by_name(name: str) -> List[dict]:
                 "weight": player.get("weight", ""),
             })
         return results
+
+
+# ── Recherche league (DB-first) ───────────────────────────────────────────────
+
+async def search_leagues_db_first(name: str, db) -> dict:
+    """Recherche une compétition : DB en premier, API-Football en fallback."""
+    cursor = db["leagues"].find(
+        {"name": {"$regex": name, "$options": "i"}},
+        {"league_id": 1, "name": 1, "country_or_region": 1,
+         "logo_url": 1, "apifootball_league_id": 1, "apifootball_logo": 1, "scoring_weight": 1}
+    ).limit(10)
+    db_leagues = await cursor.to_list(length=10)
+
+    db_results = [
+        {
+            "source": "db",
+            "league_id": l["league_id"],
+            "apifootball_league_id": l.get("apifootball_league_id"),
+            "name": l["name"],
+            "country": l.get("country_or_region", ""),
+            "logo": l.get("apifootball_logo") or l.get("logo_url", ""),
+            "scoring_weight": l.get("scoring_weight"),
+        }
+        for l in db_leagues
+    ]
+
+    api_results = await search_leagues_by_name(name)
+    return {"db_results": db_results, "api_results": api_results}
+
+
+async def search_leagues_by_name(name: str) -> List[dict]:
+    """Recherche des compétitions via /leagues."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(
+            f"{BASE_URL}/leagues",
+            params={"search": name},
+            headers=_headers(),
+        )
+        if r.status_code == 404:
+            return []
+        r.raise_for_status()
+        leagues = r.json().get("response") or []
+        results = []
+        for item in leagues:
+            league = item.get("league", {})
+            country = item.get("country", {})
+            results.append({
+                "source": "api",
+                "apifootball_league_id": league.get("id"),
+                "name": league.get("name", ""),
+                "country": country.get("name", ""),
+                "logo": league.get("logo", ""),
+                "type": league.get("type", ""),
+            })
+        return results[:10]
 
 
 async def lookup_honours(player_id: str) -> List[dict]:
@@ -142,12 +317,7 @@ async def lookup_honours(player_id: str) -> List[dict]:
 
 
 async def lookup_career(player_id: str) -> List[dict]:
-    """Récupère l'historique de clubs d'un joueur via /transfers.
-
-    Retourne une liste ordonnée (du plus récent au plus ancien) :
-      club, team_id, date_start, date_end, type ("IN"/"OUT")
-    On ne garde que les transferts IN pour reconstituer la carrière.
-    """
+    """Récupère l'historique de clubs d'un joueur via /transfers."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(
             f"{BASE_URL}/transfers",
@@ -165,16 +335,51 @@ async def lookup_career(player_id: str) -> List[dict]:
         for t in transfers:
             team_in = t.get("teams", {}).get("in", {})
             team_out = t.get("teams", {}).get("out", {})
-            date = t.get("date", "")  # YYYY-MM-DD or YYYY
+            date = t.get("date", "")
+            transfer_type = t.get("type", "")  # "Free", "Loan", "€ 180M", etc.
             entries.append({
                 "club": team_in.get("name", ""),
                 "team_id": team_in.get("id"),
                 "team_logo": team_in.get("logo", ""),
                 "from_club": team_out.get("name", ""),
+                "from_club_logo": team_out.get("logo", ""),
                 "date": date,
-                "type": t.get("type", ""),
+                "transfer_type": transfer_type,
             })
 
-    # Trier par date décroissante, filtrer les arrivées uniquement
     entries.sort(key=lambda x: x["date"] or "", reverse=True)
     return entries
+
+
+async def lookup_player_profile(player_id: str) -> dict | None:
+    """Récupère les infos identité d'un joueur via /players/profiles."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(
+            f"{BASE_URL}/players/profiles",
+            params={"player": player_id},
+            headers=_headers(),
+        )
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        response = r.json().get("response") or []
+        if not response:
+            return None
+        p = response[0].get("player", {})
+        birth = p.get("birth") or {}
+        return {
+            "apifootball_id": str(p.get("id", "")),
+            "name": p.get("name", ""),
+            "firstname": p.get("firstname", ""),
+            "lastname": p.get("lastname", ""),
+            "age": p.get("age"),
+            "birth_date": birth.get("date", ""),
+            "birth_place": birth.get("place", ""),
+            "birth_country": birth.get("country", ""),
+            "nationality": p.get("nationality", ""),
+            "height": p.get("height", ""),
+            "weight": p.get("weight", ""),
+            "position": p.get("position", ""),
+            "photo": p.get("photo", ""),
+            "number": p.get("number"),
+        }

@@ -276,6 +276,10 @@ class LeagueCreate(BaseModel):
     level: Optional[str] = "domestic"
     organizer: Optional[str] = ""
     logo_url: Optional[str] = ""
+    # Champs API-Football
+    apifootball_league_id: Optional[int] = None
+    apifootball_logo: Optional[str] = ""
+    scoring_weight: Optional[float] = None  # poids dans score_palmares (override HONOUR_WEIGHTS)
 
 
 class LeagueOut(BaseModel):
@@ -288,6 +292,9 @@ class LeagueOut(BaseModel):
     level: Optional[str] = "domestic"
     organizer: Optional[str] = ""
     logo_url: Optional[str] = ""
+    apifootball_league_id: Optional[int] = None
+    apifootball_logo: Optional[str] = ""
+    scoring_weight: Optional[float] = None
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -314,6 +321,39 @@ class BrandOut(BaseModel):
     updated_at: Optional[str] = None
 
 
+# ─── Award (trophée individuel) ───────────────────────────────────────────────
+
+class AwardCreate(BaseModel):
+    """Trophée individuel (Ballon d'Or, Golden Boot, FIFA Best…)"""
+    name: str                              # ex: "Ballon d'Or"
+    category: Optional[str] = "individual" # individual | collective
+    scoring_weight: Optional[float] = 5.0  # poids dans score_palmares
+    logo_url: Optional[str] = ""
+    description: Optional[str] = ""
+
+
+class AwardOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    award_id: str
+    name: str
+    category: Optional[str] = "individual"
+    scoring_weight: Optional[float] = 5.0
+    logo_url: Optional[str] = ""
+    description: Optional[str] = ""
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class IndividualAwardEntry(BaseModel):
+    """Référence à un award dans le profil d'un joueur."""
+    award_id: str          # référence à awards collection
+    award_name: str        # dénormalisé pour affichage rapide
+    year: Optional[str] = ""
+    count: Optional[int] = 1
+
+
+# ─── Player ───────────────────────────────────────────────────────────────────
+
 class PlayerCreate(BaseModel):
     full_name: str
     nationality: Optional[str] = ""
@@ -324,9 +364,10 @@ class PlayerCreate(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
-    # --- Scoring API-Football ---
-    apifootball_id: Optional[str] = ""     # ID API-Football pour enrichissement auto
+    # Scoring API-Football
+    apifootball_id: Optional[str] = ""
     honours: Optional[List[dict]] = []
+    individual_awards: Optional[List[IndividualAwardEntry]] = []
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
     note: Optional[float] = 0.0
@@ -346,9 +387,9 @@ class PlayerOut(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
-    # --- Scoring API-Football ---
     apifootball_id: Optional[str] = ""
     honours: Optional[List[dict]] = []
+    individual_awards: Optional[List[dict]] = []
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
     note: Optional[float] = 0.0
@@ -370,9 +411,9 @@ class PlayerOut(BaseModel):
 
 class PlayerScoringEnrichRequest(BaseModel):
     """Body pour enrichir/mettre à jour le scoring d'un joueur via API-Football."""
-    player_id: str               # player_id Topkit (UUID stocké en Mongo)
-    apifootball_id: str          # ID numérique API-Football (ex: "276")
-    aura: Optional[float] = 0.0  # 0–100
+    player_id: str
+    apifootball_id: str
+    aura: Optional[float] = 0.0
 
 
 class PlayerScoringOut(BaseModel):
