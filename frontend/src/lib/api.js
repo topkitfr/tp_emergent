@@ -11,9 +11,9 @@ export const proxyImageUrl = (url) => {
     return `${BACKEND_URL}${url}`;
   }
 
-  const apiImagesPattern = /^https?:\/\/[^/]+(\/api\/images\/.+)$/;
+  const apiImagesPattern = /^\/api\/images\/.+$|^https?:\/\/[^/]+(\/api\/images\/.+)$/;
   const match = url.match(apiImagesPattern);
-  if (match) {
+  if (match?.[1]) {
     return `${BACKEND_URL}${match[1]}`;
   }
 
@@ -182,6 +182,12 @@ export const togglePlayerFollow = (playerId, followed) =>
   followed
     ? followEntity({ entity_type: 'player', entity_id: playerId })
     : unfollowEntity({ entity_type: 'player', entity_id: playerId });
+
+// ── Scoring API-Football ─────────────────────────────────────────────────────
+/** Récupère le scoring palmarès stocké en base pour un joueur */
+export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
+/** Lance l'enrichissement API-Football pour un joueur (admin/user connecté) */
+export const enrichPlayer = (playerId) => api.post(`/scoring/players/enrich`, { player_id: playerId });
 
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
