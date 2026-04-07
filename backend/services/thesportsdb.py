@@ -1,8 +1,8 @@
 """Client async API-Football (api-sports.io) — free tier (100 req/day).
 
 Endpoints utilisés :
-  - GET /players?search={name}&season=2024  → recherche joueur
-  - GET /trophies?player={id}               → palmarès complet
+  - GET /players/profiles?search={name}  → recherche joueur (pas de league requise)
+  - GET /trophies?player={id}            → palmarès complet
 
 Doc : https://api-sports.io/documentation/football/v3
 """
@@ -77,11 +77,11 @@ def compute_note(score_palmares: float, aura: float) -> float:
 
 
 async def search_players_by_name(name: str) -> List[dict]:
-    """Recherche des joueurs API-Football par nom."""
+    """Recherche des joueurs via /players/profiles (pas de league requise)."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(
-            f"{BASE_URL}/players",
-            params={"search": name, "season": "2024"},
+            f"{BASE_URL}/players/profiles",
+            params={"search": name},
             headers=_headers(),
         )
         if r.status_code == 404:
@@ -91,11 +91,11 @@ async def search_players_by_name(name: str) -> List[dict]:
         return [
             {
                 "tsdb_id": str(p["player"]["id"]),
-                "name": p["player"]["name"],
-                "team": p["statistics"][0]["team"]["name"] if p.get("statistics") else "",
+                "name": p["player"].get("name", ""),
+                "firstname": p["player"].get("firstname", ""),
+                "lastname": p["player"].get("lastname", ""),
                 "nationality": p["player"].get("nationality", ""),
                 "thumb": p["player"].get("photo", ""),
-                "sport": "soccer",
             }
             for p in players
             if p.get("player")
@@ -103,7 +103,7 @@ async def search_players_by_name(name: str) -> List[dict]:
 
 
 async def lookup_honours(player_id: str) -> List[dict]:
-    """Récupère le palmarès complet d'un joueur via API-Football."""
+    """Récupère le palmarès complet d'un joueur via /trophies."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(
             f"{BASE_URL}/trophies",
