@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { User, Heart } from 'lucide-react';
 import { proxyImageUrl } from '@/lib/api';
 
-// ── Couleurs du cadre selon la note Aura ──────────────────────────────────
+// ── Couleurs du cadre selon la note Aura ─────────────────────────────────────────
 const TIER = {
   0: { border: '#3f3f46', glow: 'rgba(63,63,70,0)',     bg: '#18181b' },
   1: { border: '#7B3F1A', glow: 'rgba(139,69,19,0.5)',  bg: '#1c1008' },
@@ -44,6 +44,10 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
   const nationality = player.nationality ?? player.country ?? '';
   const position    = player.position   ?? player.role    ?? player.poste ?? '';
 
+  // Lecture du score palmares et de la note API-Football
+  const scorePalmares = player.score_palmares ?? player.scoring?.score_palmares ?? null;
+  const noteAura      = player.note           ?? player.scoring?.note           ?? null;
+
   // Même logique que JerseyCard : proxyImageUrl direct sur le champ image
   const rawImage =
     player.image_url    ?? player.photo_url   ?? player.photo      ??
@@ -77,7 +81,7 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           transition: 'transform 0.3s ease, box-shadow 0.2s ease',
         }}
       >
-        {/* ── Photo ───────────────────────────────────────────── */}
+        {/* ── Photo ─────────────────────────────────────────────────────────── */}
         <div className="absolute inset-0">
           {imageUrl ? (
             <img
@@ -95,7 +99,7 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           )}
         </div>
 
-        {/* ── Bandeau haut : étoiles + follow ─────────────────── */}
+        {/* ── Bandeau haut : étoiles + follow ─────────────────────────────────── */}
         <div
           className="absolute top-0 left-0 right-0 flex items-center justify-between px-1.5 py-1"
           style={{
@@ -131,7 +135,27 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           )}
         </div>
 
-        {/* ── Bandeau blanc bas style Panini ──────────────────── */}
+        {/* ── Badge note API-Football (coin haut droit si pas de follow) ──────── */}
+        {noteAura !== null && !onFollowToggle && (
+          <div
+            className="absolute top-1 right-1"
+            style={{
+              background: tier.border,
+              color: '#fff',
+              fontFamily: 'Barlow Condensed, sans-serif',
+              fontWeight: 800,
+              fontSize: 9,
+              lineHeight: 1,
+              padding: '2px 4px',
+              borderRadius: 2,
+              zIndex: 3,
+            }}
+          >
+            {Number(noteAura).toFixed(1)}
+          </div>
+        )}
+
+        {/* ── Bandeau blanc bas style Panini ────────────────────────────────── */}
         <div
           className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
           style={{
@@ -167,6 +191,22 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
               }}
             >
               {[position, nationality].filter(Boolean).join(' · ')}
+            </span>
+          )}
+          {/* Score palmares API-Football */}
+          {scorePalmares !== null && (
+            <span
+              style={{
+                color: tier.border,
+                fontSize: 8,
+                fontWeight: 700,
+                fontFamily: 'Barlow Condensed, sans-serif',
+                letterSpacing: '0.3px',
+                lineHeight: 1.2,
+                marginTop: 1,
+              }}
+            >
+              🏆 {Number(scorePalmares).toFixed(0)} pts
             </span>
           )}
         </div>
