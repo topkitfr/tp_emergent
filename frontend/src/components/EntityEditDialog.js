@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { createSubmission, searchApiFootballPlayers } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import { toast } from 'sonner';
-import { Trash2, Loader2, Search, CheckCircle2 } from 'lucide-react';
+import { Trash2, Loader2, Search, CheckCircle2, UserSearch } from 'lucide-react';
 
 const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
 const inputClass = 'bg-card border-border rounded-none';
@@ -17,6 +17,7 @@ const inputClass = 'bg-card border-border rounded-none';
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const AURA_LEVELS = [1, 2, 3, 4, 5];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
+const FOOT_OPTIONS = ['right', 'left', 'both'];
 
 const ENTITY_CONFIGS = {
   team: {
@@ -63,28 +64,35 @@ const ENTITY_CONFIGS = {
   player: {
     label: 'Player', nameField: 'full_name', imageField: 'photo_url', imageLabel: 'Photo',
     folder: 'player',
+    // apifootball_id intentionally excluded — filled silently via autofill, hidden from user
     fields: [
-      { key: 'full_name',        label: 'Full Name',              required: true, span: 2 },
+      // --- Autofill banner (type spécial, rendu en dehors de la grille)
+      { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
+      // --- Identité
+      { key: 'full_name',        label: 'Full Name',           required: true, span: 2 },
       { key: 'nationality',      label: 'Nationality' },
       { key: 'birth_date',       label: 'Date of Birth (DD/MM/YYYY)' },
-      { key: 'preferred_number', label: 'Preferred Number',       type: 'number' },
-      { key: 'apifootball_id',   label: 'API-Football ID',        type: 'apifootball_search', span: 2 },
-      { key: 'positions',        label: 'Positions',              type: 'positions', span: 2 },
-      { key: 'bio',              label: 'Bio',                    type: 'textarea',  span: 2 },
+      { key: 'height',           label: 'Height (cm)',          type: 'number' },
+      { key: 'weight',           label: 'Weight (kg)',          type: 'number' },
+      { key: 'preferred_foot',   label: 'Preferred Foot',       type: 'select', options: FOOT_OPTIONS },
+      { key: 'preferred_number', label: 'Preferred Number',     type: 'number' },
+      // --- Jeu
+      { key: 'positions',        label: 'Positions',            type: 'positions', span: 2 },
+      // --- Bio
+      { key: 'bio',              label: 'Bio',                  type: 'textarea',  span: 2 },
     ],
   },
 };
 
 /**
- * ApiFootballSearchField — champ recherche live + dropdown pour EntityEditDialog.
- * Gestion locale de la query, auto-fill via onFill(player).
+ * ApiFootballSearchField — barre de recherche live avec dropdown.
+ * Remplit automatiquement TOUS les champs joueur + cache apifootball_id.
  */
-function ApiFootballSearchField({ currentId, onFill }) {
+function ApiFootballSearchField({ filledName, onFill }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [filledName, setFilledName] = useState('');
   const debounceRef = useRef(null);
   const wrapperRef = useRef(null);
 
@@ -115,26 +123,21 @@ function ApiFootballSearchField({ currentId, onFill }) {
     setQuery('');
     setResults([]);
     setOpen(false);
-    setFilledName(player.name || player.firstname || '');
     onFill(player);
   };
 
   return (
-    <div ref={wrapperRef} className="space-y-1.5">
-      {/* Affichage de l'ID actuel */}
-      {currentId && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-          <span style={labelStyle}>Current ID:</span>
-          <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{currentId}</code>
-        </div>
-      )}
+    <div ref={wrapperRef} className="relative space-y-1.5 sm:col-span-2">
+      <Label className="text-xs uppercase tracking-wider flex items-center gap-1.5 text-primary" style={labelStyle}>
+        <UserSearch className="w-3.5 h-3.5" />
+        Auto-fill from API-Football
+      </Label>
 
-      {/* Input de recherche */}
       <div className="relative">
         <Input
           value={query}
           onChange={(e) => handleInput(e.target.value)}
-          placeholder="Search player on API-Football..."
+          placeholder="Search a player (min 3 chars)..."
           className={`${inputClass} pr-8`}
         />
         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
@@ -144,7 +147,7 @@ function ApiFootballSearchField({ currentId, onFill }) {
         </span>
       </div>
 
-      {/* Dropdown */}
+      {/* Dropdown résultats */}
       {open && results.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-popover border border-border shadow-lg max-h-64 overflow-y-auto">
           {results.map((p) => (
@@ -156,28 +159,35 @@ function ApiFootballSearchField({ currentId, onFill }) {
               {p.photo && (
                 <img src={p.photo} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-muted" />
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate" style={labelStyle}>{p.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {[p.nationality, p.birth_date].filter(Boolean).join(' · ')}
                 </p>
               </div>
-              <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0 font-mono">#{p.apifootball_id}</span>
             </li>
           ))}
         </ul>
       )}
 
       {open && results.length === 0 && !loading && query.length >= 3 && (
-        <div className="text-xs text-muted-foreground px-1 mt-1">No results for « {query} »</div>
+        <div className="text-xs text-muted-foreground px-1 mt-1">No results for « {query} »</div>
       )}
 
+      {/* Confirmation autofill */}
       {filledName && (
         <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          <span style={labelStyle}>Auto-filled: <strong>{filledName}</strong></span>
+          <span style={labelStyle}>Auto-filled from API-Football: <strong>{filledName}</strong></span>
         </div>
       )}
+
+      {/* Séparateur visuel */}
+      <div className="flex items-center gap-2 pt-1">
+        <div className="flex-1 border-t border-border" />
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest" style={labelStyle}>or fill manually</span>
+        <div className="flex-1 border-t border-border" />
+      </div>
     </div>
   );
 }
@@ -196,18 +206,25 @@ export default function EntityEditDialog({
   const [submitting, setSubmitting] = useState(false);
   const [showRemoval, setShowRemoval] = useState(false);
   const [removalNotes, setRemovalNotes] = useState('');
+  const [apiFillName, setApiFillName] = useState('');
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
-  /** Auto-fill depuis résultat API-Football */
+  /** Auto-fill depuis résultat API-Football — remplit TOUT ce qu'on a */
   const handleApiFill = (player) => {
+    setApiFillName(player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || '');
     setForm(prev => ({
       ...prev,
-      full_name:      player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
-      nationality:    player.nationality || prev.nationality || '',
-      birth_date:     player.birth_date  || prev.birth_date  || '',
-      photo_url:      player.photo       || prev.photo_url   || '',
-      apifootball_id: player.apifootball_id,
+      full_name:        player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
+      nationality:      player.nationality   || prev.nationality   || '',
+      birth_date:       player.birth_date    || prev.birth_date    || '',
+      photo_url:        player.photo         || prev.photo_url     || '',
+      height:           player.height        ?? prev.height        ?? '',
+      weight:           player.weight        ?? prev.weight        ?? '',
+      preferred_foot:   player.preferred_foot || prev.preferred_foot || '',
+      preferred_number: player.preferred_number ?? prev.preferred_number ?? '',
+      // apifootball_id stocké silencieusement
+      apifootball_id:   player.apifootball_id,
     }));
   };
 
@@ -229,6 +246,8 @@ export default function EntityEditDialog({
         }
       }
       if (mode === 'edit' && entityId) payload.entity_id = entityId;
+      // Nettoyer les clés internes
+      delete payload._apifootball_search;
       await createSubmission({ submission_type: entityType, data: payload });
       toast.success(
         mode === 'create'
@@ -271,10 +290,11 @@ export default function EntityEditDialog({
   };
 
   const renderField = (f) => {
+    // Champ de recherche API-Football (rendu spécial avec état partagé)
     if (f.type === 'apifootball_search') {
       return (
         <ApiFootballSearchField
-          currentId={form.apifootball_id || ''}
+          filledName={apiFillName}
           onFill={handleApiFill}
         />
       );
@@ -393,19 +413,26 @@ export default function EntityEditDialog({
 
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {config.fields.map(f => (
-              <div
-                key={f.key}
-                className={`space-y-1 ${
-                  f.key === config.nameField || f.span === 2 ? 'sm:col-span-2' : ''
-                }`}
-              >
-                <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
-                  {f.label} {f.required && '*'}
-                </Label>
-                {renderField(f)}
-              </div>
-            ))}
+            {config.fields.map(f => {
+              // Le champ search API-Football a son propre wrapper sm:col-span-2 interne
+              if (f.type === 'apifootball_search') {
+                return renderField(f);
+              }
+
+              return (
+                <div
+                  key={f.key}
+                  className={`space-y-1 ${
+                    f.key === config.nameField || f.span === 2 ? 'sm:col-span-2' : ''
+                  }`}
+                >
+                  <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
+                    {f.label} {f.required && '*'}
+                  </Label>
+                  {renderField(f)}
+                </div>
+              );
+            })}
           </div>
 
           {/* Image upload */}
