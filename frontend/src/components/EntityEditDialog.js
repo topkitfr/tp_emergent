@@ -1,17 +1,18 @@
 // frontend/src/components/EntityEditDialog.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createSubmission } from '@/lib/api';
+import { createSubmission, searchApiFootballPlayers } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2, Search, CheckCircle2 } from 'lucide-react';
 
 const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
+const inputClass = 'bg-card border-border rounded-none';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const AURA_LEVELS = [1, 2, 3, 4, 5];
@@ -67,12 +68,119 @@ const ENTITY_CONFIGS = {
       { key: 'nationality',      label: 'Nationality' },
       { key: 'birth_date',       label: 'Date of Birth (DD/MM/YYYY)' },
       { key: 'preferred_number', label: 'Preferred Number',       type: 'number' },
-      { key: 'apifootball_id',   label: 'API-Football ID',        type: 'number' },
+      { key: 'apifootball_id',   label: 'API-Football ID',        type: 'apifootball_search', span: 2 },
       { key: 'positions',        label: 'Positions',              type: 'positions', span: 2 },
       { key: 'bio',              label: 'Bio',                    type: 'textarea',  span: 2 },
     ],
   },
 };
+
+/**
+ * ApiFootballSearchField — champ recherche live + dropdown pour EntityEditDialog.
+ * Gestion locale de la query, auto-fill via onFill(player).
+ */
+function ApiFootballSearchField({ currentId, onFill }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [filledName, setFilledName] = useState('');
+  const debounceRef = useRef(null);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleInput = useCallback((val) => {
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.length < 3) { setResults([]); setOpen(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await searchApiFootballPlayers(val);
+        setResults(res.data.players || []);
+        setOpen(true);
+      } catch { setResults([]); }
+      finally { setLoading(false); }
+    }, 500);
+  }, []);
+
+  const handleSelect = (player) => {
+    setQuery('');
+    setResults([]);
+    setOpen(false);
+    setFilledName(player.name || player.firstname || '');
+    onFill(player);
+  };
+
+  return (
+    <div ref={wrapperRef} className="space-y-1.5">
+      {/* Affichage de l'ID actuel */}
+      {currentId && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+          <span style={labelStyle}>Current ID:</span>
+          <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{currentId}</code>
+        </div>
+      )}
+
+      {/* Input de recherche */}
+      <div className="relative">
+        <Input
+          value={query}
+          onChange={(e) => handleInput(e.target.value)}
+          placeholder="Search player on API-Football..."
+          className={`${inputClass} pr-8`}
+        />
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+          {loading
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <Search className="w-3.5 h-3.5" />}
+        </span>
+      </div>
+
+      {/* Dropdown */}
+      {open && results.length > 0 && (
+        <ul className="absolute z-50 w-full mt-1 bg-popover border border-border shadow-lg max-h-64 overflow-y-auto">
+          {results.map((p) => (
+            <li
+              key={p.apifootball_id}
+              onClick={() => handleSelect(p)}
+              className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
+            >
+              {p.photo && (
+                <img src={p.photo} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-muted" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate" style={labelStyle}>{p.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {[p.nationality, p.birth_date].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+              <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0 font-mono">#{p.apifootball_id}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {open && results.length === 0 && !loading && query.length >= 3 && (
+        <div className="text-xs text-muted-foreground px-1 mt-1">No results for « {query} »</div>
+      )}
+
+      {filledName && (
+        <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span style={labelStyle}>Auto-filled: <strong>{filledName}</strong></span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function EntityEditDialog({
   open,
@@ -90,6 +198,18 @@ export default function EntityEditDialog({
   const [removalNotes, setRemovalNotes] = useState('');
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  /** Auto-fill depuis résultat API-Football */
+  const handleApiFill = (player) => {
+    setForm(prev => ({
+      ...prev,
+      full_name:      player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
+      nationality:    player.nationality || prev.nationality || '',
+      birth_date:     player.birth_date  || prev.birth_date  || '',
+      photo_url:      player.photo       || prev.photo_url   || '',
+      apifootball_id: player.apifootball_id,
+    }));
+  };
 
   const handleSubmit = async () => {
     const nameKey = config.nameField;
@@ -151,6 +271,15 @@ export default function EntityEditDialog({
   };
 
   const renderField = (f) => {
+    if (f.type === 'apifootball_search') {
+      return (
+        <ApiFootballSearchField
+          currentId={form.apifootball_id || ''}
+          onFill={handleApiFill}
+        />
+      );
+    }
+
     if (f.type === 'positions') {
       const current = Array.isArray(form.positions) ? form.positions : [];
       return (
@@ -196,7 +325,7 @@ export default function EntityEditDialog({
               }`}
               style={labelStyle}
             >
-              {'★'.repeat(level)}
+              {'\u2605'.repeat(level)}
             </button>
           ))}
         </div>

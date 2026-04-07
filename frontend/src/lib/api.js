@@ -28,7 +28,7 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ─── Intercepteur de réponse — gestion globale des erreurs ───────────────────
+// ─── Intercepteur de réponse — gestion globale des erreurs ───────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -118,7 +118,7 @@ export const getUserPublicCollection = (userId) => api.get(`/users/${userId}/pub
 export const getUserPublicSubmissions = (userId) => api.get(`/users/${userId}/public-submissions`);
 export const getUserPublicFollows = (userId) => api.get(`/users/${userId}/public-follows`);
 
-// ── Listes personnalisées ────────────────────────────────────────────────────
+// ── Listes personnalisées ────────────────────────────────────────────────
 export const getUserLists = () => api.get('/lists');
 export const getListDetail = (listId) => api.get(`/lists/${listId}`);
 export const createList = (data) => api.post('/lists', data);
@@ -183,11 +183,19 @@ export const togglePlayerFollow = (playerId, followed) =>
     ? followEntity({ entity_type: 'player', entity_id: playerId })
     : unfollowEntity({ entity_type: 'player', entity_id: playerId });
 
-// ── Scoring API-Football ─────────────────────────────────────────────────────
+// ── Scoring API-Football ─────────────────────────────────────────────
+/** Recherche un joueur sur API-Football (pour auto-complétion / pré-remplissage) */
+export const searchApiFootballPlayers = (name) =>
+  api.get('/scoring/players/api-search', { params: { name } });
 /** Récupère le scoring palmarès stocké en base pour un joueur */
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
-/** Lance l'enrichissement API-Football pour un joueur (admin/user connecté) */
-export const enrichPlayer = (playerId) => api.post(`/scoring/players/enrich`, { player_id: playerId });
+/** Lance l'enrichissement API-Football pour un joueur */
+export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
+  api.post(`/scoring/players/enrich`, {
+    player_id: playerId,
+    apifootball_id: String(apifootballId),
+    aura,
+  });
 
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');

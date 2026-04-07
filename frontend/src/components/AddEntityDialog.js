@@ -1,7 +1,7 @@
 // frontend/src/components/AddEntityDialog.js
 // Dialog générique pour soumettre une nouvelle entité (player/team/brand/league/sponsor)
 // Les soumissions créées ici sont VOTABLES par la communauté (pas de parent kit)
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createPlayerPending, createTeamPending, createBrandPending, createLeaguePending, createSponsorPending } from '@/lib/api';
+import { Loader2, Search, CheckCircle2 } from 'lucide-react';
+import { createPlayerPending, createTeamPending, createBrandPending, createLeaguePending, createSponsorPending, searchApiFootballPlayers } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
@@ -17,6 +18,119 @@ const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = 'bg-card border-border rounded-none';
+
+/**
+ * ApiFootballSearch — champ de recherche live API-Football avec dropdown auto-fill.
+ * Props:
+ *   onSelect(player) : appelé quand l'utilisateur choisit un résultat
+ *   selectedName     : nom affiché une fois sélectionné
+ */
+function ApiFootballSearch({ onSelect, selectedName }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const debounceRef = useRef(null);
+  const wrapperRef = useRef(null);
+
+  // Fermer le dropdown en cliquant à l'extérieur
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleInput = useCallback((val) => {
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.length < 3) { setResults([]); setOpen(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await searchApiFootballPlayers(val);
+        setResults(res.data.players || []);
+        setOpen(true);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+  }, []);
+
+  const handleSelect = (player) => {
+    setQuery('');
+    setResults([]);
+    setOpen(false);
+    onSelect(player);
+  };
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div className="relative">
+        <Input
+          value={query}
+          onChange={(e) => handleInput(e.target.value)}
+          placeholder="Search on API-Football (min 3 chars)..."
+          className={`${inputClass} pr-8`}
+        />
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+          {loading
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <Search className="w-3.5 h-3.5" />}
+        </span>
+      </div>
+
+      {/* Dropdown résultats */}
+      {open && results.length > 0 && (
+        <ul className="absolute z-50 w-full mt-1 bg-popover border border-border shadow-lg max-h-64 overflow-y-auto">
+          {results.map((p) => (
+            <li
+              key={p.apifootball_id}
+              onClick={() => handleSelect(p)}
+              className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
+            >
+              {p.photo && (
+                <img
+                  src={p.photo}
+                  alt={p.name}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-muted"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate" style={fieldStyle}>{p.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {[p.nationality, p.birth_date].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+              <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0 font-mono">
+                #{p.apifootball_id}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {open && results.length === 0 && !loading && query.length >= 3 && (
+        <div className="absolute z-50 w-full mt-1 bg-popover border border-border px-3 py-2 text-xs text-muted-foreground">
+          No results found for « {query} »
+        </div>
+      )}
+
+      {/* Badge joueur sélectionné */}
+      {selectedName && (
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span style={fieldStyle}>Auto-filled from API-Football: <strong>{selectedName}</strong></span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * AddEntityDialog — modal d'ajout direct d'une entité de référence.
@@ -30,12 +144,27 @@ const inputClass = 'bg-card border-border rounded-none';
 export default function AddEntityDialog({ open, onClose, entityType, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({});
+  const [apiSelectedName, setApiSelectedName] = useState('');
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
   const handleClose = () => {
     setForm({});
+    setApiSelectedName('');
     onClose();
+  };
+
+  /** Auto-fill le formulaire depuis un résultat API-Football */
+  const handleApiSelect = (player) => {
+    setForm(prev => ({
+      ...prev,
+      full_name:      player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim(),
+      nationality:    player.nationality || prev.nationality || '',
+      birth_date:     player.birth_date  || prev.birth_date  || '',
+      photo_url:      player.photo       || prev.photo_url   || '',
+      apifootball_id: player.apifootball_id,
+    }));
+    setApiSelectedName(player.name || player.firstname);
   };
 
   const handleSubmit = async () => {
@@ -97,6 +226,17 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
           {/* ── PLAYER ── */}
           {entityType === 'player' && (
             <>
+              {/* ✨ Recherche API-Football */}
+              <div className="space-y-1.5 pb-2 border-b border-border">
+                <Label className={fieldLabel} style={fieldStyle}>
+                  🔍 Auto-fill from API-Football
+                </Label>
+                <ApiFootballSearch
+                  onSelect={handleApiSelect}
+                  selectedName={apiSelectedName}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Full Name *</Label>
@@ -138,14 +278,13 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
                   <Input
-                    type="number"
                     value={form.apifootball_id || ''}
-                    onChange={e => set('apifootball_id', e.target.value ? parseInt(e.target.value) : '')}
-                    placeholder="193313"
-                    className={inputClass}
+                    readOnly
+                    className={`${inputClass} text-muted-foreground bg-muted cursor-default`}
+                    placeholder="Auto-filled via search above"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Positions</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {POSITIONS.map(pos => (
@@ -181,7 +320,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                     className={`${inputClass} min-h-[80px]`}
                   />
                 </div>
-
 
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Photo</Label>
