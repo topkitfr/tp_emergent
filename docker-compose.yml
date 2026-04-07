@@ -21,8 +21,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        REACT_APP_BACKEND_URL: https://topkit.app
-        REACT_APP_API_URL: https://topkit.app/api
+        REACT_APP_BACKEND_URL: https://api.topkit.app
+        REACT_APP_API_URL: https://api.topkit.app/api
     restart: always
     expose:
       - "80"
@@ -42,6 +42,25 @@ services:
       - frontend
       - backend
 
+  # ── Gitea ─────────────────────────────────────────────────────────────────────
+  gitea:
+    image: gitea/gitea:latest
+    restart: always
+    expose:
+      - "3000"
+    volumes:
+      - gitea_data:/data
+
+  # ── pgAdmin ───────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: always
+    expose:
+      - "80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@topkit.app"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
+
   # ── Certificat Let's Encrypt ─────────────────────────────────────────────────
   certbot:
     image: certbot/certbot
@@ -53,3 +72,4 @@ volumes:
   uploads_data:
   certbot_certs:
   certbot_www:
+  gitea_data:
