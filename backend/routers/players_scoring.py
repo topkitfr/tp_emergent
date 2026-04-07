@@ -1,10 +1,10 @@
 """Router players_scoring — enrichissement automatique via TheSportsDB.
 
 Routes :
-  GET  /api/players/tsdb-search?name=...  → auto-complétion (TheSportsDB)
-  POST /api/players/enrich                → enrichit un joueur Topkit avec son palmarès
-  GET  /api/players/{player_id}/scoring   → score actuel d'un joueur
-  PATCH /api/players/{player_id}/aura     → mise à jour de l'aura (vote communautaire)
+  GET  /api/scoring/players/tsdb-search?name=...  → auto-complétion (TheSportsDB)
+  POST /api/scoring/players/enrich                → enrichit un joueur Topkit avec son palmarès
+  GET  /api/scoring/players/{player_id}           → score actuel d'un joueur
+  PATCH /api/scoring/players/{player_id}/aura     → mise à jour de l'aura (vote communautaire)
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -19,7 +19,7 @@ from ..services.thesportsdb import (
     compute_note,
 )
 
-router = APIRouter(prefix="/api/players", tags=["players-scoring"])
+router = APIRouter(prefix="/api/scoring/players", tags=["players-scoring"])
 
 
 @router.get("/tsdb-search")
@@ -37,18 +37,15 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     """Enrichit un joueur Topkit avec son palmarès TheSportsDB et recalcule son score."""
     coll = db["players"]
 
-    # Vérifier que le joueur existe en Mongo
     player = await coll.find_one({"player_id": body.player_id})
     if not player:
         raise HTTPException(status_code=404, detail="Joueur introuvable")
 
-    # Récupérer le palmarès depuis TheSportsDB
     try:
         honours_raw = await lookup_honours(body.tsdb_id)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"TheSportsDB error: {str(e)}")
 
-    # Formater les honours pour le stockage
     honours_clean = [
         {
             "honour": h.get("strHonour", ""),
@@ -88,7 +85,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     )
 
 
-@router.get("/{player_id}/scoring", response_model=PlayerScoringOut)
+@router.get("/{player_id}", response_model=PlayerScoringOut)
 async def get_player_scoring(player_id: str):
     """Retourne le score actuel d'un joueur."""
     player = await db["players"].find_one({"player_id": player_id})
