@@ -349,6 +349,12 @@ class PlayerCreate(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1      # conservé pour compat DB, non utilisé dans l'estimation
+    # --- Scoring TheSportsDB ---
+    tsdb_id: Optional[str] = ""        # ID TheSportsDB pour enrichissement auto
+    honours: Optional[List[dict]] = [] # Palmarès brut (lookuphonours)
+    score_palmares: Optional[float] = 0.0
+    aura: Optional[float] = 0.0        # 0–100, vote communautaire
+    note: Optional[float] = 0.0        # score final calculé
 
 
 class PlayerOut(BaseModel):
@@ -365,6 +371,12 @@ class PlayerOut(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1      # conservé pour compat DB, non utilisé dans l'estimation
+    # --- Scoring TheSportsDB ---
+    tsdb_id: Optional[str] = ""
+    honours: Optional[List[dict]] = []
+    score_palmares: Optional[float] = 0.0
+    aura: Optional[float] = 0.0
+    note: Optional[float] = 0.0
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -377,3 +389,25 @@ class PlayerOut(BaseModel):
         if isinstance(v, list):
             return v
         return [v]
+
+
+# ─── Scoring joueur (TheSportsDB) ────────────────────────────────────────────
+
+class PlayerScoringEnrichRequest(BaseModel):
+    """Body pour enrichir/mettre à jour le scoring d'un joueur via TheSportsDB."""
+    player_id: str          # player_id Topkit (UUID stocké en Mongo)
+    tsdb_id: str            # ID numérique TheSportsDB (ex: "34146212")
+    aura: Optional[float] = 0.0  # 0–100
+
+
+class PlayerScoringOut(BaseModel):
+    """Réponse après enrichissement scoring."""
+    model_config = ConfigDict(extra="ignore")
+    player_id: str
+    full_name: str
+    tsdb_id: Optional[str] = ""
+    honours_count: int = 0
+    score_palmares: float = 0.0
+    aura: float = 0.0
+    note: float = 0.0
+    updated_at: Optional[str] = None
