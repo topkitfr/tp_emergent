@@ -1,14 +1,18 @@
-"""Client async TheSportsDB — free tier (api key = 1).
+"""Client async API-Football (api-sports.io) — free tier (100 req/day).
 
 Endpoints utilisés :
-  - search_all_players.php?p={name}  → auto-complétion joueur (free tier OK)
-  - lookuphonours.php?id={tsdb_id}   → palmarès complet
+  - GET /players?search={name}&season=2024  → recherche joueur
+  - GET /trophies?player={id}               → palmarès complet
+
+Doc : https://api-sports.io/documentation/football/v3
 """
 
 import httpx
 from typing import List
+import os
 
-BASE_URL = "https://www.thesportsdb.com/api/v1/json/1"
+BASE_URL = "https://v3.football.api-sports.io"
+API_KEY = os.environ.get("API_FOOTBALL_KEY", "92000910b07df3b860baa17aa7f0ef7d")
 
 HONOUR_WEIGHTS: dict[str, float] = {
     "world cup": 20.0,
@@ -46,10 +50,17 @@ DEFAULT_HONOUR_WEIGHT = 1.5
 SCORE_MESSI_REF = 100.0
 
 
+def _headers() -> dict:
+    return {"x-apisports-key": API_KEY}
+
+
 def compute_score_palmares(honours: List[dict]) -> float:
+    """Calcule le score palmarès pondéré (uniquement les victoires)."""
     total = 0.0
     for h in honours:
-        honour_name = (h.get("strHonour") or "").lower()
+        if (h.get("place") or "").lower() != "winner":
+            continue
+        honour_name = (h.get("strHonour") or h.get("league") or "").lower()
         weight = DEFAULT_HONOUR_WEIGHT
         for keyword, w in HONOUR_WEIGHTS.items():
             if keyword in honour_name:
@@ -66,36 +77,50 @@ def compute_note(score_palmares: float, aura: float) -> float:
 
 
 async def search_players_by_name(name: str) -> List[dict]:
-    """Recherche des joueurs TheSportsDB par nom — endpoint free tier."""
-    url = f"{BASE_URL}/search_all_players.php"
+    """Recherche des joueurs API-Football par nom."""
     async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.get(url, params={"p": name})
+        r = await client.get(
+            f"{BASE_URL}/players",
+            params={"search": name, "season": "2024"},
+            headers=_headers(),
+        )
         if r.status_code == 404:
             return []
         r.raise_for_status()
-        data = r.json()
-        players = data.get("player") or []
+        players = r.json().get("response") or []
         return [
             {
-                "tsdb_id": p.get("idPlayer", ""),
-                "name": p.get("strPlayer", ""),
-                "team": p.get("strTeam", ""),
-                "nationality": p.get("strNationality", ""),
-                "thumb": p.get("strThumb", "") or p.get("strCutout", ""),
-                "sport": p.get("strSport", ""),
+                "tsdb_id": str(p["player"]["id"]),
+                "name": p["player"]["name"],
+                "team": p["statistics"][0]["team"]["name"] if p.get("statistics") else "",
+                "nationality": p["player"].get("nationality", ""),
+                "thumb": p["player"].get("photo", ""),
+                "sport": "soccer",
             }
             for p in players
-            if p.get("strSport", "").lower() in ("soccer", "football", "")
+            if p.get("player")
         ]
 
 
-async def lookup_honours(tsdb_id: str) -> List[dict]:
-    """Récupère le palmarès complet d'un joueur via TheSportsDB."""
-    url = f"{BASE_URL}/lookuphonours.php"
+async def lookup_honours(player_id: str) -> List[dict]:
+    """Récupère le palmarès complet d'un joueur via API-Football."""
     async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.get(url, params={"id": tsdb_id})
+        r = await client.get(
+            f"{BASE_URL}/trophies",
+            params={"player": player_id},
+            headers=_headers(),
+        )
         if r.status_code == 404:
             return []
         r.raise_for_status()
-        data = r.json()
-        return data.get("honours") or []
+        trophies = r.json().get("response") or []
+        return [
+            {
+                "strHonour": t.get("league", ""),
+                "strSeason": t.get("season", ""),
+                "strTeam": t.get("team", ""),
+                "place": t.get("place", ""),
+                "league": t.get("league", ""),
+            }
+            for t in trophies
+        ]
