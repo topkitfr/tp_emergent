@@ -1,18 +1,15 @@
 """Client async TheSportsDB — free tier (api key = 1).
 
 Endpoints utilisés :
-  - searchplayers.php?p={name}    → auto-complétion joueur
-  - lookuphonours.php?id={tsdb_id} → palmarès complet
+  - search_all_players.php?p={name}  → auto-complétion joueur (free tier OK)
+  - lookuphonours.php?id={tsdb_id}   → palmarès complet
 """
 
 import httpx
-from typing import List, Optional
+from typing import List
 
 BASE_URL = "https://www.thesportsdb.com/api/v1/json/1"
 
-# Poids par type de trophée pour le calcul score_palmares.
-# Clé = sous-chaîne (insensible à la casse) présente dans strHonour.
-# Score Messi de référence : ~40 titres majeurs → score_palmares ≈ 100.
 HONOUR_WEIGHTS: dict[str, float] = {
     "world cup": 20.0,
     "coupe du monde": 20.0,
@@ -45,15 +42,11 @@ HONOUR_WEIGHTS: dict[str, float] = {
     "golden ball": 3.0,
 }
 
-DEFAULT_HONOUR_WEIGHT = 1.5  # Tout titre non reconnu vaut 1.5 pt
-
-# Score de référence Messi (pour calibration à 97.5)
-# Calculé empiriquement sur ses ~40 titres majeurs
+DEFAULT_HONOUR_WEIGHT = 1.5
 SCORE_MESSI_REF = 100.0
 
 
 def compute_score_palmares(honours: List[dict]) -> float:
-    """Calcule le score palmarès pondéré à partir de la liste honours TheSportsDB."""
     total = 0.0
     for h in honours:
         honour_name = (h.get("strHonour") or "").lower()
@@ -67,17 +60,18 @@ def compute_score_palmares(honours: List[dict]) -> float:
 
 
 def compute_note(score_palmares: float, aura: float) -> float:
-    """Formule validée : note = (score_palmares / SCORE_MESSI_REF) * 50 + (aura / 100) * 50."""
     palmares_part = min(score_palmares / SCORE_MESSI_REF, 1.0) * 50.0
     aura_part = min(aura / 100.0, 1.0) * 50.0
     return round(palmares_part + aura_part, 1)
 
 
 async def search_players_by_name(name: str) -> List[dict]:
-    """Recherche des joueurs TheSportsDB par nom (pour auto-complétion)."""
-    url = f"{BASE_URL}/searchplayers.php"
+    """Recherche des joueurs TheSportsDB par nom — endpoint free tier."""
+    url = f"{BASE_URL}/search_all_players.php"
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(url, params={"p": name})
+        if r.status_code == 404:
+            return []
         r.raise_for_status()
         data = r.json()
         players = data.get("player") or []
@@ -100,6 +94,8 @@ async def lookup_honours(tsdb_id: str) -> List[dict]:
     url = f"{BASE_URL}/lookuphonours.php"
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(url, params={"id": tsdb_id})
+        if r.status_code == 404:
+            return []
         r.raise_for_status()
         data = r.json()
         return data.get("honours") or []
