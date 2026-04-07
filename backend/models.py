@@ -86,8 +86,6 @@ class CollectionAdd(BaseModel):
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
     flocking_player_id: Optional[str] = ""
-    # Profil du joueur flocqué : "legend" | "star" | "none"
-    # "legend" = légende mondiale, "star" = star du club, "none" = joueur lambda / pas précisé
     flocking_player_profile: Optional[str] = "none"
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
@@ -99,9 +97,7 @@ class CollectionAdd(BaseModel):
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
     signed_by_player_id: Optional[str] = ""
-    # signed_proof: "none" | "light" | "strong"
     signed_proof: Optional[str] = "none"
-    # signed_type: "player_flocked" | "team" | "other"
     signed_type: Optional[str] = ""
     signed_other_detail: Optional[str] = ""
     patch: Optional[bool] = False
@@ -226,42 +222,21 @@ class EstimationRequest(BaseModel):
     mode : "basic" | "advanced"
       - "basic"    : Modèle + Compétition + État physique uniquement
       - "advanced" : Tous les critères (origine, flocage, patch, signature, rareté, ancienneté)
-
-    Logique flocage (côté UI) :
-      - flocking_origin == "Official"     -> afficher le champ joueur flocqué
-      - flocking_origin == "Personalized" -> NE PAS afficher le champ joueur
-      - flocking_origin == "None"         -> rien
-
-    Logique signature :
-      - signed_type == "player_flocked" -> joueur dont le nom est flocqué
-      - signed_type == "team"           -> toute l'équipe
-      - signed_type == "other"          -> préciser via signed_other_detail
     """
-    # Champs communs basic + advanced
     model_type: str
     competition: Optional[str] = ""
     physical_state: Optional[str] = ""
-
-    # Champs advanced uniquement
-    mode: Optional[str] = "advanced"          # "basic" | "advanced"
+    mode: Optional[str] = "advanced"
     condition_origin: Optional[str] = ""
-    # Flocage : "Official" | "Personalized" | "None"
     flocking_origin: Optional[str] = ""
-    # Profil du joueur flocqué (utilisé uniquement si signé par le joueur flocqué)
-    # "football_legend" | "club_star" | "none"
     flocking_player_profile: Optional[str] = "none"
     signed: Optional[bool] = False
-    # signed_type: "player_flocked" | "team" | "other"
     signed_type: Optional[str] = ""
-    # Précision si signed_type == "other"
     signed_other_detail: Optional[str] = ""
-    # signed_proof: "none" | "light" | "strong"
     signed_proof: Optional[str] = "none"
-    # Année de début de saison (ex: 2018 pour la saison 2018/2019)
     season_year: Optional[int] = 0
     patch: Optional[bool] = False
     is_rare: Optional[bool] = False
-    # Raison de la rareté (texte libre, affiché dans le breakdown)
     rare_reason: Optional[str] = ""
 
 
@@ -348,13 +323,13 @@ class PlayerCreate(BaseModel):
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
-    aura_level: Optional[int] = 1      # conservé pour compat DB, non utilisé dans l'estimation
-    # --- Scoring TheSportsDB ---
-    tsdb_id: Optional[str] = ""        # ID TheSportsDB pour enrichissement auto
-    honours: Optional[List[dict]] = [] # Palmarès brut (lookuphonours)
+    aura_level: Optional[int] = 1
+    # --- Scoring API-Football ---
+    apifootball_id: Optional[str] = ""     # ID API-Football pour enrichissement auto
+    honours: Optional[List[dict]] = []
     score_palmares: Optional[float] = 0.0
-    aura: Optional[float] = 0.0        # 0–100, vote communautaire
-    note: Optional[float] = 0.0        # score final calculé
+    aura: Optional[float] = 0.0
+    note: Optional[float] = 0.0
 
 
 class PlayerOut(BaseModel):
@@ -370,9 +345,9 @@ class PlayerOut(BaseModel):
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
-    aura_level: Optional[int] = 1      # conservé pour compat DB, non utilisé dans l'estimation
-    # --- Scoring TheSportsDB ---
-    tsdb_id: Optional[str] = ""
+    aura_level: Optional[int] = 1
+    # --- Scoring API-Football ---
+    apifootball_id: Optional[str] = ""
     honours: Optional[List[dict]] = []
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
@@ -391,12 +366,12 @@ class PlayerOut(BaseModel):
         return [v]
 
 
-# ─── Scoring joueur (TheSportsDB) ────────────────────────────────────────────
+# ─── Scoring joueur (API-Football) ───────────────────────────────────────────
 
 class PlayerScoringEnrichRequest(BaseModel):
-    """Body pour enrichir/mettre à jour le scoring d'un joueur via TheSportsDB."""
-    player_id: str          # player_id Topkit (UUID stocké en Mongo)
-    tsdb_id: str            # ID numérique TheSportsDB (ex: "34146212")
+    """Body pour enrichir/mettre à jour le scoring d'un joueur via API-Football."""
+    player_id: str               # player_id Topkit (UUID stocké en Mongo)
+    apifootball_id: str          # ID numérique API-Football (ex: "276")
     aura: Optional[float] = 0.0  # 0–100
 
 
@@ -405,7 +380,7 @@ class PlayerScoringOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     player_id: str
     full_name: str
-    tsdb_id: Optional[str] = ""
+    apifootball_id: Optional[str] = ""
     honours_count: int = 0
     score_palmares: float = 0.0
     aura: float = 0.0

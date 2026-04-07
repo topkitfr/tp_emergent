@@ -1,10 +1,10 @@
-"""Router players_scoring — enrichissement automatique via TheSportsDB.
+"""Router players_scoring — enrichissement automatique via API-Football.
 
 Routes :
-  GET  /api/scoring/players/tsdb-search?name=...  → auto-complétion (TheSportsDB)
-  POST /api/scoring/players/enrich                → enrichit un joueur Topkit avec son palmarès
-  GET  /api/scoring/players/{player_id}           → score actuel d'un joueur
-  PATCH /api/scoring/players/{player_id}/aura     → mise à jour de l'aura (vote communautaire)
+  GET  /api/scoring/players/api-search?name=...  → recherche joueur (API-Football) pour auto-complétion
+  POST /api/scoring/players/enrich               → enrichit un joueur Topkit avec son palmarès
+  GET  /api/scoring/players/{player_id}          → score actuel d'un joueur
+  PATCH /api/scoring/players/{player_id}/aura    → mise à jour de l'aura (vote communautaire)
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -22,19 +22,25 @@ from ..services.thesportsdb import (
 router = APIRouter(prefix="/api/scoring/players", tags=["players-scoring"])
 
 
-@router.get("/tsdb-search")
-async def tsdb_search_players(name: str = Query(..., min_length=2)):
-    """Auto-complétion joueur via TheSportsDB (non authentifié)."""
+@router.get("/api-search")
+async def api_search_players(name: str = Query(..., min_length=2)):
+    """Recherche un joueur sur API-Football et retourne les champs
+    nécessaires au pré-remplissage du formulaire Topkit.
+
+    Réponse par joueur :
+      apifootball_id, name, firstname, lastname, nationality,
+      birth_date (DD/MM/YYYY), photo, height, weight
+    """
     try:
         results = await search_players_by_name(name)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"TheSportsDB error: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"API-Football error: {str(e)}")
     return {"players": results}
 
 
 @router.post("/enrich", response_model=PlayerScoringOut)
 async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
-    """Enrichit un joueur Topkit avec son palmarès TheSportsDB et recalcule son score."""
+    """Enrichit un joueur Topkit avec son palmarès API-Football et recalcule son score."""
     coll = db["players"]
 
     player = await coll.find_one({"player_id": body.player_id})
@@ -42,9 +48,9 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
         raise HTTPException(status_code=404, detail="Joueur introuvable")
 
     try:
-        honours_raw = await lookup_honours(body.tsdb_id)
+        honours_raw = await lookup_honours(body.apifootball_id)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"TheSportsDB error: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"API-Football error: {str(e)}")
 
     honours_clean = [
         {
@@ -60,7 +66,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     now = datetime.now(timezone.utc).isoformat()
 
     update_fields = {
-        "tsdb_id": body.tsdb_id,
+        "apifootball_id": body.apifootball_id,
         "honours": honours_clean,
         "score_palmares": score_palmares,
         "aura": body.aura,
@@ -76,7 +82,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     return PlayerScoringOut(
         player_id=body.player_id,
         full_name=player.get("full_name", ""),
-        tsdb_id=body.tsdb_id,
+        apifootball_id=body.apifootball_id,
         honours_count=len(honours_clean),
         score_palmares=score_palmares,
         aura=body.aura,
@@ -95,7 +101,7 @@ async def get_player_scoring(player_id: str):
     return PlayerScoringOut(
         player_id=player_id,
         full_name=player.get("full_name", ""),
-        tsdb_id=player.get("tsdb_id", ""),
+        apifootball_id=player.get("apifootball_id", player.get("tsdb_id", "")),  # compat legacy
         honours_count=len(player.get("honours", [])),
         score_palmares=player.get("score_palmares", 0.0),
         aura=player.get("aura", 0.0),

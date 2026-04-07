@@ -1,7 +1,7 @@
 """Client async API-Football (api-sports.io) — free tier (100 req/day).
 
 Endpoints utilisés :
-  - GET /players/profiles?search={name}  → recherche joueur (pas de league requise)
+  - GET /players/profiles?search={name}  → recherche joueur
   - GET /trophies?player={id}            → palmarès complet
 
 Doc : https://api-sports.io/documentation/football/v3
@@ -77,7 +77,11 @@ def compute_note(score_palmares: float, aura: float) -> float:
 
 
 async def search_players_by_name(name: str) -> List[dict]:
-    """Recherche des joueurs via /players/profiles (pas de league requise)."""
+    """Recherche des joueurs via /players/profiles.
+
+    Retourne les champs nécessaires au pré-remplissage du formulaire Topkit :
+    apifootball_id, name, firstname, lastname, nationality, birth_date, photo.
+    """
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(
             f"{BASE_URL}/players/profiles",
@@ -88,18 +92,34 @@ async def search_players_by_name(name: str) -> List[dict]:
             return []
         r.raise_for_status()
         players = r.json().get("response") or []
-        return [
-            {
-                "tsdb_id": str(p["player"]["id"]),
-                "name": p["player"].get("name", ""),
-                "firstname": p["player"].get("firstname", ""),
-                "lastname": p["player"].get("lastname", ""),
-                "nationality": p["player"].get("nationality", ""),
-                "thumb": p["player"].get("photo", ""),
-            }
-            for p in players
-            if p.get("player")
-        ]
+        results = []
+        for p in players:
+            player = p.get("player")
+            if not player:
+                continue
+            # Formater la date de naissance en DD/MM/YYYY si présente
+            raw_dob = player.get("birth", {}).get("date", "") if isinstance(player.get("birth"), dict) else ""
+            birth_date_formatted = ""
+            if raw_dob:
+                try:
+                    parts = raw_dob.split("-")  # YYYY-MM-DD
+                    birth_date_formatted = f"{parts[2]}/{parts[1]}/{parts[0]}"
+                except Exception:
+                    birth_date_formatted = raw_dob
+
+            results.append({
+                "apifootball_id": str(player["id"]),
+                "name": player.get("name", ""),
+                "firstname": player.get("firstname", ""),
+                "lastname": player.get("lastname", ""),
+                "nationality": player.get("nationality", ""),
+                "birth_date": birth_date_formatted,
+                "birth_place": player.get("birth", {}).get("place", "") if isinstance(player.get("birth"), dict) else "",
+                "photo": player.get("photo", ""),
+                "height": player.get("height", ""),
+                "weight": player.get("weight", ""),
+            })
+        return results
 
 
 async def lookup_honours(player_id: str) -> List[dict]:
