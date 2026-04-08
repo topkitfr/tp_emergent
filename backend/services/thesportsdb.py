@@ -70,18 +70,100 @@ PLACE_MULTIPLIER: dict[str, float] = {
 DEFAULT_HONOUR_WEIGHT = 1.5
 SCORE_MESSI_REF = 100.0
 
+# ── Confédérations connues ────────────────────────────────────────────────────
+CONFEDERATION_MAP: dict[str, tuple[str, str]] = {
+    "UEFA": ("europe", "UEFA"),
+    "FIFA": ("world", "FIFA"),
+    "CAF": ("africa", "CAF"),
+    "CONMEBOL": ("south_america", "CONMEBOL"),
+    "AFC": ("asia", "AFC"),
+    "CONCACAF": ("north_america", "CONCACAF"),
+    "OFC": ("oceania", "OFC"),
+}
+
 
 def _headers() -> dict:
     return {"x-apisports-key": API_KEY}
 
 
-def _dedup_honours(honours: List[dict]) -> List[dict]:
-    """Supprime les doublons sans saison quand le même titre existe avec une saison.
+# ── Sprint 1 — Normalisation league ──────────────────────────────────────────
 
-    API-Football retourne parfois une entrée avec season=null en doublon
-    d'une entrée avec saison renseignée.
+def normalize_league(api_league: dict) -> dict:
+    """Normalise une réponse API-Football /leagues en modèle TopKit.
+
+    Gère deux cas :
+      - Compétition domestique : country.name présent et pas de confédération dans le nom
+      - Compétition internationale : UEFA/FIFA/CAF/etc. dans le nom → scope=international
+
+    Args:
+        api_league: Un item du tableau "response" de l'endpoint /leagues.
+                    Structure : { "league": {...}, "country": {...}, "seasons": [...] }
+
+    Returns:
+        dict compatible avec LeagueCreate / insert MongoDB.
     """
-    # Indexer les titres ayant une saison renseignée
+    league = api_league.get("league", {})
+    country = api_league.get("country", {}) or {}
+    name = league.get("name", "")
+    upper = name.upper()
+
+    for keyword, (region, organizer) in CONFEDERATION_MAP.items():
+        if keyword in upper:
+            return {
+                "apifootball_league_id": league.get("id"),
+                "name": name,
+                "type": league.get("type"),
+                "entity_type": "confederation" if upper.strip() == keyword else "league",
+                "scope": "international",
+                "region": region,
+                "organizer": organizer,
+                "country_name": None,
+                "country_code": None,
+                "country_flag": None,
+                "country_or_region": region,
+                "logo_url": league.get("logo", ""),
+                "apifootball_logo": league.get("logo", ""),
+                "source_payload": api_league,
+            }
+
+    # Compétition domestique ou sans confédération identifiée
+    country_name = country.get("name") or None
+    return {
+        "apifootball_league_id": league.get("id"),
+        "name": name,
+        "type": league.get("type"),
+        "entity_type": league.get("type") or "league",  # "league" | "cup"
+        "scope": "domestic" if country_name else "international",
+        "region": "country" if country_name else None,
+        "organizer": None,
+        "country_name": country_name,
+        "country_code": country.get("code") or None,
+        "country_flag": country.get("flag") or None,
+        "country_or_region": country_name or "",
+        "logo_url": league.get("logo", ""),
+        "apifootball_logo": league.get("logo", ""),
+        "source_payload": api_league,
+    }
+
+
+# ── Helpers couleurs ──────────────────────────────────────────────────────────
+
+def parse_colors(raw: str) -> list[str]:
+    """Parse une chaîne CSV de couleurs en liste normalisée.
+
+    Exemple : parse_colors("Red, White, red, BLUE ") → ["red", "white", "blue"]
+    """
+    return list(dict.fromkeys(
+        c.strip().lower()
+        for c in raw.split(",")
+        if c.strip()
+    ))
+
+
+# ── Fonctions existantes ──────────────────────────────────────────────────────
+
+def _dedup_honours(honours: List[dict]) -> List[dict]:
+    """Supprime les doublons sans saison quand le même titre existe avec une saison."""
     has_season: set[tuple] = set()
     for h in honours:
         season = (h.get("strSeason") or h.get("season") or "").strip()
@@ -95,7 +177,6 @@ def _dedup_honours(honours: List[dict]) -> List[dict]:
         season = (h.get("strSeason") or h.get("season") or "").strip()
         league = (h.get("strHonour") or h.get("league") or "").strip()
         place = (h.get("place") or "").strip()
-        # Si pas de saison mais qu'il existe une version avec saison → skip
         if not season and (league.lower(), place.lower()) in has_season:
             continue
         result.append(h)
@@ -103,12 +184,7 @@ def _dedup_honours(honours: List[dict]) -> List[dict]:
 
 
 def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | None = None) -> float:
-    """Calcule le score palmarès pondéré.
-
-    - Titres collectifs : API-Football /trophies, filtrés par place (Winner = 100%, 2nd Place = 15%)
-    - Titres individuels : saisie manuelle, pondérés par AWARD_WEIGHTS
-    """
-    # Dédupliquer avant calcul
+    """Calcule le score palmarès pondéré."""
     clean_honours = _dedup_honours(honours)
 
     total = 0.0
@@ -118,7 +194,6 @@ def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | 
         if multiplier == 0.0:
             continue
         honour_name = (h.get("strHonour") or h.get("league") or "").lower()
-        # Poids depuis DB via scoring_weight si dispo, sinon HONOUR_WEIGHTS
         weight = h.get("scoring_weight") or DEFAULT_HONOUR_WEIGHT
         for keyword, w in HONOUR_WEIGHTS.items():
             if keyword in honour_name:
@@ -126,10 +201,8 @@ def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | 
                 break
         total += weight * multiplier
 
-    # Trophées individuels
     for award in (individual_awards or []):
         award_name = (award.get("award_name") or "").lower()
-        # Poids depuis DB award si dispo, sinon AWARD_WEIGHTS
         weight = award.get("scoring_weight") or DEFAULT_HONOUR_WEIGHT
         for keyword, w in AWARD_WEIGHTS.items():
             if keyword in award_name:
@@ -151,14 +224,7 @@ def compute_note(score_palmares: float, aura: float) -> float:
 # ── Recherche joueur (DB-first) ───────────────────────────────────────────────
 
 async def search_players_db_first(name: str, db) -> dict:
-    """Recherche un joueur : DB en premier, API-Football en fallback.
-
-    Retourne:
-      {
-        "db_results": [...],      # joueurs trouvés en DB (badge "in_db")
-        "api_results": [...],     # résultats API-Football
-      }
-    """
+    """Recherche un joueur : DB en premier, API-Football en fallback."""
     import unicodedata
 
     def norm(s: str) -> str:
@@ -168,7 +234,6 @@ async def search_players_db_first(name: str, db) -> dict:
 
     name_norm = norm(name)
 
-    # 1. Cherche en DB (regex insensible accents)
     cursor = db["players"].find(
         {"full_name": {"$regex": name, "$options": "i"}},
         {"player_id": 1, "full_name": 1, "nationality": 1,
@@ -190,9 +255,7 @@ async def search_players_db_first(name: str, db) -> dict:
         for p in db_players
     ]
 
-    # 2. API-Football fallback
     api_results = await search_players_by_name(name)
-
     return {"db_results": db_results, "api_results": api_results}
 
 
@@ -244,7 +307,8 @@ async def search_leagues_db_first(name: str, db) -> dict:
     """Recherche une compétition : DB en premier, API-Football en fallback."""
     cursor = db["leagues"].find(
         {"name": {"$regex": name, "$options": "i"}},
-        {"league_id": 1, "name": 1, "country_or_region": 1,
+        {"league_id": 1, "name": 1, "country_or_region": 1, "country_name": 1,
+         "scope": 1, "region": 1, "organizer": 1, "entity_type": 1,
          "logo_url": 1, "apifootball_league_id": 1, "apifootball_logo": 1, "scoring_weight": 1}
     ).limit(10)
     db_leagues = await cursor.to_list(length=10)
@@ -255,7 +319,11 @@ async def search_leagues_db_first(name: str, db) -> dict:
             "league_id": l["league_id"],
             "apifootball_league_id": l.get("apifootball_league_id"),
             "name": l["name"],
-            "country": l.get("country_or_region", ""),
+            "country": l.get("country_name") or l.get("country_or_region", ""),
+            "scope": l.get("scope"),
+            "region": l.get("region"),
+            "organizer": l.get("organizer"),
+            "entity_type": l.get("entity_type", "league"),
             "logo": l.get("apifootball_logo") or l.get("logo_url", ""),
             "scoring_weight": l.get("scoring_weight"),
         }
@@ -267,7 +335,7 @@ async def search_leagues_db_first(name: str, db) -> dict:
 
 
 async def search_leagues_by_name(name: str) -> List[dict]:
-    """Recherche des compétitions via /leagues."""
+    """Recherche des compétitions via /leagues avec normalisation."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.get(
             f"{BASE_URL}/leagues",
@@ -280,16 +348,9 @@ async def search_leagues_by_name(name: str) -> List[dict]:
         leagues = r.json().get("response") or []
         results = []
         for item in leagues:
-            league = item.get("league", {})
-            country = item.get("country", {})
-            results.append({
-                "source": "api",
-                "apifootball_league_id": league.get("id"),
-                "name": league.get("name", ""),
-                "country": country.get("name", ""),
-                "logo": league.get("logo", ""),
-                "type": league.get("type", ""),
-            })
+            normalized = normalize_league(item)
+            normalized["source"] = "api"
+            results.append(normalized)
         return results[:10]
 
 
@@ -337,7 +398,7 @@ async def lookup_career(player_id: str) -> List[dict]:
             team_in = t.get("teams", {}).get("in", {})
             team_out = t.get("teams", {}).get("out", {})
             date = t.get("date", "")
-            transfer_type = t.get("type", "")  # "Free", "Loan", "€ 180M", etc.
+            transfer_type = t.get("type", "")
             entries.append({
                 "club": team_in.get("name", ""),
                 "team_id": team_in.get("id"),

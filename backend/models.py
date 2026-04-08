@@ -26,6 +26,11 @@ class MasterKitCreate(BaseModel):
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
     sponsor_id: Optional[str] = ""
+    # Sprint 1 — Club vs Nation
+    entity_type: Optional[str] = "club"         # "club" | "nation"
+    confederation_id: Optional[str] = None      # league_id d'une confédération, si entity_type = "nation"
+    # Sprint 1 — Couleurs
+    color: Optional[List[str]] = []             # ["red", "white", "blue"]
 
 
 class MasterKitOut(BaseModel):
@@ -44,6 +49,10 @@ class MasterKitOut(BaseModel):
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
     sponsor_id: Optional[str] = ""
+    # Sprint 1
+    entity_type: Optional[str] = "club"
+    confederation_id: Optional[str] = None
+    color: Optional[List[str]] = []
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     version_count: Optional[int] = 0
@@ -279,7 +288,15 @@ class LeagueCreate(BaseModel):
     # Champs API-Football
     apifootball_league_id: Optional[int] = None
     apifootball_logo: Optional[str] = ""
-    scoring_weight: Optional[float] = None  # poids dans score_palmares (override HONOUR_WEIGHTS)
+    scoring_weight: Optional[float] = None
+    # Sprint 1 — normalisation domestic/international
+    entity_type: Optional[str] = "league"   # "league" | "cup" | "confederation"
+    scope: Optional[str] = None             # "domestic" | "international"
+    region: Optional[str] = None            # "country" | "europe" | "world" | "africa" | ...
+    country_name: Optional[str] = None      # seulement si scope = "domestic"
+    country_code: Optional[str] = None
+    country_flag: Optional[str] = None
+    source_payload: Optional[dict] = None   # réponse brute API-Football pour re-sync
 
 
 class LeagueOut(BaseModel):
@@ -295,6 +312,13 @@ class LeagueOut(BaseModel):
     apifootball_league_id: Optional[int] = None
     apifootball_logo: Optional[str] = ""
     scoring_weight: Optional[float] = None
+    # Sprint 1
+    entity_type: Optional[str] = "league"
+    scope: Optional[str] = None
+    region: Optional[str] = None
+    country_name: Optional[str] = None
+    country_code: Optional[str] = None
+    country_flag: Optional[str] = None
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
