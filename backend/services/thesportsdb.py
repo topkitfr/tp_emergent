@@ -5,6 +5,7 @@ Endpoints utilisés :
   - GET /trophies?player={id}            → palmarès complet
   - GET /transfers?player={id}           → historique de clubs
   - GET /leagues?search={name}           → recherche compétition (DB-first)
+  - GET /teams?search={name}             → recherche club (DB-first)
 
 Doc : https://api-sports.io/documentation/football/v3
 """
@@ -89,19 +90,7 @@ def _headers() -> dict:
 # ── Sprint 1 — Normalisation league ──────────────────────────────────────────
 
 def normalize_league(api_league: dict) -> dict:
-    """Normalise une réponse API-Football /leagues en modèle TopKit.
-
-    Gère deux cas :
-      - Compétition domestique : country.name présent et pas de confédération dans le nom
-      - Compétition internationale : UEFA/FIFA/CAF/etc. dans le nom → scope=international
-
-    Args:
-        api_league: Un item du tableau "response" de l'endpoint /leagues.
-                    Structure : { "league": {...}, "country": {...}, "seasons": [...] }
-
-    Returns:
-        dict compatible avec LeagueCreate / insert MongoDB.
-    """
+    """Normalise une réponse API-Football /leagues en modèle TopKit."""
     league = api_league.get("league", {})
     country = api_league.get("country", {}) or {}
     name = league.get("name", "")
@@ -126,13 +115,12 @@ def normalize_league(api_league: dict) -> dict:
                 "source_payload": api_league,
             }
 
-    # Compétition domestique ou sans confédération identifiée
     country_name = country.get("name") or None
     return {
         "apifootball_league_id": league.get("id"),
         "name": name,
         "type": league.get("type"),
-        "entity_type": league.get("type") or "league",  # "league" | "cup"
+        "entity_type": league.get("type") or "league",
         "scope": "domestic" if country_name else "international",
         "region": "country" if country_name else None,
         "organizer": None,
@@ -143,6 +131,32 @@ def normalize_league(api_league: dict) -> dict:
         "logo_url": league.get("logo", ""),
         "apifootball_logo": league.get("logo", ""),
         "source_payload": api_league,
+    }
+
+
+# ── Normalisation team ────────────────────────────────────────────────────────
+
+def normalize_team(api_item: dict) -> dict:
+    """Normalise une réponse API-Football /teams en modèle TopKit.
+
+    Structure API : { "team": {...}, "venue": {...} }
+    """
+    team = api_item.get("team", {})
+    venue = api_item.get("venue", {}) or {}
+    return {
+        "source": "api",
+        "apifootball_team_id": team.get("id"),
+        "name": team.get("name", ""),
+        "code": team.get("code", ""),
+        "country": team.get("country", ""),
+        "founded": team.get("founded"),
+        "is_national": team.get("national", False),
+        "logo": team.get("logo", ""),
+        "city": venue.get("city", ""),
+        "stadium_name": venue.get("name", ""),
+        "stadium_capacity": venue.get("capacity"),
+        "stadium_surface": venue.get("surface", ""),
+        "stadium_image_url": venue.get("image", ""),
     }
 
 
@@ -353,6 +367,58 @@ async def search_leagues_by_name(name: str) -> List[dict]:
             results.append(normalized)
         return results[:10]
 
+
+# ── Recherche team (DB-first) ─────────────────────────────────────────────────
+
+async def search_teams_db_first(name: str, db) -> dict:
+    """Recherche un club : DB en premier, API-Football en fallback."""
+    cursor = db["teams"].find(
+        {"name": {"$regex": name, "$options": "i"}},
+        {"team_id": 1, "name": 1, "country": 1, "founded": 1,
+         "is_national": 1, "crest_url": 1, "city": 1,
+         "stadium_name": 1, "stadium_capacity": 1,
+         "apifootball_team_id": 1}
+    ).limit(10)
+    db_teams = await cursor.to_list(length=10)
+
+    db_results = [
+        {
+            "source": "db",
+            "team_id": t["team_id"],
+            "apifootball_team_id": t.get("apifootball_team_id"),
+            "name": t["name"],
+            "country": t.get("country", ""),
+            "founded": t.get("founded"),
+            "is_national": t.get("is_national", False),
+            "logo": t.get("crest_url", ""),
+            "city": t.get("city", ""),
+            "stadium_name": t.get("stadium_name", ""),
+            "stadium_capacity": t.get("stadium_capacity"),
+        }
+        for t in db_teams
+    ]
+
+    api_results = await search_teams_by_name(name)
+    return {"db_results": db_results, "api_results": api_results}
+
+
+async def search_teams_by_name(name: str) -> List[dict]:
+    """Recherche des clubs via /teams avec normalisation."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(
+            f"{BASE_URL}/teams",
+            params={"search": name},
+            headers=_headers(),
+        )
+        if r.status_code == 404:
+            return []
+        r.raise_for_status()
+        teams = r.json().get("response") or []
+        results = [normalize_team(item) for item in teams]
+        return results[:10]
+
+
+# ── Lookup trophées / carrière / profil ───────────────────────────────────────
 
 async def lookup_honours(player_id: str) -> List[dict]:
     """Récupère le palmarès complet d'un joueur via /trophies."""
