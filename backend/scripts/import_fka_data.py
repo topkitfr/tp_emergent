@@ -7,6 +7,14 @@ import_fka_data.py
    → Lance avec : DOWNLOAD_IMAGES=true python3 scripts/import_fka_data.py
    → Chemin NAS  : /mnt/freebox/topkit-media/photos  (montage VM)
    → Nommage     : master_{kit_type}_{kit_id}.jpg
+
+Règles métier :
+  - Saison stockée au format "YYYY/YYYY+1" (ex: "2023/2024")
+  - carry_over : True si le CSV contient "carry-over" dans la colonne season
+  - colors : list normalisée depuis les valeurs espace-séparées du CSV
+             (gère les multiwords : "Sky blue", "Off-white", "Navy blue"…)
+  - Version authentic  : toutes saisons >= 1985
+  - Version replica    : saisons >= 1996 uniquement
 """
 
 import asyncio, csv, os, re, hashlib, pathlib, sys
@@ -48,15 +56,21 @@ if not MONGO_URL:
 
 DB_NAME = os.environ.get("DB_NAME", "topkit")
 
-# CSV à la racine du dossier backend (un niveau au-dessus de scripts/)
 CSV_PATH = os.environ.get(
     "CSV_PATH",
     os.path.join(os.path.dirname(__file__), "..", "Db_topkit-Data.csv")
 )
 
-# Répertoire NAS Freebox monté sur la VM
 FREEBOX_IMG_DIR = os.environ.get("FREEBOX_IMG_DIR", "/mnt/freebox/topkit-media/photos")
 DOWNLOAD_IMAGES = os.environ.get("DOWNLOAD_IMAGES", "false").lower() == "true"
+
+# ── Couleurs multiwords reconnues (ordre important : les plus longs en premier)
+KNOWN_MULTIWORD_COLORS = [
+    "sky blue", "off-white", "off white", "navy blue", "light blue",
+    "dark blue", "dark green", "dark red", "dark grey", "dark gray",
+    "light green", "light grey", "light gray", "hot pink", "royal blue",
+    "claret blue", "bottle green",
+]
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -86,6 +100,64 @@ def normalize_kit_type(raw: str) -> str:
     return mapping.get(t, re.sub(r'\s+', '', t))
 
 
+def parse_season(raw: str) -> tuple[str, bool]:
+    """
+    '23-24'            → ('2023/2024', False)
+    '24-25 Carry-over' → ('2024/2025', True)
+    '85-86'            → ('1985/1986', False)
+
+    Règle année : si partie gauche <= 30 → 2000+xx, sinon 1900+xx
+    (seuil 30 pour couvrir jusqu'à 2030 sans ambiguïté avec 1931+)
+    """
+    raw = str(raw).strip()
+    carry_over = "carry" in raw.lower()
+
+    # Extraire la partie XX-YY
+    m = re.search(r'(\d{2})-(\d{2})', raw)
+    if not m:
+        return (raw, carry_over)
+
+    start = int(m.group(1))
+    year_start = 2000 + start if start <= 30 else 1900 + start
+    return (f"{year_start}/{year_start + 1}", carry_over)
+
+
+def parse_colors(raw: str) -> list[str]:
+    """
+    Transforme la string espace-séparée du CSV en liste normalisée.
+    Gère les couleurs multiwords : "Sky blue" → "sky blue" (un seul item).
+
+    Exemples :
+      "White Red Navy"      → ["white", "red", "navy"]
+      "White Sky blue Navy" → ["white", "sky blue", "navy"]
+      "Off-white Green"     → ["off-white", "green"]
+    """
+    if not raw or str(raw).strip().lower() in ("", "nan", "none"):
+        return []
+
+    text = raw.strip().lower()
+
+    # Remplacer les multiwords connus par un placeholder sans espace
+    placeholders = {}
+    for mw in sorted(KNOWN_MULTIWORD_COLORS, key=len, reverse=True):
+        if mw in text:
+            placeholder = mw.replace(" ", "_").replace("-", "_")
+            placeholders[placeholder] = mw
+            text = text.replace(mw, placeholder)
+
+    # Splitter sur les espaces (les mots simples capitalisés sont déjà en minuscules)
+    parts = text.split()
+
+    # Restaurer les multiwords
+    result = []
+    for p in parts:
+        color = placeholders.get(p, p).strip()
+        if color:
+            result.append(color)
+
+    return result
+
+
 def fix_img_url(raw: str) -> str:
     """Tente de reconstruire une URL valide si elle est malformée."""
     raw = raw.strip()
@@ -93,7 +165,6 @@ def fix_img_url(raw: str) -> str:
         return ""
     if raw.startswith("http://") or raw.startswith("https://"):
         return raw
-    # Cas fréquent : 'https' collé sans ://
     m = re.match(r'https(cdn\.footballkitarchive\.com)(\d{4})(\d{2})(\d{2})([\w]+\.jpg)', raw)
     if m:
         return f"https://{m.group(1)}/{m.group(2)}/{m.group(3)}/{m.group(4)}/{m.group(5)}"
@@ -149,7 +220,7 @@ async def main():
     rows = list(csv.DictReader(open(csv_path, encoding="utf-8")))
     print(f"📄 {len(rows)} lignes lues depuis {os.path.basename(csv_path)}")
 
-    # Dédoublonnage sur team+season+type
+    # Dédoublonnage sur team+season+type (avant normalisation saison)
     seen, unique = {}, []
     for r in rows:
         key = f"{slugify(r['team'])}|{slugify(r['season'])}|{slugify(r['type'])}"
@@ -194,74 +265,91 @@ async def main():
 
     # ── master_kits + versions ────────────────────────────────────────────────
     kit_docs, ver_docs = [], []
-    download_tasks = []   # (kit_id, kit_type, img_url)
+    download_tasks = []
+
+    stats = {"authentic": 0, "replica": 0, "carry_over": 0}
 
     for r in unique:
         kit_type     = normalize_kit_type(r["type"].strip())
         kid          = stable_id("kit", r["team"], r["season"], r["type"])
-        vid_auth     = stable_id("ver", r["team"], r["season"], r["type"], "authentic")
-        vid_rep      = stable_id("ver", r["team"], r["season"], r["type"], "replica")
         img          = fix_img_url(r.get("img_url", "").strip())
         src_url      = fix_img_url(r.get("source_url", "").strip())
         sponsor_name = r.get("sponsor", "").strip()
 
-        # Année pour la logique replica (>=2000)
-        season_raw = str(r.get("season", "") or "1900")
+        # ── Saison normalisée + carry_over
+        season_normalized, carry_over = parse_season(r.get("season", ""))
+        if carry_over:
+            stats["carry_over"] += 1
+
+        # ── Année de début pour les règles authentic/replica
         try:
-            season_year = int(season_raw[:4])
-        except ValueError:
-            season_year = 1900
+            year_start = int(season_normalized.split("/")[0])
+        except (ValueError, IndexError):
+            year_start = 0
+
+        # ── Colors parsées depuis le CSV
+        colors = parse_colors(r.get("colors", ""))
+
+        # ── Nombre de versions à créer
+        has_authentic = year_start >= 1985
+        has_replica   = year_start >= 1996
+        version_count = (1 if has_authentic else 0) + (1 if has_replica else 0)
 
         kit_docs.append({
             "kit_id":        kid,
             "club":          r["team"].strip(),
             "team_id":       teams_map.get(slugify(r["team"]), ""),
-            "season":        r["season"].strip(),
+            "season":        season_normalized,
+            "carry_over":    carry_over,
             "kit_type":      kit_type,
             "design":        r.get("design", "").strip(),
-            "colors":        r.get("colors", "").strip(),
+            "color":         colors,
             "brand":         r["brand"].strip(),
             "brand_id":      brands_map.get(slugify(r["brand"]), ""),
             "sponsor":       sponsor_name,
             "sponsor_id":    sponsors_map.get(slugify(sponsor_name), "") if sponsor_name else "",
             "league":        r["league"].strip(),
             "league_id":     leagues_map.get(slugify(r["league"]), ""),
-            "front_photo":   "",        # sera mis à jour après téléchargement
-            "img_url":       img,       # URL source conservée pour référence
+            "front_photo":   "",
+            "img_url":       img,
             "source_url":    src_url,
             "gender":        "Male",
+            "entity_type":   "club",
             "avg_rating":    0.0,
             "review_count":  0,
-            "version_count": 1 + (1 if season_year >= 2000 else 0),
+            "version_count": version_count,
             "created_at":    now_iso(),
         })
 
-        # Version authentique (toujours)
-        ver_docs.append({
-            "version_id":   vid_auth,
-            "kit_id":       kid,
-            "version_type": "authentic",
-            "competition":  "National Championship",
-            "front_photo":  "",
-            "back_photo":   "",
-            "avg_rating":   0.0,
-            "review_count": 0,
-            "created_at":   now_iso(),
-        })
-
-        # Version replica uniquement à partir de 2000
-        if season_year >= 2000:
+        # ── Version authentic (>= 1985)
+        if has_authentic:
             ver_docs.append({
-                "version_id":   vid_rep,
+                "version_id":   stable_id("ver", r["team"], r["season"], r["type"], "authentic"),
                 "kit_id":       kid,
-                "version_type": "replica",
-                "competition":  "National Championship",
+                "version_type": "authentic",
+                "competition":  "",
                 "front_photo":  "",
                 "back_photo":   "",
                 "avg_rating":   0.0,
                 "review_count": 0,
                 "created_at":   now_iso(),
             })
+            stats["authentic"] += 1
+
+        # ── Version replica (>= 1996)
+        if has_replica:
+            ver_docs.append({
+                "version_id":   stable_id("ver", r["team"], r["season"], r["type"], "replica"),
+                "kit_id":       kid,
+                "version_type": "replica",
+                "competition":  "",
+                "front_photo":  "",
+                "back_photo":   "",
+                "avg_rating":   0.0,
+                "review_count": 0,
+                "created_at":   now_iso(),
+            })
+            stats["replica"] += 1
 
         if DOWNLOAD_IMAGES and img:
             download_tasks.append((kid, kit_type, img))
@@ -274,7 +362,12 @@ async def main():
 
     total_kits = await db.master_kits.count_documents({})
     total_vers = await db.versions.count_documents({})
-    print(f"\n✅ {total_kits} master_kits | {total_vers} versions insérés en DB")
+
+    print(f"\n✅ {total_kits} master_kits insérés")
+    print(f"   ↳ dont {stats['carry_over']} carry-over")
+    print(f"✅ {total_vers} versions insérées")
+    print(f"   ↳ {stats['authentic']} authentic (>= 1985)")
+    print(f"   ↳ {stats['replica']} replica (>= 1996)")
 
     # ── Téléchargement images → Freebox NAS ──────────────────────────────────
     if download_tasks:
@@ -285,7 +378,6 @@ async def main():
             if local_path:
                 norm_type = normalize_kit_type(kit_type)
                 filename = f"master_{norm_type}_{kid}.jpg"
-                # Met à jour front_photo dans master_kits ET versions
                 await db.master_kits.update_one(
                     {"kit_id": kid},
                     {"$set": {"front_photo": filename}}
@@ -301,14 +393,13 @@ async def main():
                 print(f"  ... {ok + fail}/{len(download_tasks)} traités ({ok} OK, {fail} erreurs)")
 
         print(f"\n✅ {ok} images téléchargées, {fail} erreurs")
-        print(f"   Nommage : master_{{type}}_{{kit_id}}.jpg (ex: master_Home_kit_abc123.jpg)")
     else:
         if not DOWNLOAD_IMAGES:
             print("\nℹ️  Téléchargement images désactivé.")
             print("   Pour télécharger : DOWNLOAD_IMAGES=true python3 scripts/import_fka_data.py")
 
     # ── Résumé final ──────────────────────────────────────────────────────────
-    print(f"\n--- Résumé ---")
+    print(f"\n--- Résumé final ---")
     print(f"  Master kits : {total_kits}")
     print(f"  Versions    : {total_vers}")
     if DOWNLOAD_IMAGES:
