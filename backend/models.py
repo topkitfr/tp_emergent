@@ -68,6 +68,9 @@ class VersionCreate(BaseModel):
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
     main_player_id: Optional[str] = ""
+    # Sprint 4 — lien compétition réelle (#15)
+    competition_id: Optional[str] = None        # league_id de la collection leagues
+    competition_name: Optional[str] = ""        # dénormalisé pour affichage rapide
 
 
 class VersionOut(BaseModel):
@@ -81,6 +84,9 @@ class VersionOut(BaseModel):
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
     main_player_id: Optional[str] = ""
+    # Sprint 4
+    competition_id: Optional[str] = None
+    competition_name: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     avg_rating: Optional[float] = 0.0
@@ -249,7 +255,8 @@ class EstimationRequest(BaseModel):
     rare_reason: Optional[str] = ""
 
 
-# Entity models
+# ─── Team ─────────────────────────────────────────────────────────────────────
+
 class TeamCreate(BaseModel):
     name: str
     country: Optional[str] = ""
@@ -259,6 +266,13 @@ class TeamCreate(BaseModel):
     secondary_color: Optional[str] = ""
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
+    # Sprint 2 — champs API-Football (#14)
+    apifootball_team_id: Optional[int] = None   # team.id API-Football
+    is_national: Optional[bool] = False          # team.national
+    stadium_name: Optional[str] = ""            # venue.name
+    stadium_capacity: Optional[int] = None      # venue.capacity
+    stadium_surface: Optional[str] = ""         # venue.surface
+    stadium_image_url: Optional[str] = ""       # venue.image
 
 
 class TeamOut(BaseModel):
@@ -274,10 +288,19 @@ class TeamOut(BaseModel):
     secondary_color: Optional[str] = ""
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
+    # Sprint 2
+    apifootball_team_id: Optional[int] = None
+    is_national: Optional[bool] = False
+    stadium_name: Optional[str] = ""
+    stadium_capacity: Optional[int] = None
+    stadium_surface: Optional[str] = ""
+    stadium_image_url: Optional[str] = ""
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
+
+# ─── League ───────────────────────────────────────────────────────────────────
 
 class LeagueCreate(BaseModel):
     name: str
@@ -319,10 +342,13 @@ class LeagueOut(BaseModel):
     country_name: Optional[str] = None
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
+    source_payload: Optional[dict] = None
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
+
+# ─── Brand ────────────────────────────────────────────────────────────────────
 
 class BrandCreate(BaseModel):
     name: str
@@ -388,8 +414,15 @@ class PlayerCreate(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
-    # Scoring API-Football
+    # Sprint 2 — champs API-Football (#10)
     apifootball_id: Optional[str] = ""
+    firstname: Optional[str] = ""           # player.firstname
+    lastname: Optional[str] = ""            # player.lastname
+    birth_place: Optional[str] = ""         # player.birth.place
+    birth_country: Optional[str] = ""       # player.birth.country
+    height: Optional[str] = ""              # player.height (ex: "180 cm")
+    weight: Optional[str] = ""              # player.weight (ex: "75 kg")
+    # Scoring API-Football
     honours: Optional[List[dict]] = []
     individual_awards: Optional[List[IndividualAwardEntry]] = []
     score_palmares: Optional[float] = 0.0
@@ -412,6 +445,13 @@ class PlayerOut(BaseModel):
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
     apifootball_id: Optional[str] = ""
+    # Sprint 2
+    firstname: Optional[str] = ""
+    lastname: Optional[str] = ""
+    birth_place: Optional[str] = ""
+    birth_country: Optional[str] = ""
+    height: Optional[str] = ""
+    weight: Optional[str] = ""
     honours: Optional[List[dict]] = []
     individual_awards: Optional[List[dict]] = []
     score_palmares: Optional[float] = 0.0
