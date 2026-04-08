@@ -158,6 +158,7 @@ async def list_leagues(
     search: Optional[str] = None,
     country_or_region: Optional[str] = None,
     level: Optional[str] = None,
+    entity_type: Optional[str] = None,   # "league" | "cup" | "confederation"
     skip: int = 0,
     limit: int = 48
 ):
@@ -168,6 +169,8 @@ async def list_leagues(
         query["country_or_region"] = {"$regex": country_or_region, "$options": "i"}
     if level:
         query["level"] = level
+    if entity_type:
+        query["entity_type"] = entity_type
     total = await db.leagues.count_documents(query)
     leagues = await db.leagues.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for l in leagues:
