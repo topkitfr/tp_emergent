@@ -13,30 +13,32 @@ RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 router = APIRouter(prefix="/api", tags=["uploads"])
 
 
+# Aligné sur la structure réelle /TP_media/ de la Freebox
 FOLDER_MAP = {
-    "master_kit": "master_kit",
-    "version":    "version",
-    "profile":    "profile",
-    "brand":      "brand",
-    "team":       "team",
-    "league":     "league",
-    "sponsor":    "sponsor",
-    "player":     "player",
+    "master_kit": "kits/masters",
+    "version":    "kits/versions",
+    "profile":    "users/photos",
+    "brand":      "brands/logos",
+    "team":       "teams/clubs",
+    "nation":     "teams/nations",
+    "league":     "leagues/logos",
+    "sponsor":    "sponsors/logos",
+    "player":     "players/photos",
 }
 
 
 def _to_relative_path(public_url: str) -> str:
     """
     Convertit l'URL absolue retournée par le receiver Freebox
-    (ex: http://82.67.103.45/brands/logos/abc.jpg)
+    (ex: http://82.67.103.45/leagues/logos/39.png)
     en chemin relatif via le proxy backend existant
-    (ex: /api/images/brands/logos/abc.jpg).
+    (ex: /api/images/leagues/logos/39.png).
     """
     pattern = re.compile(r'^https?://[^/]+')
     match = pattern.match(public_url)
     if not match:
         return public_url
-    relative = public_url[match.end():]  # ex: /brands/logos/abc.jpg
+    relative = public_url[match.end():]
     return f"/api/images{relative}"
 
 
@@ -70,6 +72,61 @@ async def _forward_to_receiver(
         }
 
 
+async def download_and_store(
+    image_url: str,
+    folder: str,
+    entity_id: str,
+    filename: Optional[str] = None,
+) -> dict:
+    """
+    Télécharge une image depuis une URL externe (API-Football, etc.)
+    et la stocke sur la Freebox via le receiver.
+    Retourne { url, relative_path } prêts à persister en base.
+
+    Flux : source externe → backend → Freebox NAS → logo_url en base
+    """
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        resp = await client.get(image_url)
+        if resp.status_code != 200:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Échec du téléchargement de l'image : {image_url} (status {resp.status_code})"
+            )
+        contents = resp.content
+        # Détermine l'extension depuis le Content-Type si pas de filename fourni
+        ct = resp.headers.get("content-type", "image/png")
+        ext = ct.split("/")[-1].split(";")[0].strip()  # png, jpeg, webp…
+        ext = "jpg" if ext == "jpeg" else ext
+        fname = filename or f"{entity_id}.{ext}"
+
+    return await _forward_to_receiver(contents, fname, folder, entity_id)
+
+
+@router.post("/upload/from-url")
+async def upload_from_url(
+    image_url: str,
+    folder: str,
+    entity_id: str,
+    filename: Optional[str] = None,
+):
+    """
+    Route pour les seeds API-Football et tout import automatique.
+    Reçoit une URL externe, télécharge l'image et la stocke sur la Freebox.
+
+    Exemples d'usage :
+      - seed_leagues  → folder="league",  entity_id="39"
+      - seed_teams    → folder="team",    entity_id="33"
+      - seed_players  → folder="player",  entity_id="276"
+    """
+    mapped_folder = FOLDER_MAP.get(folder)
+    if not mapped_folder:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Dossier inconnu : '{folder}'. Valeurs valides : {list(FOLDER_MAP.keys())}"
+        )
+    return await download_and_store(image_url, mapped_folder, entity_id, filename)
+
+
 @router.post("/upload")
 async def upload_image(
     file: UploadFile = File(...),
@@ -87,8 +144,8 @@ async def upload_image(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
-    folder = FOLDER_MAP.get(folder, "master_kit")
-    result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
+    mapped_folder = FOLDER_MAP.get(folder, "kits/masters")
+    result = await _forward_to_receiver(contents, file.filename, mapped_folder, entity_id, side)
     return {"filename": file.filename, **result}
 
 
@@ -100,7 +157,7 @@ async def upload_multiple_images(
     side: Optional[str] = None,
 ):
     results = []
-    folder = FOLDER_MAP.get(folder, "master_kit")
+    mapped_folder = FOLDER_MAP.get(folder, "kits/masters")
     for file in files:
         ext = Path(file.filename).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
@@ -109,7 +166,7 @@ async def upload_multiple_images(
         if len(contents) > MAX_FILE_SIZE:
             continue
         try:
-            result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
+            result = await _forward_to_receiver(contents, file.filename, mapped_folder, entity_id, side)
             results.append({"filename": file.filename, **result})
         except Exception:
             continue
