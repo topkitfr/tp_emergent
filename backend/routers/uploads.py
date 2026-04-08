@@ -13,7 +13,20 @@ RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 router = APIRouter(prefix="/api", tags=["uploads"])
 
 
-# Aligné sur la structure réelle /TP_media/ de la Freebox
+# Clés valides — le mapping réel vers les chemins Freebox est fait côté receiver
+FOLDER_KEYS = {
+    "master_kit",
+    "version",
+    "profile",
+    "brand",
+    "team",
+    "nation",
+    "league",
+    "sponsor",
+    "player",
+}
+
+# Gardé pour /upload et /upload/multiple qui envoient le chemin mappé au receiver
 FOLDER_MAP = {
     "master_kit": "kits/masters",
     "version":    "kits/versions",
@@ -112,19 +125,21 @@ async def upload_from_url(
     """
     Route pour les seeds API-Football et tout import automatique.
     Reçoit une URL externe, télécharge l'image et la stocke sur la Freebox.
+    Le folder doit être une clé courte (ex: "league", "team", "player") —
+    le mapping vers le chemin Freebox est fait côté receiver.
 
     Exemples d'usage :
       - seed_leagues  → folder="league",  entity_id="39"
       - seed_teams    → folder="team",    entity_id="33"
       - seed_players  → folder="player",  entity_id="276"
     """
-    mapped_folder = FOLDER_MAP.get(folder)
-    if not mapped_folder:
+    if folder not in FOLDER_KEYS:
         raise HTTPException(
             status_code=400,
-            detail=f"Dossier inconnu : '{folder}'. Valeurs valides : {list(FOLDER_MAP.keys())}"
+            detail=f"Dossier inconnu : '{folder}'. Valeurs valides : {sorted(FOLDER_KEYS)}"
         )
-    return await download_and_store(image_url, mapped_folder, entity_id, filename)
+    # Passe la clé courte directement — le receiver fait son propre mapping
+    return await download_and_store(image_url, folder, entity_id, filename)
 
 
 @router.post("/upload")
