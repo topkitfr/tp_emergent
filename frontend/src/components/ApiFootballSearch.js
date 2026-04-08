@@ -1,11 +1,15 @@
 // frontend/src/components/ApiFootballSearch.js
-// Composant générique de recherche API-Football (DB-first) pour les forms
+// Composant g\u00e9n\u00e9rique de recherche API-Football (DB-first) pour les forms
 // Supporte les types : 'player' | 'team' | 'league'
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Search, CheckCircle2, UserSearch, Building2, Trophy } from 'lucide-react';
-import { searchApiFootballPlayers, searchApiFootballTeams, searchApiFootballLeagues } from '@/lib/api';
+import {
+  searchApiFootballPlayers,
+  searchApiFootballTeams,
+  searchApiFootballLeagues,
+} from '@/lib/api';
 
 const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
 const inputClass = 'bg-card border-border rounded-none';
@@ -15,10 +19,20 @@ const TYPE_CONFIG = {
     icon: UserSearch,
     label: 'Auto-fill from API-Football',
     placeholder: 'Search a player (min 3 chars)...',
-    search: (q) => searchApiFootballPlayers(q).then(r => (r.data.players || r.data || [])),
+    // DB-first : retourne { db_results, api_results } — m\u00eame pattern que team/league
+    search: async (q) => {
+      const r = await searchApiFootballPlayers(q);
+      const data = r.data || {};
+      const db = (data.db_results || []).map(p => ({ ...p, _source: 'db' }));
+      const api = (data.api_results || []).map(p => ({ ...p, _source: 'api' }));
+      // D\u00e9duplique par apifootball_id
+      const seen = new Set(db.map(p => p.apifootball_id).filter(Boolean));
+      const apiDedup = api.filter(p => !seen.has(p.apifootball_id));
+      return [...db, ...apiDedup].slice(0, 10);
+    },
     getId: (item) => item.apifootball_id,
     getLabel: (item) => item.name || `${item.firstname || ''} ${item.lastname || ''}`.trim(),
-    getSub: (item) => [item.nationality, item.birth_date, item.position].filter(Boolean).join(' · '),
+    getSub: (item) => [item.nationality, item.birth_date, item.position].filter(Boolean).join(' \u00b7 '),
     getLogo: (item) => item.photo || '',
     logoRound: true,
   },
@@ -26,20 +40,18 @@ const TYPE_CONFIG = {
     icon: Building2,
     label: 'Auto-fill from API-Football',
     placeholder: 'Search a club (min 3 chars)...',
-    // teams-api retourne { db_results, api_results } — on fusionne en préférant DB
     search: async (q) => {
       const r = await searchApiFootballTeams(q);
       const data = r.data || {};
       const db = (data.db_results || []).map(t => ({ ...t, _source: 'db' }));
       const api = (data.api_results || []).map(t => ({ ...t, _source: 'api' }));
-      // déduplique par apifootball_team_id
       const seen = new Set(db.map(t => t.apifootball_team_id).filter(Boolean));
       const apiDedup = api.filter(t => !seen.has(t.apifootball_team_id));
       return [...db, ...apiDedup].slice(0, 10);
     },
     getId: (item) => item.apifootball_team_id || item.team_id,
     getLabel: (item) => item.name,
-    getSub: (item) => [item.country, item.city, item.founded ? `est. ${item.founded}` : ''].filter(Boolean).join(' · '),
+    getSub: (item) => [item.country, item.city, item.founded ? `est. ${item.founded}` : ''].filter(Boolean).join(' \u00b7 '),
     getLogo: (item) => item.logo || item.crest_url || '',
     logoRound: false,
   },
@@ -58,7 +70,7 @@ const TYPE_CONFIG = {
     },
     getId: (item) => item.apifootball_league_id || item.league_id,
     getLabel: (item) => item.name,
-    getSub: (item) => [item.country_name || item.country_or_region, item.type, item.scope].filter(Boolean).join(' · '),
+    getSub: (item) => [item.country_name || item.country_or_region, item.type, item.scope].filter(Boolean).join(' \u00b7 '),
     getLogo: (item) => item.logo_url || item.apifootball_logo || '',
     logoRound: false,
   },
@@ -69,9 +81,9 @@ const TYPE_CONFIG = {
  *
  * Props:
  *   entityType   : 'player' | 'team' | 'league'
- *   onSelect     : fn(item) appelé quand l'utilisateur choisit un résultat
- *   filledName   : string — nom affiché dans le badge de confirmation
- *   className    : classes supplémentaires sur le wrapper
+ *   onSelect     : fn(item) appel\u00e9 quand l'utilisateur choisit un r\u00e9sultat
+ *   filledName   : string \u2014 nom affich\u00e9 dans le badge de confirmation
+ *   className    : classes suppl\u00e9mentaires sur le wrapper
  */
 export default function ApiFootballSearch({ entityType = 'player', onSelect, filledName, className = '' }) {
   const config = TYPE_CONFIG[entityType];
@@ -140,7 +152,7 @@ export default function ApiFootballSearch({ entityType = 'player', onSelect, fil
         </span>
       </div>
 
-      {/* Dropdown résultats */}
+      {/* Dropdown r\u00e9sultats */}
       {open && results.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-popover border border-border shadow-lg max-h-64 overflow-y-auto">
           {results.map((item, idx) => {
@@ -171,7 +183,7 @@ export default function ApiFootballSearch({ entityType = 'player', onSelect, fil
                     <p className="text-xs text-muted-foreground truncate">{sub}</p>
                   )}
                 </div>
-                {/* Badge source */}
+                {/* Badge source DB (vert) ou API (bleu/primary) */}
                 <span className={`ml-auto text-[9px] uppercase tracking-widest flex-shrink-0 px-1.5 py-0.5 rounded-sm font-mono ${
                   isDb
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
@@ -187,11 +199,11 @@ export default function ApiFootballSearch({ entityType = 'player', onSelect, fil
 
       {open && results.length === 0 && !loading && query.length >= 3 && (
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border px-3 py-2 text-xs text-muted-foreground">
-          No results for « {query} »
+          No results for \u00ab {query} \u00bb
         </div>
       )}
 
-      {/* Séparateur */}
+      {/* S\u00e9parateur */}
       <div className="flex items-center gap-2 pt-1">
         <div className="flex-1 border-t border-border" />
         <span className="text-[10px] text-muted-foreground uppercase tracking-widest" style={labelStyle}>
@@ -200,7 +212,7 @@ export default function ApiFootballSearch({ entityType = 'player', onSelect, fil
         <div className="flex-1 border-t border-border" />
       </div>
 
-      {/* Badge entité sélectionnée */}
+      {/* Badge entit\u00e9 s\u00e9lectionn\u00e9e */}
       {filledName && (
         <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="w-3.5 h-3.5" />

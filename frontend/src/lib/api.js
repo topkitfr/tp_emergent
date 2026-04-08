@@ -27,7 +27,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers?.['retry-after'];
-      error.message = `Trop de requêtes. Réessayez dans ${retryAfter || 60} secondes.`;
+      error.message = `Trop de requ\u00eates. R\u00e9essayez dans ${retryAfter || 60} secondes.`;
     }
     return Promise.reject(error);
   }
@@ -106,7 +106,7 @@ export const getUserPublicCollection = (userId) => api.get(`/users/${userId}/pub
 export const getUserPublicSubmissions = (userId) => api.get(`/users/${userId}/public-submissions`);
 export const getUserPublicFollows = (userId) => api.get(`/users/${userId}/public-follows`);
 
-// Listes personnalisées
+// Listes personnalis\u00e9es
 export const getUserLists = () => api.get('/lists');
 export const getListDetail = (listId) => api.get(`/lists/${listId}`);
 export const createList = (data) => api.post('/lists', data);
@@ -171,9 +171,7 @@ export const togglePlayerFollow = (playerId, followed) =>
     ? followEntity({ entity_type: 'player', entity_id: playerId })
     : unfollowEntity({ entity_type: 'player', entity_id: playerId });
 
-// ── Scoring / API-Football — Players ─────────────────────────────────────────
-export const searchApiFootballPlayers = (name) =>
-  api.get('/scoring/players/api-search', { params: { name } });
+// \u2500\u2500 Scoring / palmar\u00e8s \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
@@ -183,7 +181,22 @@ export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
     aura,
   });
 
-// ── API-Football — Teams (DB-first search + upsert) ───────────────────────────
+// \u2500\u2500 API-Football \u2014 Players (DB-first search + profil) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+/**
+ * Recherche un joueur : DB d'abord, API-Football en fallback.
+ * Retourne { db_results: [...], api_results: [...] }
+ */
+export const searchApiFootballPlayers = (name) =>
+  api.get('/players-api/search', { params: { name } });
+
+/**
+ * R\u00e9cup\u00e8re le profil complet d'un joueur par son apifootball_id.
+ * Utilis\u00e9 pour le pr\u00e9fill du formulaire apr\u00e8s s\u00e9lection.
+ */
+export const getApiFootballPlayerProfile = (apifootballId) =>
+  api.get(`/players-api/get/${apifootballId}`);
+
+// \u2500\u2500 API-Football \u2014 Teams (DB-first search + upsert) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 /**
  * Recherche un club : DB d'abord, API-Football en fallback.
  * Retourne { db_results: [...], api_results: [...] }
@@ -193,22 +206,20 @@ export const searchApiFootballTeams = (name) =>
 
 /**
  * Sauvegarde un club issu de l'API-Football dans la DB locale.
- * Le backend fait un upsert basé sur apifootball_team_id.
  */
 export const upsertTeamFromApi = (teamData) =>
   api.post('/teams-api/upsert', teamData);
 
-// ── API-Football — Leagues (DB-first search + upsert) ─────────────────────────
+// \u2500\u2500 API-Football \u2014 Leagues (DB-first search + upsert) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 /**
- * Recherche une compétition : DB d'abord, API-Football en fallback.
+ * Recherche une comp\u00e9tition : DB d'abord, API-Football en fallback.
  * Retourne { db_results: [...], api_results: [...] }
  */
 export const searchApiFootballLeagues = (name) =>
   api.get('/leagues-api/search', { params: { name } });
 
 /**
- * Sauvegarde une compétition issue de l'API-Football dans la DB locale.
- * Le backend fait un upsert basé sur apifootball_league_id.
+ * Sauvegarde une comp\u00e9tition issue de l'API-Football dans la DB locale.
  */
 export const upsertLeagueFromApi = (leagueData) =>
   api.post('/leagues-api/upsert', leagueData);
