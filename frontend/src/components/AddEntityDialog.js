@@ -18,7 +18,7 @@ import {
   createSponsorPending,
 } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
-import ApiFootballSearch from '@/components/ApiFootballSearch';
+import UnifiedEntitySearch from '@/components/UnifiedEntitySearch';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
@@ -26,7 +26,7 @@ const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = 'bg-card border-border rounded-none';
 
-// ── Mapping position API → codes Topkit ──────────────────────────────────────
+// ── Mapping position API → codes Topkit ────────────────────────────────────
 const API_POSITION_MAP = {
   'Goalkeeper': ['GK'],
   'Defender': ['CB'], 'Centre-Back': ['CB'], 'Center Back': ['CB'],
@@ -62,18 +62,73 @@ function mapApiPosition(apiPosition) {
 export default function AddEntityDialog({ open, onClose, entityType, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({});
-  const [apiSelectedName, setApiSelectedName] = useState('');
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
   const handleClose = () => {
     setForm({});
-    setApiSelectedName('');
     onClose();
   };
 
-  // ── Auto-fill player ──────────────────────────────────────────────────────
-  const handlePlayerSelect = (player) => {
+  // ── Handlers DB sélect (élément déjà en base) ────────────────────────────
+  const handleDbSelect = (item) => {
+    // Avertissement : l'élément existe déjà en base
+    toast.warning(
+      `« ${item.name || item.full_name || item.label} » existe déjà en base de données. Préremplissage effectué.`,
+      { duration: 5000 }
+    );
+    // Préremplir quand même pour permettre une édition
+    if (entityType === 'player')  handlePlayerDbSelect(item);
+    if (entityType === 'team')    handleTeamDbSelect(item);
+    if (entityType === 'league')  handleLeagueDbSelect(item);
+    if (entityType === 'brand')   set('name', item.name || '');
+    if (entityType === 'sponsor') set('name', item.name || '');
+  };
+
+  const handlePlayerDbSelect = (item) => {
+    setForm(prev => ({
+      ...prev,
+      full_name:      item.full_name || item.name || '',
+      nationality:    item.nationality || '',
+      birth_date:     item.birth_date || '',
+      photo_url:      item.photo_url || item.photo || '',
+      apifootball_id: item.apifootball_id || '',
+      positions:      item.positions || [],
+    }));
+  };
+
+  const handleTeamDbSelect = (item) => {
+    setForm(prev => ({
+      ...prev,
+      name:                item.name || '',
+      country:             item.country || '',
+      city:                item.city || '',
+      founded:             item.founded || '',
+      is_national:         item.is_national ?? false,
+      crest_url:           item.crest_url || '',
+      stadium_name:        item.stadium_name || '',
+      stadium_capacity:    item.stadium_capacity || '',
+      stadium_surface:     item.stadium_surface || '',
+      apifootball_team_id: item.apifootball_team_id || '',
+    }));
+  };
+
+  const handleLeagueDbSelect = (item) => {
+    setForm(prev => ({
+      ...prev,
+      name:              item.name || '',
+      country_or_region: item.country_or_region || '',
+      country_code:      item.country_code || '',
+      type:              item.type || '',
+      scope:             item.scope || '',
+      organizer:         item.organizer || '',
+      logo_url:          item.logo_url || '',
+      apifootball_league_id: item.apifootball_league_id || '',
+    }));
+  };
+
+  // ── Handlers API select (préfill depuis API-Football) ───────────────────
+  const handlePlayerApiSelect = (player) => {
     const mappedPositions = mapApiPosition(player.position);
     setForm(prev => ({
       ...prev,
@@ -84,11 +139,9 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       apifootball_id: player.apifootball_id,
       positions:      mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
     }));
-    setApiSelectedName(player.name || player.firstname || '');
   };
 
-  // ── Auto-fill team ────────────────────────────────────────────────────────
-  const handleTeamSelect = (team) => {
+  const handleTeamApiSelect = (team) => {
     setForm(prev => ({
       ...prev,
       name:                  team.name              || prev.name || '',
@@ -103,11 +156,9 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
       apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
     }));
-    setApiSelectedName(team.name || '');
   };
 
-  // ── Auto-fill league ──────────────────────────────────────────────────────
-  const handleLeagueSelect = (league) => {
+  const handleLeagueApiSelect = (league) => {
     setForm(prev => ({
       ...prev,
       name:                    league.name                || prev.name || '',
@@ -120,7 +171,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       logo_url:                league.apifootball_logo    || league.logo_url || prev.logo_url || '',
       apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
     }));
-    setApiSelectedName(league.name || '');
   };
 
   const handleSubmit = async () => {
@@ -178,11 +228,13 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
           {/* ── PLAYER ── */}
           {entityType === 'player' && (
             <>
-              <div className="pb-2 border-b border-border">
-                <ApiFootballSearch
+              <div className="pb-3 border-b border-border space-y-1">
+                <Label className={fieldLabel} style={fieldStyle}>Recherche rapide</Label>
+                <UnifiedEntitySearch
                   entityType="player"
-                  onSelect={handlePlayerSelect}
-                  filledName={apiSelectedName}
+                  onSelectDb={handleDbSelect}
+                  onSelectApi={handlePlayerApiSelect}
+                  placeholder="Nom du joueur..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -204,7 +256,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
-                  <Input type="number" value={form.apifootball_id || ''} onChange={e => set('apifootball_id', e.target.value ? parseInt(e.target.value) : '')} className={inputClass} placeholder="Auto-filled above, or enter manually" />
+                  <Input type="number" value={form.apifootball_id || ''} onChange={e => set('apifootball_id', e.target.value ? parseInt(e.target.value) : '')} className={inputClass} placeholder="Auto-fillé ci-dessus" />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Positions</Label>
@@ -239,11 +291,13 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
           {/* ── TEAM ── */}
           {entityType === 'team' && (
             <>
-              <div className="pb-2 border-b border-border">
-                <ApiFootballSearch
+              <div className="pb-3 border-b border-border space-y-1">
+                <Label className={fieldLabel} style={fieldStyle}>Recherche rapide</Label>
+                <UnifiedEntitySearch
                   entityType="team"
-                  onSelect={handleTeamSelect}
-                  filledName={apiSelectedName}
+                  onSelectDb={handleDbSelect}
+                  onSelectApi={handleTeamApiSelect}
+                  placeholder="Nom du club..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -265,9 +319,8 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
-                  <Input type="number" value={form.apifootball_team_id || ''} onChange={e => set('apifootball_team_id', e.target.value ? parseInt(e.target.value) : '')} placeholder="Auto-filled above" className={inputClass} />
+                  <Input type="number" value={form.apifootball_team_id || ''} onChange={e => set('apifootball_team_id', e.target.value ? parseInt(e.target.value) : '')} placeholder="Auto-fillé ci-dessus" className={inputClass} />
                 </div>
-                {/* Stade */}
                 <div className="col-span-2">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2" style={fieldStyle}>Stadium</p>
                 </div>
@@ -293,34 +346,47 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
 
           {/* ── BRAND ── */}
           {entityType === 'brand' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Brand Name *</Label>
-                <Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Adidas" className={inputClass} />
+            <>
+              <div className="pb-3 border-b border-border space-y-1">
+                <Label className={fieldLabel} style={fieldStyle}>Recherche rapide</Label>
+                <UnifiedEntitySearch
+                  entityType="brand"
+                  onSelectDb={handleDbSelect}
+                  onSelectApi={() => {}}
+                  placeholder="Nom de la marque..."
+                />
               </div>
-              <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Country</Label>
-                <Input value={form.country || ''} onChange={e => set('country', e.target.value)} placeholder="Germany" className={inputClass} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Brand Name *</Label>
+                  <Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Adidas" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Country</Label>
+                  <Input value={form.country || ''} onChange={e => set('country', e.target.value)} placeholder="Germany" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Founded</Label>
+                  <Input type="number" value={form.founded || ''} onChange={e => set('founded', e.target.value ? parseInt(e.target.value) : '')} placeholder="1949" className={inputClass} />
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
+                  <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="brand" />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Founded</Label>
-                <Input type="number" value={form.founded || ''} onChange={e => set('founded', e.target.value ? parseInt(e.target.value) : '')} placeholder="1949" className={inputClass} />
-              </div>
-              <div className="col-span-2 space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
-                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="brand" />
-              </div>
-            </div>
+            </>
           )}
 
           {/* ── LEAGUE ── */}
           {entityType === 'league' && (
             <>
-              <div className="pb-2 border-b border-border">
-                <ApiFootballSearch
+              <div className="pb-3 border-b border-border space-y-1">
+                <Label className={fieldLabel} style={fieldStyle}>Recherche rapide</Label>
+                <UnifiedEntitySearch
                   entityType="league"
-                  onSelect={handleLeagueSelect}
-                  filledName={apiSelectedName}
+                  onSelectDb={handleDbSelect}
+                  onSelectApi={handleLeagueApiSelect}
+                  placeholder="Nom de la compétition..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -351,7 +417,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
-                  <Input type="number" value={form.apifootball_league_id || ''} onChange={e => set('apifootball_league_id', e.target.value ? parseInt(e.target.value) : '')} placeholder="Auto-filled above" className={inputClass} />
+                  <Input type="number" value={form.apifootball_league_id || ''} onChange={e => set('apifootball_league_id', e.target.value ? parseInt(e.target.value) : '')} placeholder="Auto-fillé ci-dessus" className={inputClass} />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
@@ -363,24 +429,35 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
 
           {/* ── SPONSOR ── */}
           {entityType === 'sponsor' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Sponsor Name *</Label>
-                <Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Emirates" className={inputClass} />
+            <>
+              <div className="pb-3 border-b border-border space-y-1">
+                <Label className={fieldLabel} style={fieldStyle}>Recherche rapide</Label>
+                <UnifiedEntitySearch
+                  entityType="sponsor"
+                  onSelectDb={handleDbSelect}
+                  onSelectApi={() => {}}
+                  placeholder="Nom du sponsor..."
+                />
               </div>
-              <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Country</Label>
-                <Input value={form.country || ''} onChange={e => set('country', e.target.value)} placeholder="UAE" className={inputClass} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Sponsor Name *</Label>
+                  <Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Emirates" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Country</Label>
+                  <Input value={form.country || ''} onChange={e => set('country', e.target.value)} placeholder="UAE" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Website</Label>
+                  <Input value={form.website || ''} onChange={e => set('website', e.target.value)} placeholder="https://..." className={inputClass} />
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
+                  <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="sponsor" />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Website</Label>
-                <Input value={form.website || ''} onChange={e => set('website', e.target.value)} placeholder="https://..." className={inputClass} />
-              </div>
-              <div className="col-span-2 space-y-1.5">
-                <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
-                <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="sponsor" />
-              </div>
-            </div>
+            </>
           )}
 
         </div>
