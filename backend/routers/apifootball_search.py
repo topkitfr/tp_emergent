@@ -30,9 +30,13 @@ ENTITY_CONFIG = {
         "min_chars": 3,
     },
     "player": {
-        "endpoint": "/players/profiles",
+        # /players/profiles est réservé aux plans payants
+        # /players?search= fonctionne sur le plan gratuit (nécessite aussi ?season=)
+        # On utilise season courante pour éviter l'erreur 400
+        "endpoint": "/players",
         "param": "search",
         "min_chars": 4,
+        "extra_params": {"season": "2024"},
     },
 }
 
@@ -61,6 +65,9 @@ async def search_apifootball(
 
     url = f"{API_FOOTBALL_BASE}{config['endpoint']}"
     params = {config["param"]: q.strip()}
+    # Paramètres supplémentaires éventuels (ex: season pour /players)
+    if "extra_params" in config:
+        params.update(config["extra_params"])
 
     async with httpx.AsyncClient(timeout=8.0) as client:
         try:
@@ -75,6 +82,13 @@ async def search_apifootball(
             )
 
     data = resp.json()
+
+    # Gérer les erreurs métier retournées dans le body (ex: quota dépassé)
+    errors = data.get("errors", {})
+    if errors:
+        first_error = next(iter(errors.values()), "Erreur API-Football")
+        raise HTTPException(status_code=429 if "limit" in str(first_error).lower() else 502, detail=str(first_error))
+
     results = data.get("response", [])
 
     return {"results": results, "total": len(results)}
