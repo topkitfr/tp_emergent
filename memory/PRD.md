@@ -8,6 +8,9 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - **Backend**: FastAPI (Python) - Modular router architecture
 - **Database**: MongoDB
 - **Auth**: Emergent-managed Google OAuth
+- **Media**: Freebox NAS `/TP_media/` via receiver FastAPI (port 8001) + Cloudflare Tunnel
+  - Images servies via `/api/images/{path}` (proxy Cloudflare → NAS)
+  - Toute image (API ou upload manuel) passe par la Freebox avant d'être stockée en base
 
 ## Backend Structure (Refactored Feb 18, 2026)
 ```
@@ -26,8 +29,66 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
     ├── submissions.py # /api/submissions/*, /api/reports/* (moderation + removal requests)
     ├── wishlist.py    # /api/wishlist/*
     ├── entities.py    # /api/teams/*, /api/leagues/*, /api/brands/*, /api/players/*, /api/autocomplete
-    ├── uploads.py     # /api/upload/*, /api/image-proxy
+    ├── uploads.py     # /api/upload/*, /api/upload/from-url, /api/image-proxy
     └── admin.py       # /api/stats, /api/users/*, /api/seed, /api/import-excel, migrations
+```
+
+## Media Storage — Architecture (ajout 08/04/2026)
+
+### Flux unifié
+```
+Source (API-Football ou upload user)
+        │
+        ▼
+  Backend FastAPI
+  download_and_store() / _forward_to_receiver()
+        │
+        ▼
+  Freebox NAS /TP_media/{entity}/{type}/{id}.png
+        │
+        ▼
+  MongoDB : logo_url = "/api/images/leagues/logos/39.png"
+        │
+        ▼
+  Frontend : <img src="/api/images/leagues/logos/39.png">
+```
+
+### Structure dossiers Freebox
+```
+/TP_media/
+├── brands/logos/
+├── kits/masters/
+├── kits/versions/
+├── leagues/logos/       ← logos ligues
+├── players/photos/      ← photos joueurs
+├── sponsors/logos/
+├── teams/clubs/         ← logos clubs
+├── teams/nations/       ← drapeaux/logos nations
+└── users/photos/
+```
+
+### FOLDER_MAP (uploads.py)
+| Clé | Dossier Freebox |
+|---|---|
+| `master_kit` | `kits/masters` |
+| `version` | `kits/versions` |
+| `profile` | `users/photos` |
+| `brand` | `brands/logos` |
+| `team` | `teams/clubs` |
+| `nation` | `teams/nations` |
+| `league` | `leagues/logos` |
+| `sponsor` | `sponsors/logos` |
+| `player` | `players/photos` |
+
+### Route seed (POST /api/upload/from-url)
+Utilisée par tous les scripts de seed API-Football :
+```python
+await client.post("/api/upload/from-url", params={
+    "image_url": "https://media.api-sports.io/football/leagues/39.png",
+    "folder": "league",
+    "entity_id": "39"
+})
+# → { "url": "/api/images/leagues/logos/39.png" }
 ```
 
 ## Core Data Model
@@ -99,10 +160,30 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - **C. Header/Menu Reorganization**: Removed My Collection and Wishlist from header navbar (kept in user dropdown), removed Contributions from dropdown (kept in header navbar).
 - **D. Profile Enhancements**: Replaced URL input with ImageUpload component for profile photos, added username-based profile URLs (/profile/:username), public profile view support.
 
+### Phase 15: API-Football Integration + Media Freebox (08/04/2026) - EN COURS
+
+#### Sprint 1 — Seed des référentiels (PARTIEL)
+- [x] `seed_leagues_apifootball.py` exécuté : 27 ligues cibles, **15 insérées + 12 mises à jour**, 0 erreurs
+  - Couverture : top 5 européens, coupes UEFA, CONMEBOL, CONCACAF, CAF, AFC, FIFA
+  - `logo_url` = URLs externes API-Football (à migrer vers Freebox — voir ci-dessous)
+- [ ] `seed_teams_apifootball.py` — à faire
+- [ ] `seed_players_apifootball.py` — à faire
+
+#### Architecture média centralisée (COMMIT `11d49bea`) - DONE
+- `uploads.py` mis à jour :
+  - `FOLDER_MAP` aligné sur structure réelle `/TP_media/` Freebox
+  - Nouvelle fonction `download_and_store()` — télécharge URL externe + forward receiver Freebox
+  - Nouvelle route `POST /api/upload/from-url` — point d'entrée pour tous les seeds auto
+
+#### Prochaine étape immédiate
+- [ ] Mettre à jour `seed_leagues_apifootball.py` : après chaque INSERT/UPDATE, appeler `/api/upload/from-url` et persister le chemin Freebox dans `logo_url`
+- [ ] Même logique pour `seed_teams` et `seed_players`
+
 ## Prioritized Backlog
 
 ### P1
 - CSV/XLSX bulk import endpoints for Teams, Leagues, Brands, Players
+- Finaliser Phase 15 : migration logo_url → Freebox pour toutes les entités
 
 ### P2
 - Notification system (wishlist updates, contribution status)
