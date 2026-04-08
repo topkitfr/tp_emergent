@@ -1,15 +1,16 @@
 // frontend/src/components/EntityEditDialog.js
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createSubmission, searchApiFootballPlayers } from '@/lib/api';
+import { createSubmission } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
+import ApiFootballSearch from '@/components/ApiFootballSearch';
 import { toast } from 'sonner';
-import { Trash2, Loader2, Search, CheckCircle2, UserSearch } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
 const inputClass = 'bg-card border-border rounded-none';
@@ -19,46 +20,19 @@ const AURA_LEVELS = [1, 2, 3, 4, 5];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
 const FOOT_OPTIONS = ['right', 'left', 'both'];
 
-/**
- * Normalise les positions renvoyées par API-Football ("Midfielder", "Attacker", etc.)
- * vers les codes Topkit (CM, CF, etc.).
- * API-Football renvoie un seul string de position principale.
- */
 const API_POSITION_MAP = {
-  // Gardien
   'Goalkeeper': ['GK'],
-  // Défenseurs
-  'Defender':   ['CB'],
-  'Centre-Back': ['CB'],
-  'Left Back':  ['LB'],
-  'Right Back': ['RB'],
-  'Left Wing Back': ['LWB'],
-  'Right Wing Back': ['RWB'],
-  // Milieux
-  'Midfielder': ['CM'],
-  'Central Midfield': ['CM'],
-  'Defensive Midfield': ['CDM'],
-  'Attacking Midfield': ['CAM'],
-  'Left Midfield': ['LM'],
-  'Right Midfield': ['RM'],
-  // Attaquants
-  'Attacker':   ['CF'],
-  'Forward':    ['CF'],
-  'Centre Forward': ['CF'],
-  'Striker':    ['ST'],
-  'Left Winger': ['LW'],
-  'Right Winger': ['RW'],
-  'Second Striker': ['SS'],
+  'Defender': ['CB'], 'Centre-Back': ['CB'], 'Left Back': ['LB'], 'Right Back': ['RB'],
+  'Left Wing Back': ['LWB'], 'Right Wing Back': ['RWB'],
+  'Midfielder': ['CM'], 'Central Midfield': ['CM'], 'Defensive Midfield': ['CDM'],
+  'Attacking Midfield': ['CAM'], 'Left Midfield': ['LM'], 'Right Midfield': ['RM'],
+  'Attacker': ['CF'], 'Forward': ['CF'], 'Centre Forward': ['CF'],
+  'Striker': ['ST'], 'Left Winger': ['LW'], 'Right Winger': ['RW'], 'Second Striker': ['SS'],
 };
 
-/** Convertit une position API-Football en tableau de codes Topkit */
 function normalizePositions(apiPosition) {
   if (!apiPosition) return [];
-  // Si c'est déjà un tableau (backend enrichi), on filtre les codes valides
-  if (Array.isArray(apiPosition)) {
-    return apiPosition.filter(p => POSITIONS.includes(p));
-  }
-  // Sinon c'est un string — on cherche dans le map
+  if (Array.isArray(apiPosition)) return apiPosition.filter(p => POSITIONS.includes(p));
   return API_POSITION_MAP[apiPosition] || [];
 }
 
@@ -67,23 +41,34 @@ const ENTITY_CONFIGS = {
     label: 'Team', nameField: 'name',
     imageField: 'crest_url', imageLabel: 'Crest / Badge',
     folder: 'team',
+    apiSearchType: 'team',
     fields: [
-      { key: 'name',            label: 'Team Name',       required: true },
-      { key: 'country',         label: 'Country' },
-      { key: 'city',            label: 'City' },
-      { key: 'founded',         label: 'Founded (year)',   type: 'number' },
-      { key: 'primary_color',   label: 'Primary Color' },
-      { key: 'secondary_color', label: 'Secondary Color' },
+      { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
+      // Identité
+      { key: 'name',               label: 'Team Name',        required: true },
+      { key: 'country',            label: 'Country' },
+      { key: 'city',               label: 'City' },
+      { key: 'founded',            label: 'Founded (year)',   type: 'number' },
+      { key: 'apifootball_team_id',label: 'API-Football ID',  type: 'number' },
+      // Stade
+      { key: '_stadium_divider',   label: 'Stadium',          type: 'divider', span: 2 },
+      { key: 'stadium_name',       label: 'Stadium Name',     span: 2 },
+      { key: 'stadium_capacity',   label: 'Capacity',         type: 'number' },
+      { key: 'stadium_surface',    label: 'Surface' },
     ],
   },
   league: {
     label: 'League', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
     folder: 'league',
+    apiSearchType: 'league',
     fields: [
-      { key: 'name',              label: 'League Name',     required: true },
-      { key: 'country_or_region', label: 'Country / Region' },
-      { key: 'level',             label: 'Level',           type: 'select', options: LEAGUE_LEVELS },
-      { key: 'organizer',         label: 'Organizer' },
+      { key: '_apifootball_search',   label: '', type: 'apifootball_search', span: 2 },
+      { key: 'name',                  label: 'League Name',     required: true },
+      { key: 'country_or_region',     label: 'Country / Region' },
+      { key: 'type',                  label: 'Type (League/Cup)' },
+      { key: 'level',                 label: 'Level',           type: 'select', options: LEAGUE_LEVELS },
+      { key: 'organizer',             label: 'Organizer' },
+      { key: 'apifootball_league_id', label: 'API-Football ID',  type: 'number' },
     ],
   },
   sponsor: {
@@ -107,10 +92,9 @@ const ENTITY_CONFIGS = {
   player: {
     label: 'Player', nameField: 'full_name', imageField: 'photo_url', imageLabel: 'Photo',
     folder: 'player',
-    // apifootball_id intentionally excluded — filled silently via autofill, hidden from user
+    apiSearchType: 'player',
     fields: [
       { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
-      // --- Identité
       { key: 'full_name',        label: 'Full Name',           required: true, span: 2 },
       { key: 'nationality',      label: 'Nationality' },
       { key: 'birth_date',       label: 'Date of Birth (DD/MM/YYYY)' },
@@ -118,114 +102,11 @@ const ENTITY_CONFIGS = {
       { key: 'weight',           label: 'Weight (kg)',          type: 'number' },
       { key: 'preferred_foot',   label: 'Preferred Foot',       type: 'select', options: FOOT_OPTIONS },
       { key: 'preferred_number', label: 'Preferred Number',     type: 'number' },
-      // --- Jeu
       { key: 'positions',        label: 'Positions',            type: 'positions', span: 2 },
-      // --- Bio
       { key: 'bio',              label: 'Bio',                  type: 'textarea',  span: 2 },
     ],
   },
 };
-
-function ApiFootballSearchField({ filledName, onFill }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const debounceRef = useRef(null);
-  const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleInput = useCallback((val) => {
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (val.length < 3) { setResults([]); setOpen(false); return; }
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await searchApiFootballPlayers(val);
-        setResults(res.data.players || []);
-        setOpen(true);
-      } catch { setResults([]); }
-      finally { setLoading(false); }
-    }, 500);
-  }, []);
-
-  const handleSelect = (player) => {
-    setQuery('');
-    setResults([]);
-    setOpen(false);
-    onFill(player);
-  };
-
-  return (
-    <div ref={wrapperRef} className="relative space-y-1.5 sm:col-span-2">
-      <Label className="text-xs uppercase tracking-wider flex items-center gap-1.5 text-primary" style={labelStyle}>
-        <UserSearch className="w-3.5 h-3.5" />
-        Auto-fill from API-Football
-      </Label>
-
-      <div className="relative">
-        <Input
-          value={query}
-          onChange={(e) => handleInput(e.target.value)}
-          placeholder="Search a player (min 3 chars)..."
-          className={`${inputClass} pr-8`}
-        />
-        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-          {loading
-            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            : <Search className="w-3.5 h-3.5" />}
-        </span>
-      </div>
-
-      {open && results.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-popover border border-border shadow-lg max-h-64 overflow-y-auto">
-          {results.map((p) => (
-            <li
-              key={p.apifootball_id}
-              onClick={() => handleSelect(p)}
-              className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
-            >
-              {p.photo && (
-                <img src={p.photo} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-muted" />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate" style={labelStyle}>{p.name}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {[p.nationality, p.birth_date, p.position].filter(Boolean).join(' · ')}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {open && results.length === 0 && !loading && query.length >= 3 && (
-        <div className="text-xs text-muted-foreground px-1 mt-1">No results for « {query} »</div>
-      )}
-
-      {filledName && (
-        <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          <span style={labelStyle}>Auto-filled from API-Football: <strong>{filledName}</strong></span>
-        </div>
-      )}
-
-      <div className="flex items-center gap-2 pt-1">
-        <div className="flex-1 border-t border-border" />
-        <span className="text-[10px] text-muted-foreground uppercase tracking-widest" style={labelStyle}>or fill manually</span>
-        <div className="flex-1 border-t border-border" />
-      </div>
-    </div>
-  );
-}
 
 export default function EntityEditDialog({
   open,
@@ -245,14 +126,10 @@ export default function EntityEditDialog({
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
-  /** Auto-fill depuis résultat API-Football — remplit TOUT ce qu'on a */
-  const handleApiFill = (player) => {
+  // ── Auto-fill player ────────────────────────────────────────────────────────
+  const handleApiFillPlayer = (player) => {
     setApiFillName(player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || '');
-
-    // Normalise le poste API-Football vers les codes Topkit
-    // API-Football peut renvoyer player.position (string) ou player.positions (tableau)
     const normalizedPositions = normalizePositions(player.positions || player.position);
-
     setForm(prev => ({
       ...prev,
       full_name:        player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
@@ -263,11 +140,52 @@ export default function EntityEditDialog({
       weight:           player.weight         ?? prev.weight         ?? '',
       preferred_foot:   player.preferred_foot || prev.preferred_foot || '',
       preferred_number: player.preferred_number ?? prev.preferred_number ?? '',
-      // Positions : on garde celles déjà sélectionnées si l'API n'en renvoie pas
       positions:        normalizedPositions.length > 0 ? normalizedPositions : (prev.positions || []),
-      // apifootball_id stocké silencieusement
       apifootball_id:   player.apifootball_id,
     }));
+  };
+
+  // ── Auto-fill team ───────────────────────────────────────────────────────────
+  const handleApiFillTeam = (team) => {
+    setApiFillName(team.name || '');
+    setForm(prev => ({
+      ...prev,
+      name:                  team.name              || prev.name || '',
+      country:               team.country           || prev.country || '',
+      city:                  team.city              || prev.city || '',
+      founded:               team.founded           ?? prev.founded ?? '',
+      is_national:           team.is_national       ?? prev.is_national ?? false,
+      crest_url:             team.logo              || prev.crest_url || '',
+      stadium_name:          team.stadium_name      || prev.stadium_name || '',
+      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity ?? '',
+      stadium_surface:       team.stadium_surface   || prev.stadium_surface || '',
+      stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
+      apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
+    }));
+  };
+
+  // ── Auto-fill league ─────────────────────────────────────────────────────────
+  const handleApiFillLeague = (league) => {
+    setApiFillName(league.name || '');
+    setForm(prev => ({
+      ...prev,
+      name:                    league.name                || prev.name || '',
+      country_or_region:       league.country_name        || league.country_or_region || prev.country_or_region || '',
+      country_code:            league.country_code        || prev.country_code || '',
+      country_flag:            league.country_flag        || prev.country_flag || '',
+      type:                    league.type                || prev.type || '',
+      scope:                   league.scope               || prev.scope || '',
+      organizer:               league.organizer           || prev.organizer || '',
+      logo_url:                league.apifootball_logo    || league.logo_url || prev.logo_url || '',
+      apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
+    }));
+  };
+
+  const getApiFillHandler = () => {
+    if (entityType === 'player') return handleApiFillPlayer;
+    if (entityType === 'team') return handleApiFillTeam;
+    if (entityType === 'league') return handleApiFillLeague;
+    return () => {};
   };
 
   const handleSubmit = async () => {
@@ -288,7 +206,9 @@ export default function EntityEditDialog({
         }
       }
       if (mode === 'edit' && entityId) payload.entity_id = entityId;
+      // Nettoyer les pseudo-champs
       delete payload._apifootball_search;
+      delete payload._stadium_divider;
       await createSubmission({ submission_type: entityType, data: payload });
       toast.success(
         mode === 'create'
@@ -305,14 +225,8 @@ export default function EntityEditDialog({
   };
 
   const handleRequestRemoval = async () => {
-    if (!removalNotes.trim()) {
-      toast.error('Please provide a reason for removal');
-      return;
-    }
-    if (!entityId) {
-      toast.error('Entity ID missing');
-      return;
-    }
+    if (!removalNotes.trim()) { toast.error('Please provide a reason for removal'); return; }
+    if (!entityId) { toast.error('Entity ID missing'); return; }
     setSubmitting(true);
     try {
       await createSubmission({
@@ -331,12 +245,26 @@ export default function EntityEditDialog({
   };
 
   const renderField = (f) => {
+    if (f.type === 'divider') {
+      return (
+        <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap" style={labelStyle}>
+            {f.label}
+          </p>
+          <div className="flex-1 border-t border-border" />
+        </div>
+      );
+    }
+
     if (f.type === 'apifootball_search') {
       return (
-        <ApiFootballSearchField
-          filledName={apiFillName}
-          onFill={handleApiFill}
-        />
+        <div className="sm:col-span-2 pb-2 border-b border-border">
+          <ApiFootballSearch
+            entityType={config.apiSearchType || entityType}
+            onSelect={getApiFillHandler()}
+            filledName={apiFillName}
+          />
+        </div>
       );
     }
 
@@ -345,26 +273,14 @@ export default function EntityEditDialog({
       return (
         <div className="flex flex-wrap gap-1.5">
           {POSITIONS.map(pos => (
-            <button
-              key={pos}
-              type="button"
-              onClick={() =>
-                handleChange(
-                  'positions',
-                  current.includes(pos)
-                    ? current.filter(p => p !== pos)
-                    : [...current, pos]
-                )
-              }
+            <button key={pos} type="button"
+              onClick={() => handleChange('positions', current.includes(pos) ? current.filter(p => p !== pos) : [...current, pos])}
               className={`px-2 py-0.5 text-[11px] border rounded-none transition-colors ${
                 current.includes(pos)
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card border-border text-muted-foreground hover:border-primary/50'
               }`}
-              style={labelStyle}
-            >
-              {pos}
-            </button>
+              style={labelStyle}>{pos}</button>
           ))}
         </div>
       );
@@ -374,19 +290,13 @@ export default function EntityEditDialog({
       return (
         <div className="flex gap-1">
           {AURA_LEVELS.map(level => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => handleChange('aura_level', level)}
+            <button key={level} type="button" onClick={() => handleChange('aura_level', level)}
               className={`px-2 py-1 text-xs border rounded-none transition-colors ${
                 form.aura_level === level
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card border-border text-muted-foreground hover:border-primary/50'
               }`}
-              style={labelStyle}
-            >
-              {'\u2605'.repeat(level)}
-            </button>
+              style={labelStyle}>{'\u2605'.repeat(level)}</button>
           ))}
         </div>
       );
@@ -394,21 +304,13 @@ export default function EntityEditDialog({
 
     if (f.type === 'select') {
       return (
-        <Select
-          value={form[f.key] || ''}
-          onValueChange={v => handleChange(f.key, v)}
-        >
-          <SelectTrigger
-            className="bg-card border-border rounded-none h-9"
-            data-testid={`entity-edit-${f.key}`}
-          >
+        <Select value={form[f.key] || ''} onValueChange={v => handleChange(f.key, v)}>
+          <SelectTrigger className="bg-card border-border rounded-none h-9" data-testid={`entity-edit-${f.key}`}>
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
           <SelectContent>
             {f.options.map(o => (
-              <SelectItem key={o} value={o}>
-                {o.charAt(0).toUpperCase() + o.slice(1)}
-              </SelectItem>
+              <SelectItem key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -454,8 +356,9 @@ export default function EntityEditDialog({
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => {
-              if (f.type === 'apifootball_search') {
-                return renderField(f);
+              // Les types structurels (divider, apifootball_search) gèrent leur propre layout
+              if (f.type === 'divider' || f.type === 'apifootball_search') {
+                return <React.Fragment key={f.key}>{renderField(f)}</React.Fragment>;
               }
               return (
                 <div
@@ -504,8 +407,7 @@ export default function EntityEditDialog({
             <div className="border-t border-border pt-4">
               {!showRemoval ? (
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="outline" size="sm"
                   onClick={() => setShowRemoval(true)}
                   className="rounded-none border-destructive/50 text-destructive hover:bg-destructive/10 w-full"
                   data-testid="entity-request-removal-btn"
@@ -514,9 +416,7 @@ export default function EntityEditDialog({
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-wider text-destructive" style={labelStyle}>
-                    REQUEST REMOVAL
-                  </p>
+                  <p className="text-xs uppercase tracking-wider text-destructive" style={labelStyle}>REQUEST REMOVAL</p>
                   <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                     The community will vote on this removal request.
                   </p>
@@ -528,23 +428,15 @@ export default function EntityEditDialog({
                     data-testid="entity-removal-notes"
                   />
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={handleRequestRemoval}
+                    <Button size="sm" onClick={handleRequestRemoval}
                       disabled={submitting || !removalNotes.trim()}
                       className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      data-testid="entity-submit-removal-btn"
-                    >
+                      data-testid="entity-submit-removal-btn">
                       <Trash2 className="w-3 h-3 mr-1" /> Submit Removal Request
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    <Button size="sm" variant="outline"
                       onClick={() => { setShowRemoval(false); setRemovalNotes(''); }}
-                      className="rounded-none"
-                    >
-                      Cancel
-                    </Button>
+                      className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
