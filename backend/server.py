@@ -31,6 +31,7 @@ from .routers.leagues_api import router as leagues_api_router
 from .routers.teams_api import router as teams_api_router
 from .routers.players_api import router as players_api_router
 from .routers.awards import router as awards_router
+from .routers.apifootball_search import router as apifootball_search_router  # Sprint 2 — #21
 from .middleware import maintenance_middleware
 
 
@@ -88,6 +89,7 @@ RATE_LIMITS = {
     "/api/submissions":           (30, 60),
     "/api/upload":                (20, 60),
     "/api/reports":               (10, 60),
+    "/api/apifootball/search":    (60, 60),  # Sprint 2 — rate limit search API
 }
 DEFAULT_RATE_LIMIT = (200, 60)
 
@@ -164,10 +166,11 @@ app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 app.include_router(beta_router, prefix="/api/beta", tags=["beta"])
 app.include_router(players_scoring_router)
-app.include_router(leagues_api_router)   # ← recherche leagues DB-first
-app.include_router(teams_api_router)     # ← recherche clubs DB-first
-app.include_router(players_api_router)   # ← recherche joueurs DB-first
-app.include_router(awards_router)        # ← CRUD awards individuels
+app.include_router(leagues_api_router)          # ← recherche leagues DB-first
+app.include_router(teams_api_router)            # ← recherche clubs DB-first
+app.include_router(players_api_router)          # ← recherche joueurs DB-first
+app.include_router(awards_router)               # ← CRUD awards individuels
+app.include_router(apifootball_search_router)   # ← Sprint 2 : proxy search API-Football (#21)
 
 
 @app.on_event("startup")
