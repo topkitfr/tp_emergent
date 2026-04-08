@@ -1,142 +1,152 @@
+#!/usr/bin/env python3
 """
-Seed des confédérations — Sprint 1
+Seed des 7 confédérations footballistiques dans la collection `leagues`.
+Utilisation :
+    python backend/scripts/seed_confederations.py [--apply]
 
-Insère UEFA, FIFA, CAF, CONMEBOL, AFC, CONCACAF, OFC dans la collection `leagues`
-avec entity_type = "confederation".
-
-Usage :
-    python -m backend.scripts.seed_confederations          # dry-run (affiche ce qui serait créé)
-    python -m backend.scripts.seed_confederations --apply  # applique en base
-
-Idempotent : si le slug existe déjà, la confédération est ignorée (pas de doublon).
+Par défaut : dry-run (affiche ce qui serait créé, n'écrit rien).
+Passer --apply pour insérer réellement en base.
 """
-
-import asyncio
 import sys
-import uuid
+import os
 from datetime import datetime, timezone
 
-import motor.motor_asyncio
-from dotenv import load_dotenv
-import os
-import re
-import unicodedata
+# ── Ajout du répertoire backend au path ──────────────────────────────────────
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-load_dotenv()
+from backend.database import db
 
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
-DB_NAME    = os.getenv("DB_NAME", "topkit")
+DRY_RUN = "--apply" not in sys.argv
 
 CONFEDERATIONS = [
     {
         "name": "FIFA",
-        "organizer": "FIFA",
+        "slug": "fifa",
+        "entity_type": "confederation",
         "scope": "international",
         "region": "world",
+        "organizer": "FIFA",
         "country_or_region": "World",
         "logo_url": "https://media.api-sports.io/football/leagues/1.png",
+        "apifootball_league_id": None,
+        "level": "international",
+        "status": "approved",
     },
     {
         "name": "UEFA",
-        "organizer": "UEFA",
+        "slug": "uefa",
+        "entity_type": "confederation",
         "scope": "international",
         "region": "europe",
+        "organizer": "UEFA",
         "country_or_region": "Europe",
-        "logo_url": "https://media.api-sports.io/football/leagues/3.png",
-    },
-    {
-        "name": "CAF",
-        "organizer": "CAF",
-        "scope": "international",
-        "region": "africa",
-        "country_or_region": "Africa",
-        "logo_url": "",
+        "logo_url": "https://media.api-sports.io/football/leagues/2.png",
+        "apifootball_league_id": None,
+        "level": "continental",
+        "status": "approved",
     },
     {
         "name": "CONMEBOL",
-        "organizer": "CONMEBOL",
+        "slug": "conmebol",
+        "entity_type": "confederation",
         "scope": "international",
         "region": "south_america",
+        "organizer": "CONMEBOL",
         "country_or_region": "South America",
         "logo_url": "",
+        "apifootball_league_id": None,
+        "level": "continental",
+        "status": "approved",
+    },
+    {
+        "name": "CAF",
+        "slug": "caf",
+        "entity_type": "confederation",
+        "scope": "international",
+        "region": "africa",
+        "organizer": "CAF",
+        "country_or_region": "Africa",
+        "logo_url": "",
+        "apifootball_league_id": None,
+        "level": "continental",
+        "status": "approved",
     },
     {
         "name": "AFC",
-        "organizer": "AFC",
+        "slug": "afc",
+        "entity_type": "confederation",
         "scope": "international",
         "region": "asia",
+        "organizer": "AFC",
         "country_or_region": "Asia",
         "logo_url": "",
+        "apifootball_league_id": None,
+        "level": "continental",
+        "status": "approved",
     },
     {
         "name": "CONCACAF",
-        "organizer": "CONCACAF",
+        "slug": "concacaf",
+        "entity_type": "confederation",
         "scope": "international",
-        "region": "north_america",
-        "country_or_region": "North America & Caribbean",
+        "region": "north_central_america",
+        "organizer": "CONCACAF",
+        "country_or_region": "North & Central America",
         "logo_url": "",
+        "apifootball_league_id": None,
+        "level": "continental",
+        "status": "approved",
     },
     {
         "name": "OFC",
-        "organizer": "OFC",
+        "slug": "ofc",
+        "entity_type": "confederation",
         "scope": "international",
         "region": "oceania",
+        "organizer": "OFC",
         "country_or_region": "Oceania",
         "logo_url": "",
+        "apifootball_league_id": None,
+        "level": "continental",
+        "status": "approved",
     },
 ]
 
 
-def _slugify(s: str) -> str:
-    s = unicodedata.normalize("NFD", s)
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    s = s.lower().strip()
-    s = re.sub(r"[^a-z0-9]+", "-", s)
-    return s.strip("-")
-
-
-async def seed(apply: bool = False):
-    client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URL)
-    db     = client[DB_NAME]
-    now    = datetime.now(timezone.utc).isoformat()
-
-    created = []
-    skipped = []
+def run():
+    leagues_col = db["leagues"]
+    now = datetime.now(timezone.utc).isoformat()
+    created = 0
+    skipped = 0
 
     for conf in CONFEDERATIONS:
-        slug = _slugify(conf["name"])
-        existing = await db.leagues.find_one({"slug": slug}, {"_id": 0, "league_id": 1})
+        existing = leagues_col.find_one({"slug": conf["slug"]})
         if existing:
-            skipped.append(conf["name"])
+            print(f"[SKIP]   {conf['name']} déjà en base (id={existing.get('_id')})")
+            skipped += 1
             continue
 
         doc = {
             **conf,
-            "league_id":  f"league_{uuid.uuid4().hex[:12]}",
-            "slug":       slug,
-            "status":     "approved",
-            "entity_type": "confederation",
-            "level":      "international",
-            "kit_count":  0,
+            "kit_count": 0,
             "created_at": now,
             "updated_at": now,
         }
 
-        if apply:
-            await db.leagues.insert_one(doc)
-            print(f"  ✅ Créé : {conf['name']} ({doc['league_id']})")
+        if DRY_RUN:
+            print(f"[DRY-RUN] Créerait : {conf['name']} ({conf['region']})")
         else:
-            print(f"  [DRY-RUN] À créer : {conf['name']} (slug={slug})")
+            result = leagues_col.insert_one(doc)
+            print(f"[OK]     {conf['name']} inséré → _id={result.inserted_id}")
+        created += 1
 
-        created.append(conf["name"])
-
-    print(f"\n{'Appliqué' if apply else 'Dry-run'} — {len(created)} à créer, {len(skipped)} déjà présents.")
-    if skipped:
-        print(f"  Ignorés : {', '.join(skipped)}")
-
-    client.close()
+    print()
+    if DRY_RUN:
+        print(f"Dry-run terminé : {created} à créer, {skipped} déjà présents.")
+        print("Relancer avec --apply pour insérer.")
+    else:
+        print(f"Seed terminé : {created} insérés, {skipped} ignorés.")
 
 
 if __name__ == "__main__":
-    apply = "--apply" in sys.argv
-    asyncio.run(seed(apply=apply))
+    run()
