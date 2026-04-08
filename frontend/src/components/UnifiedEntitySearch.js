@@ -1,13 +1,13 @@
 // frontend/src/components/UnifiedEntitySearch.js
 // Barre de recherche unifiée pour les dialogs d'entités (team, player, league, brand, sponsor).
 // Affiche dans le même dropdown :
-//   - Section « Déjà en base » (résultats DB locale via /api/<entity>/search)
-//   - Section « API-Football » (résultats API externe via /api/apifootball/search/<entity>)
+//   - Section « Déjà en base »  → /api/autocomplete?type=<entity>&q=<query>   (route existante)
+//   - Section « API-Football »  → /api/apifootball/search/<entity>?q=<query>
 //
 // Props:
 //   entityType   : 'team' | 'player' | 'league' | 'brand' | 'sponsor'
-//   onSelectDb   : fn(item)    — item DB sélectionné (prefill + indique doublon potentiel)
-//   onSelectApi  : fn(item)    — item API-Football sélectionné (prefill depuis API)
+//   onSelectDb   : fn(item)  — item DB sélectionné { id, label, extra, status, ... }
+//   onSelectApi  : fn(item)  — item API-Football sélectionné (préfill depuis API)
 //   placeholder  : string (optionnel)
 //   disabled     : bool (optionnel)
 
@@ -17,37 +17,39 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 const API_BASE = process.env.REACT_APP_API_URL || '';
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_DB  = 200;
+const DEBOUNCE_API = 350;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
-const dmSans = { fontFamily: 'DM Sans' };
+const dmSans     = { fontFamily: 'DM Sans' };
 
+// DB : utilise la route /api/autocomplete?type=&q= déjà implémentée dans entities.py
+function getDbEndpoint(entityType, query) {
+  return `${API_BASE}/api/autocomplete?type=${entityType}&q=${encodeURIComponent(query)}`;
+}
+
+// API-Football externe
 function getApiEndpoint(entityType, query) {
   return `${API_BASE}/api/apifootball/search/${entityType}?q=${encodeURIComponent(query)}`;
 }
 
-function getDbEndpoint(entityType, query) {
-  // Route DB locale : /api/teams/search?q=, /api/players/search?q=, etc.
-  const plural = { team: 'teams', player: 'players', league: 'leagues', brand: 'brands', sponsor: 'sponsors' };
-  const col = plural[entityType] || entityType + 's';
-  return `${API_BASE}/api/${col}/search?q=${encodeURIComponent(query)}`;
-}
-
+// Nom affiché selon la source
 function extractName(item, entityType, source) {
-  if (source === 'db') return item.name || item.full_name || item.label || '';
+  if (source === 'db') return item.label || item.name || item.full_name || '';
   // API-Football
   if (entityType === 'player') return item.player?.name || item.name || '';
   if (entityType === 'league') return item.league?.name || item.name || '';
   return item.team?.name || item.name || '';
 }
 
+// Sous-titre affiché
 function extractSub(item, entityType, source) {
   if (source === 'db') {
-    if (entityType === 'player') return [item.nationality, item.birth_date].filter(Boolean).join(' · ');
-    if (entityType === 'team')   return [item.country, item.city].filter(Boolean).join(', ');
-    if (entityType === 'league') return [item.country_or_region, item.type].filter(Boolean).join(' · ');
-    return item.country || '';
+    // L'autocomplete renvoie { id, label, extra, status }
+    // extra = country / nationality / country_or_region selon l'entité
+    const parts = [item.extra, item.status !== 'approved' ? `(${item.status})` : null].filter(Boolean);
+    return parts.join(' · ');
   }
   // API-Football
   if (entityType === 'player') return [item.statistics?.[0]?.team?.name, item.player?.nationality].filter(Boolean).join(' · ');
@@ -55,15 +57,15 @@ function extractSub(item, entityType, source) {
   return item.team?.country || '';
 }
 
+// Logo / photo
 function extractLogo(item, entityType, source) {
-  if (source === 'db') {
-    return item.logo_url || item.crest_url || item.photo_url || item.photo || null;
-  }
+  if (source === 'db') return item.logo_url || item.crest_url || item.photo_url || null;
   if (entityType === 'player') return item.photo || item.player?.photo || null;
   if (entityType === 'league') return item.league?.logo || item.logo || null;
   return item.team?.logo || item.logo || null;
 }
 
+// Drapeau pays (API uniquement)
 function extractFlag(item, entityType, source) {
   if (source === 'api' && (entityType === 'league' || entityType === 'team')) {
     return item.country?.flag || null;
@@ -84,7 +86,7 @@ function SkeletonRow() {
   );
 }
 
-// ─── Section header ───────────────────────────────────────────────────────────
+// ─── En-tête de section ───────────────────────────────────────────────────────
 function SectionHeader({ icon: Icon, label, count, color }) {
   return (
     <div className={`flex items-center gap-1.5 px-3 py-1.5 border-b border-border ${color || 'bg-muted/40'}`}>
@@ -99,7 +101,7 @@ function SectionHeader({ icon: Icon, label, count, color }) {
   );
 }
 
-// ─── Result row ───────────────────────────────────────────────────────────────
+// ─── Ligne de résultat ────────────────────────────────────────────────────────
 function ResultRow({ item, entityType, source, onClick }) {
   const name = extractName(item, entityType, source);
   const sub  = extractSub(item, entityType, source);
@@ -117,9 +119,11 @@ function ResultRow({ item, entityType, source, onClick }) {
         <img
           src={logo}
           alt=""
+          width={28}
+          height={28}
           className="w-7 h-7 object-contain shrink-0 rounded-sm"
           loading="lazy"
-          onError={e => { e.currentTarget.style.opacity = '0.25'; }}
+          onError={e => { e.currentTarget.style.opacity = '0.2'; }}
         />
       ) : (
         <div className="w-7 h-7 bg-muted rounded-sm shrink-0 flex items-center justify-center">
@@ -133,13 +137,13 @@ function ResultRow({ item, entityType, source, onClick }) {
         <p className="text-sm font-medium truncate" style={fieldStyle}>{name}</p>
         {sub && (
           <p className="text-xs text-muted-foreground flex items-center gap-1 truncate" style={dmSans}>
-            {flag && <img src={flag} alt="" className="w-4 h-3 object-cover shrink-0" />}
+            {flag && <img src={flag} alt="" width={16} height={12} className="object-cover shrink-0" />}
             {sub}
           </p>
         )}
       </div>
 
-      {isDb && (
+      {isDb ? (
         <Badge
           variant="outline"
           className="text-[9px] px-1.5 py-0 rounded-sm shrink-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 opacity-80 group-hover:opacity-100 transition-opacity"
@@ -148,13 +152,13 @@ function ResultRow({ item, entityType, source, onClick }) {
           <CheckCircle className="w-2.5 h-2.5 mr-0.5 inline" />
           En base
         </Badge>
-      )}
-      {!isDb && (
+      ) : (
         <Badge
           variant="outline"
           className="text-[9px] px-1.5 py-0 rounded-sm shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           style={fieldStyle}
         >
+          <Zap className="w-2.5 h-2.5 mr-0.5 inline" />
           API
         </Badge>
       )}
@@ -170,34 +174,37 @@ export default function UnifiedEntitySearch({
   placeholder,
   disabled = false,
 }) {
-  const [query, setQuery]         = useState('');
-  const [dbResults, setDbResults] = useState([]);
+  const [query, setQuery]           = useState('');
+  const [dbResults, setDbResults]   = useState([]);
   const [apiResults, setApiResults] = useState([]);
-  const [loadingDb, setLoadingDb] = useState(false);
+  const [loadingDb, setLoadingDb]   = useState(false);
   const [loadingApi, setLoadingApi] = useState(false);
-  const [errorApi, setErrorApi]   = useState(null);
-  const [open, setOpen]           = useState(false);
-  const [selectedName, setSelectedName] = useState(null);
+  const [errorApi, setErrorApi]     = useState(null);
+  const [open, setOpen]             = useState(false);
+  const [selectedSource, setSelectedSource] = useState(null); // 'db' | 'api' | null
 
-  const timerDb  = useRef(null);
-  const timerApi = useRef(null);
+  const timerDb      = useRef(null);
+  const timerApi     = useRef(null);
   const containerRef = useRef(null);
 
   const defaultPlaceholders = {
     team:    'Rechercher un club... (DB + API-Football)',
     player:  'Rechercher un joueur... (DB + API-Football)',
     league:  'Rechercher une compétition... (DB + API-Football)',
-    brand:   'Rechercher une marque...',
-    sponsor: 'Rechercher un sponsor...',
+    brand:   'Rechercher une marque dans la base...',
+    sponsor: 'Rechercher un sponsor dans la base...',
   };
 
+  // ── Fetch DB via /api/autocomplete ─────────────────────────────────────────
   const fetchDb = useCallback(async (q) => {
     setLoadingDb(true);
     try {
       const res = await fetch(getDbEndpoint(entityType, q));
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setDbResults((data.results || data || []).slice(0, 5));
+      // /api/autocomplete retourne un tableau direct [{id, label, extra, status}]
+      const items = Array.isArray(data) ? data : (data.results || []);
+      setDbResults(items.slice(0, 6));
     } catch {
       setDbResults([]);
     } finally {
@@ -205,6 +212,7 @@ export default function UnifiedEntitySearch({
     }
   }, [entityType]);
 
+  // ── Fetch API-Football ─────────────────────────────────────────────────────
   const fetchApi = useCallback(async (q) => {
     setLoadingApi(true);
     setErrorApi(null);
@@ -212,7 +220,8 @@ export default function UnifiedEntitySearch({
       const res = await fetch(getApiEndpoint(entityType, q));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setApiResults((data.results || data || []).slice(0, 6));
+      const items = Array.isArray(data) ? data : (data.results || data.response || []);
+      setApiResults(items.slice(0, 6));
     } catch (err) {
       setErrorApi(err.message || 'Erreur réseau');
       setApiResults([]);
@@ -221,10 +230,11 @@ export default function UnifiedEntitySearch({
     }
   }, [entityType]);
 
+  // ── Gestion de la saisie ───────────────────────────────────────────────────
   const handleChange = (e) => {
     const val = e.target.value;
     setQuery(val);
-    setSelectedName(null);
+    setSelectedSource(null);
 
     if (val.trim().length < 2) {
       setOpen(false);
@@ -237,23 +247,25 @@ export default function UnifiedEntitySearch({
 
     clearTimeout(timerDb.current);
     clearTimeout(timerApi.current);
-    timerDb.current  = setTimeout(() => fetchDb(val.trim()), 200);
-    timerApi.current = setTimeout(() => fetchApi(val.trim()), DEBOUNCE_MS);
+    timerDb.current  = setTimeout(() => fetchDb(val.trim()), DEBOUNCE_DB);
+    timerApi.current = setTimeout(() => fetchApi(val.trim()), DEBOUNCE_API);
     setOpen(true);
   };
 
+  // ── Sélection d'un item ────────────────────────────────────────────────────
   const handleSelect = (item, source) => {
     const name = extractName(item, entityType, source);
     setQuery(name);
-    setSelectedName(source);
+    setSelectedSource(source);
     setOpen(false);
     if (source === 'db')  onSelectDb?.(item);
     if (source === 'api') onSelectApi?.(item);
   };
 
-  const isLoading = loadingDb || loadingApi;
-  const hasResults = dbResults.length > 0 || apiResults.length > 0;
+  const isLoading    = loadingDb || loadingApi;
+  const hasResults   = dbResults.length > 0 || apiResults.length > 0;
   const showDropdown = open && query.trim().length >= 2;
+  const showApiSection = ['team', 'player', 'league'].includes(entityType);
 
   // Fermer au clic extérieur
   useEffect(() => {
@@ -266,31 +278,33 @@ export default function UnifiedEntitySearch({
 
   return (
     <div className="relative" ref={containerRef}>
-      {/* Input */}
+
+      {/* ── Input ── */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
         <Input
           value={query}
           onChange={handleChange}
-          onFocus={() => hasResults && setOpen(true)}
+          onFocus={() => hasResults && query.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder || defaultPlaceholders[entityType]}
           className="pl-8 pr-20 rounded-none h-9 text-sm bg-card border-border"
           autoComplete="off"
           disabled={disabled}
         />
-        {/* Indicateurs de chargement / statut */}
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-          {(loadingDb || loadingApi) && (
+
+        {/* Indicateurs droite */}
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+          {isLoading && (
             <svg className="w-3.5 h-3.5 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="20" />
             </svg>
           )}
-          {selectedName === 'db' && (
-            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 rounded-sm border-emerald-500/40 text-emerald-600" style={fieldStyle}>
+          {!isLoading && selectedSource === 'db' && (
+            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 rounded-sm border-emerald-500/40 text-emerald-600 dark:text-emerald-400" style={fieldStyle}>
               <CheckCircle className="w-2.5 h-2.5 mr-0.5 inline" />DB
             </Badge>
           )}
-          {selectedName === 'api' && (
+          {!isLoading && selectedSource === 'api' && (
             <Badge variant="secondary" className="text-[9px] px-1.5 py-0 rounded-sm" style={fieldStyle}>
               <Zap className="w-2.5 h-2.5 mr-0.5 inline" />API ✓
             </Badge>
@@ -298,11 +312,11 @@ export default function UnifiedEntitySearch({
         </div>
       </div>
 
-      {/* Dropdown */}
+      {/* ── Dropdown ── */}
       {showDropdown && (
-        <div className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-card border border-border shadow-lg rounded-sm overflow-hidden">
+        <div className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-card border border-border shadow-lg rounded-sm overflow-hidden max-h-80 overflow-y-auto">
 
-          {/* ── Section DB locale ── */}
+          {/* Section DB */}
           {(loadingDb || dbResults.length > 0) && (
             <>
               <SectionHeader
@@ -312,14 +326,11 @@ export default function UnifiedEntitySearch({
                 color="bg-emerald-500/5"
               />
               {loadingDb ? (
-                <>
-                  <SkeletonRow />
-                  <SkeletonRow />
-                </>
+                <><SkeletonRow /><SkeletonRow /></>
               ) : (
                 dbResults.map((item, idx) => (
                   <ResultRow
-                    key={`db-${item.id || item._id || idx}`}
+                    key={`db-${item.id || idx}`}
                     item={item}
                     entityType={entityType}
                     source="db"
@@ -330,8 +341,8 @@ export default function UnifiedEntitySearch({
             </>
           )}
 
-          {/* ── Section API-Football ── */}
-          {(['team', 'player', 'league'].includes(entityType)) && (
+          {/* Section API-Football */}
+          {showApiSection && (
             <>
               <SectionHeader
                 icon={Zap}
@@ -340,48 +351,42 @@ export default function UnifiedEntitySearch({
                 color="bg-blue-500/5"
               />
               {loadingApi ? (
-                <>
-                  <SkeletonRow />
-                  <SkeletonRow />
-                  <SkeletonRow />
-                </>
+                <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
               ) : errorApi ? (
                 <div className="flex items-center gap-2 px-3 py-2 text-xs text-destructive" style={dmSans}>
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  {errorApi}
+                  <span className="flex-1">{errorApi}</span>
                   <button
                     type="button"
+                    className="pointer-events-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => fetchApi(query.trim())}
-                    className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <RefreshCw className="w-3 h-3" /> Réessayer
                   </button>
                 </div>
-              ) : apiResults.length === 0 && !loadingApi ? (
-                <div className="px-3 py-2 text-xs text-muted-foreground" style={dmSans}>
+              ) : apiResults.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground" style={dmSans}>
                   Aucun résultat API pour «&nbsp;<em>{query}</em>&nbsp;»
-                </div>
+                </p>
               ) : (
-                <div className="max-h-52 overflow-y-auto">
-                  {apiResults.map((item, idx) => (
-                    <ResultRow
-                      key={`api-${idx}`}
-                      item={item}
-                      entityType={entityType}
-                      source="api"
-                      onClick={handleSelect}
-                    />
-                  ))}
-                </div>
+                apiResults.map((item, idx) => (
+                  <ResultRow
+                    key={`api-${idx}`}
+                    item={item}
+                    entityType={entityType}
+                    source="api"
+                    onClick={handleSelect}
+                  />
+                ))
               )}
             </>
           )}
 
-          {/* ── Empty state global ── */}
+          {/* Empty state global */}
           {!isLoading && !hasResults && (
-            <div className="px-3 py-4 text-xs text-muted-foreground text-center" style={dmSans}>
+            <p className="px-3 py-4 text-xs text-muted-foreground text-center" style={dmSans}>
               Aucun résultat pour «&nbsp;<em>{query}</em>&nbsp;»
-            </div>
+            </p>
           )}
 
         </div>
