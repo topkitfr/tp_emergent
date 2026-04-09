@@ -1,28 +1,130 @@
 // frontend/src/pages/TeamDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Shield, Globe, MapPin, Calendar, UserPlus, UserMinus } from 'lucide-react';
-import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
-import { getTeam, followEntity, unfollowEntity, isFollowing } from '@/lib/api';
+import { useParams, Link } from 'react-router-dom';
+import {
+  Shield, Globe, MapPin, Calendar, UserPlus, UserMinus,
+  Pencil, Shirt, Users, ArrowLeft, Building2
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import JerseyCard from '@/components/JerseyCard';
+import EntityEditDialog from '@/components/EntityEditDialog';
+import { getTeam, followEntity, unfollowEntity, isFollowing, proxyImageUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 
+const BC = { fontFamily: 'Barlow Condensed, sans-serif' };
+const DM = { fontFamily: 'DM Sans, sans-serif', textTransform: 'none' };
+
+// ─── VenueCard ────────────────────────────────────────────────────────────────
+function VenueCard({ team }) {
+  const hasVenue = team.stadium_name || team.stadium_capacity || team.stadium_city;
+  if (!hasVenue) return null;
+
+  return (
+    <div className="border border-border bg-card overflow-hidden">
+      {/* Photo stade */}
+      {team.stadium_image_url && (
+        <div className="aspect-video w-full overflow-hidden bg-secondary">
+          <img
+            src={proxyImageUrl(team.stadium_image_url)}
+            alt={team.stadium_name || 'Stadium'}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <div className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground" style={BC}>Stadium</p>
+        </div>
+        {team.stadium_name && (
+          <p className="text-lg tracking-tight" style={BC}>{team.stadium_name}</p>
+        )}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {team.stadium_capacity && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5" style={BC}>Capacity</p>
+              <p className="text-sm font-mono">{team.stadium_capacity.toLocaleString()}</p>
+            </div>
+          )}
+          {team.stadium_surface && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5" style={BC}>Surface</p>
+              <p className="text-sm" style={DM}>{team.stadium_surface}</p>
+            </div>
+          )}
+          {team.stadium_city && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5" style={BC}>City</p>
+              <p className="text-sm" style={DM}>{team.stadium_city}</p>
+            </div>
+          )}
+          {team.stadium_country && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5" style={BC}>Country</p>
+              <p className="text-sm" style={DM}>{team.stadium_country}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── TeamInfoCard ─────────────────────────────────────────────────────────────
+function TeamInfoCard({ team }) {
+  const items = [
+    team.country     && { label: 'Country',   value: team.country },
+    team.city        && { label: 'City',       value: team.city },
+    team.founded     && { label: 'Founded',    value: team.founded },
+    team.gender      && { label: 'Genre',      value: team.gender.charAt(0).toUpperCase() + team.gender.slice(1) },
+    team.is_national != null && {
+      label: 'Type',
+      value: team.is_national ? '🚩 National' : '🏟️ Club',
+    },
+  ].filter(Boolean);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="border border-border bg-card p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Shield className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground" style={BC}>Team Info</p>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        {items.map(({ label, value }) => (
+          <div key={label}>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5" style={BC}>{label}</p>
+            <p className="text-sm" style={DM}>{value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function TeamDetail() {
   const { id } = useParams();
   const { user } = useAuth();
-  const [team, setTeam]         = useState(null);
-  const [loading, setLoading]   = useState(true);
+  const [team, setTeam]               = useState(null);
+  const [loading, setLoading]         = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
-  const [filterBrand,  setFilterBrand]  = useState('');
+  const [filterBrand, setFilterBrand]   = useState('');
   const [following, setFollowing]       = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showEdit, setShowEdit]         = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const teamRes = await getTeam(id);
+      const res = await getTeam(id);
       setTeam({
-        ...teamRes.data,
-        kits: (teamRes.data?.kits || []).filter(k => k.status !== 'rejected'),
+        ...res.data,
+        kits: (res.data?.kits || []).filter(k => k.status !== 'rejected'),
       });
     } catch {
       setTeam(null);
@@ -35,7 +137,9 @@ export default function TeamDetail() {
 
   useEffect(() => {
     if (!user || !id) return;
-    isFollowing('team', id).then(r => setFollowing(r.data?.following || false)).catch(() => {});
+    isFollowing('team', id)
+      .then(r => setFollowing(r.data?.following || false))
+      .catch(() => {});
   }, [user, id]);
 
   const handleFollow = async () => {
@@ -57,7 +161,7 @@ export default function TeamDetail() {
   };
 
   if (loading) return <EntityDetailSkeleton />;
-  if (!team)   return (
+  if (!team) return (
     <div className="px-4 lg:px-8 py-16 text-center">
       <p className="text-muted-foreground">Team not found</p>
     </div>
@@ -67,57 +171,189 @@ export default function TeamDetail() {
   const seasons = [...new Set(kits.map(k => k.season).filter(Boolean))].sort().reverse();
   const brands  = [...new Set(kits.map(k => k.brand).filter(Boolean))].sort();
 
+  const filteredKits = kits.filter(kit => {
+    const okSeason = !filterSeason || kit.season === filterSeason;
+    const okBrand  = !filterBrand  || (kit.brand || '').toLowerCase().includes(filterBrand.toLowerCase());
+    return okSeason && okBrand;
+  });
+
+  const isPending = team.status === 'pending' || team.status === 'for_review';
+
   return (
-    <EntityDetailPage
-      entityType="team"
-      entity={team}
-      entityId={team.team_id}
-      backTo={{ path: '/teams', label: 'Teams' }}
-      image={team.crest_url}
-      icon={Shield}
-      title={team.name}
-      subtitle={
-        <>
-          {team.country && <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{team.country}</span>}
-          {team.city    && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{team.city}</span>}
-        </>
-      }
-      metaItems={[
-        team.founded
-          ? <span key="founded" className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Founded {team.founded}</span>
-          : null,
-      ].filter(Boolean)}
-      badges={[
-        { label: `${team.kit_count ?? kits.length} kits`, variant: 'secondary' },
-        team.status === 'approved'
-          ? { label: 'Approved', variant: 'secondary' }
-          : { label: team.status === 'for_review' ? 'For Review' : 'Pending', variant: 'outline' },
-      ]}
-      kits={kits}
-      filters={[
-        { key: 'season', label: 'All Seasons', value: filterSeason, onChange: setFilterSeason, options: seasons },
-        { key: 'brand',  label: 'All Brands',  value: filterBrand,  onChange: setFilterBrand,  options: brands  },
-      ]}
-      onEditSuccess={loadData}
-      testId="team-detail-page"
-      extraActions={
-        user ? (
-          <button
-            onClick={handleFollow}
-            disabled={followLoading}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-none transition-colors ${
-              following
-                ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/80'
-                : 'bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-foreground'
-            }`}
-            data-testid="follow-btn"
+    <div className="animate-fade-in-up" data-testid="team-detail-page">
+
+      {/* ── HERO BANNER ──────────────────────────────────────────────────── */}
+      <div className="relative w-full overflow-hidden" style={{ minHeight: '280px' }}>
+        {/* Fond : image stade ou dégradé neutre */}
+        {team.stadium_image_url ? (
+          <img
+            src={proxyImageUrl(team.stadium_image_url)}
+            alt={team.stadium_name || team.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-card to-secondary" />
+        )}
+        {/* Overlay gradient sombre */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+
+        {/* Contenu hero */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-8 pt-6 pb-8 flex flex-col h-full" style={{ minHeight: '280px' }}>
+          {/* Breadcrumb */}
+          <Link
+            to="/teams"
+            className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90 transition-colors mb-auto"
           >
-            {following
-              ? <><UserMinus className="w-3.5 h-3.5" /> Unfollow</>
-              : <><UserPlus  className="w-3.5 h-3.5" /> Follow</>}
-          </button>
-        ) : null
-      }
-    />
+            <ArrowLeft className="w-3 h-3" />
+            Teams
+          </Link>
+
+          {/* Bas du hero : crest + nom + actions */}
+          <div className="flex items-end gap-5 mt-8">
+            {/* Crest */}
+            <div className="shrink-0 w-20 h-20 bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden">
+              {team.crest_url
+                ? <img src={proxyImageUrl(team.crest_url)} alt={team.name} className="w-16 h-16 object-contain p-1" />
+                : <Shield className="w-8 h-8 text-white/40" />
+              }
+            </div>
+
+            {/* Nom + meta */}
+            <div className="flex-1 min-w-0">
+              {isPending && (
+                <Badge variant="outline" className="rounded-none text-[10px] border-white/30 text-white/70 mb-2">
+                  PENDING APPROVAL
+                </Badge>
+              )}
+              <h1 className="text-3xl sm:text-4xl tracking-tighter text-white break-words" style={BC}>
+                {team.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-white/60" style={DM}>
+                {team.country && (
+                  <span className="flex items-center gap-1">
+                    <Globe className="w-3.5 h-3.5" />{team.country}
+                  </span>
+                )}
+                {team.city && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" />{team.city}
+                  </span>
+                )}
+                {team.founded && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" />Est. {team.founded}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              {user && (
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-none transition-colors ${
+                    following
+                      ? 'bg-white text-black border-white hover:bg-white/80'
+                      : 'bg-transparent text-white border-white/40 hover:border-white'
+                  }`}
+                  style={BC}
+                  data-testid="follow-btn"
+                >
+                  {following
+                    ? <><UserMinus className="w-3.5 h-3.5" /> Unfollow</>
+                    : <><UserPlus  className="w-3.5 h-3.5" /> Follow</>}
+                </button>
+              )}
+              {user && (
+                <button
+                  onClick={() => setShowEdit(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-white/40 text-white hover:border-white rounded-none transition-colors"
+                  style={BC}
+                  data-testid="team-detail-page-suggest-edit-btn"
+                >
+                  <Pencil className="w-3 h-3" /> Suggest Edit
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── INFOS + VENUE ────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+          <TeamInfoCard team={team} />
+          <VenueCard team={team} />
+        </div>
+
+        {/* ── KITS ─────────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 mb-5">
+          <Shirt className="w-4 h-4 text-muted-foreground" />
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground" style={BC}>Kits</p>
+          <div className="flex-1 border-t border-border ml-1" />
+          <span className="font-mono text-xs text-muted-foreground">
+            {filteredKits.length}{filteredKits.length !== kits.length && `/${kits.length}`}
+          </span>
+        </div>
+
+        {/* Filtres */}
+        {kits.length > 0 && (
+          <div className="flex flex-wrap gap-3 mb-6">
+            <select
+              value={filterSeason}
+              onChange={e => setFilterSeason(e.target.value)}
+              className="h-9 px-3 bg-card border border-border rounded-none text-sm text-foreground"
+              data-testid="team-detail-page-filter-season"
+            >
+              <option value="">All Seasons</option>
+              {seasons.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select
+              value={filterBrand}
+              onChange={e => setFilterBrand(e.target.value)}
+              className="h-9 px-3 bg-card border border-border rounded-none text-sm text-foreground"
+              data-testid="team-detail-page-filter-brand"
+            >
+              <option value="">All Brands</option>
+              {brands.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Grille kits */}
+        {kits.length === 0 ? (
+          <div className="text-center py-16 border border-dashed border-border">
+            <Shirt className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
+            <p className="text-sm text-muted-foreground" style={DM}>No kits found for this team</p>
+          </div>
+        ) : filteredKits.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-sm text-muted-foreground" style={DM}>No kits match the selected filters</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {filteredKits.map(kit => (
+              <JerseyCard key={kit.kit_id} kit={kit} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Suggest Edit Dialog ───────────────────────────────────────── */}
+      {showEdit && (
+        <EntityEditDialog
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          entityType="team"
+          mode="edit"
+          initialData={team}
+          entityId={team.team_id}
+          onSuccess={loadData}
+        />
+      )}
+    </div>
   );
 }
