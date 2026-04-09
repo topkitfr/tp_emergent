@@ -3,18 +3,34 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Shield, Globe, MapPin, Calendar, UserPlus, UserMinus,
-  Pencil, Shirt, Users, ArrowLeft, Building2
+  Pencil, Shirt, ArrowLeft, Building2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import JerseyCard from '@/components/JerseyCard';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { getTeam, followEntity, unfollowEntity, isFollowing, proxyImageUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 
 const BC = { fontFamily: 'Barlow Condensed, sans-serif' };
 const DM = { fontFamily: 'DM Sans, sans-serif', textTransform: 'none' };
+
+// ─── Skeleton ───────────────────────────────────────────────────────────────────
+function TeamDetailSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="w-full bg-card" style={{ minHeight: '280px' }} />
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+          <div className="h-40 bg-card border border-border" />
+          <div className="h-40 bg-card border border-border" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="aspect-[3/4] bg-card border border-border" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── VenueCard ────────────────────────────────────────────────────────────────
 function VenueCard({ team }) {
@@ -23,7 +39,6 @@ function VenueCard({ team }) {
 
   return (
     <div className="border border-border bg-card overflow-hidden">
-      {/* Photo stade */}
       {team.stadium_image_url && (
         <div className="aspect-video w-full overflow-hidden bg-secondary">
           <img
@@ -76,10 +91,10 @@ function VenueCard({ team }) {
 // ─── TeamInfoCard ─────────────────────────────────────────────────────────────
 function TeamInfoCard({ team }) {
   const items = [
-    team.country     && { label: 'Country',   value: team.country },
-    team.city        && { label: 'City',       value: team.city },
-    team.founded     && { label: 'Founded',    value: team.founded },
-    team.gender      && { label: 'Genre',      value: team.gender.charAt(0).toUpperCase() + team.gender.slice(1) },
+    team.country      && { label: 'Country', value: team.country },
+    team.city         && { label: 'City',    value: team.city },
+    team.founded      && { label: 'Founded', value: team.founded },
+    team.gender       && { label: 'Genre',   value: team.gender.charAt(0).toUpperCase() + team.gender.slice(1) },
     team.is_national != null && {
       label: 'Type',
       value: team.is_national ? '🚩 National' : '🏟️ Club',
@@ -110,8 +125,8 @@ function TeamInfoCard({ team }) {
 export default function TeamDetail() {
   const { id } = useParams();
   const { user } = useAuth();
-  const [team, setTeam]               = useState(null);
-  const [loading, setLoading]         = useState(true);
+  const [team, setTeam]                 = useState(null);
+  const [loading, setLoading]           = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
   const [filterBrand, setFilterBrand]   = useState('');
   const [following, setFollowing]       = useState(false);
@@ -160,7 +175,7 @@ export default function TeamDetail() {
     }
   };
 
-  if (loading) return <EntityDetailSkeleton />;
+  if (loading) return <TeamDetailSkeleton />;
   if (!team) return (
     <div className="px-4 lg:px-8 py-16 text-center">
       <p className="text-muted-foreground">Team not found</p>
@@ -184,7 +199,6 @@ export default function TeamDetail() {
 
       {/* ── HERO BANNER ──────────────────────────────────────────────────── */}
       <div className="relative w-full overflow-hidden" style={{ minHeight: '280px' }}>
-        {/* Fond : image stade ou dégradé neutre */}
         {team.stadium_image_url ? (
           <img
             src={proxyImageUrl(team.stadium_image_url)}
@@ -195,12 +209,9 @@ export default function TeamDetail() {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-card to-secondary" />
         )}
-        {/* Overlay gradient sombre */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
 
-        {/* Contenu hero */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-8 pt-6 pb-8 flex flex-col h-full" style={{ minHeight: '280px' }}>
-          {/* Breadcrumb */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-8 pt-6 pb-8 flex flex-col" style={{ minHeight: '280px' }}>
           <Link
             to="/teams"
             className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90 transition-colors mb-auto"
@@ -209,7 +220,6 @@ export default function TeamDetail() {
             Teams
           </Link>
 
-          {/* Bas du hero : crest + nom + actions */}
           <div className="flex items-end gap-5 mt-8">
             {/* Crest */}
             <div className="shrink-0 w-20 h-20 bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden">
@@ -219,7 +229,6 @@ export default function TeamDetail() {
               }
             </div>
 
-            {/* Nom + meta */}
             <div className="flex-1 min-w-0">
               {isPending && (
                 <Badge variant="outline" className="rounded-none text-[10px] border-white/30 text-white/70 mb-2">
@@ -248,7 +257,6 @@ export default function TeamDetail() {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
               {user && (
                 <button
@@ -299,7 +307,6 @@ export default function TeamDetail() {
           </span>
         </div>
 
-        {/* Filtres */}
         {kits.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-6">
             <select
@@ -323,7 +330,6 @@ export default function TeamDetail() {
           </div>
         )}
 
-        {/* Grille kits */}
         {kits.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-border">
             <Shirt className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
