@@ -16,7 +16,10 @@ import { Search, Database, Zap, AlertCircle, RefreshCw, CheckCircle } from 'luci
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+// REACT_APP_API_URL contient déjà /api (ex: https://api.topkit.app/api)
+// On utilise REACT_APP_BACKEND_URL (sans /api) pour construire les URLs manuellement
+// et éviter le double /api/api/...
+const BACKEND = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
 const DEBOUNCE_DB  = 200;
 const DEBOUNCE_API = 350;
 
@@ -26,12 +29,12 @@ const dmSans     = { fontFamily: 'DM Sans' };
 
 // DB : utilise la route /api/autocomplete?type=&q= déjà implémentée dans entities.py
 function getDbEndpoint(entityType, query) {
-  return `${API_BASE}/api/autocomplete?type=${entityType}&q=${encodeURIComponent(query)}`;
+  return `${BACKEND}/api/autocomplete?type=${entityType}&q=${encodeURIComponent(query)}`;
 }
 
 // API-Football externe
 function getApiEndpoint(entityType, query) {
-  return `${API_BASE}/api/apifootball/search/${entityType}?q=${encodeURIComponent(query)}`;
+  return `${BACKEND}/api/apifootball/search/${entityType}?q=${encodeURIComponent(query)}`;
 }
 
 // Nom affiché selon la source
@@ -46,8 +49,6 @@ function extractName(item, entityType, source) {
 // Sous-titre affiché
 function extractSub(item, entityType, source) {
   if (source === 'db') {
-    // L'autocomplete renvoie { id, label, extra, status }
-    // extra = country / nationality / country_or_region selon l'entité
     const parts = [item.extra, item.status !== 'approved' ? `(${item.status})` : null].filter(Boolean);
     return parts.join(' · ');
   }
@@ -179,7 +180,6 @@ export default function UnifiedEntitySearch({
   const [apiResults, setApiResults] = useState([]);
   const [loadingDb, setLoadingDb]   = useState(false);
   const [loadingApi, setLoadingApi] = useState(false);
-  // null = pas encore cherché, false = cherché sans résultat, true = a des résultats
   const [dbSearched, setDbSearched] = useState(false);
   const [errorApi, setErrorApi]     = useState(null);
   const [open, setOpen]             = useState(false);
@@ -205,7 +205,6 @@ export default function UnifiedEntitySearch({
       const res = await fetch(getDbEndpoint(entityType, q));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      // /api/autocomplete retourne un tableau direct [{id, label, extra, status, logo_url}]
       const items = Array.isArray(data) ? data : (data.results || []);
       setDbResults(items.slice(0, 6));
     } catch {
@@ -391,7 +390,7 @@ export default function UnifiedEntitySearch({
             </>
           )}
 
-          {/* Empty state global — aucune section ne s'est encore affichée */}
+          {/* Empty state global */}
           {!loadingDb && !dbSearched && !showApiSection && (
             <p className="px-3 py-4 text-xs text-muted-foreground text-center" style={dmSans}>
               Aucun résultat pour «&nbsp;<em>{query}</em>&nbsp;»
