@@ -22,6 +22,11 @@ import UnifiedEntitySearch from '@/components/UnifiedEntitySearch';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
+const SURFACE_OPTIONS = ['Grass', 'Artificial Turf', 'Hybrid'];
+const GENDER_OPTIONS = ['male', 'female'];
+const FOOT_OPTIONS = ['right', 'left', 'both'];
+const LEAGUE_TYPE_OPTIONS = ['League', 'Cup'];
+
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = 'bg-card border-border rounded-none';
@@ -70,14 +75,12 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     onClose();
   };
 
-  // ── Handlers DB sélect (élément déjà en base) ────────────────────────────
+  // ── Handlers DB sélect ────────────────────────────────────────────────────
   const handleDbSelect = (item) => {
-    // Avertissement : l'élément existe déjà en base
     toast.warning(
       `« ${item.name || item.full_name || item.label} » existe déjà en base de données. Préremplissage effectué.`,
       { duration: 5000 }
     );
-    // Préremplir quand même pour permettre une édition
     if (entityType === 'player')  handlePlayerDbSelect(item);
     if (entityType === 'team')    handleTeamDbSelect(item);
     if (entityType === 'league')  handleLeagueDbSelect(item);
@@ -89,9 +92,14 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     setForm(prev => ({
       ...prev,
       full_name:      item.full_name || item.name || '',
+      first_name:     item.first_name || '',
+      last_name:      item.last_name || '',
       nationality:    item.nationality || '',
       birth_date:     item.birth_date || '',
+      birth_place:    item.birth_place || '',
+      birth_country:  item.birth_country || '',
       photo_url:      item.photo_url || item.photo || '',
+      // apifootball_id stocké silencieusement
       apifootball_id: item.apifootball_id || '',
       positions:      item.positions || [],
     }));
@@ -105,10 +113,13 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       city:                item.city || '',
       founded:             item.founded || '',
       is_national:         item.is_national ?? false,
+      gender:              item.gender || '',
       crest_url:           item.crest_url || '',
       stadium_name:        item.stadium_name || '',
       stadium_capacity:    item.stadium_capacity || '',
       stadium_surface:     item.stadium_surface || '',
+      stadium_city:        item.stadium_city || '',
+      stadium_country:     item.stadium_country || '',
       apifootball_team_id: item.apifootball_team_id || '',
     }));
   };
@@ -116,26 +127,35 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   const handleLeagueDbSelect = (item) => {
     setForm(prev => ({
       ...prev,
-      name:              item.name || '',
-      country_or_region: item.country_or_region || '',
-      country_code:      item.country_code || '',
-      type:              item.type || '',
-      scope:             item.scope || '',
-      organizer:         item.organizer || '',
-      logo_url:          item.logo_url || '',
+      name:                  item.name || '',
+      country_or_region:     item.country_or_region || '',
+      country_code:          item.country_code || '',
+      type:                  item.type || '',
+      gender:                item.gender || '',
+      scope:                 item.scope || '',
+      organizer:             item.organizer || '',
+      logo_url:              item.logo_url || '',
       apifootball_league_id: item.apifootball_league_id || '',
     }));
   };
 
-  // ── Handlers API select (préfill depuis API-Football) ───────────────────
+  // ── Handlers API select ───────────────────────────────────────────────────
   const handlePlayerApiSelect = (player) => {
     const mappedPositions = mapApiPosition(player.position);
     setForm(prev => ({
       ...prev,
       full_name:      player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim(),
-      nationality:    player.nationality || prev.nationality || '',
-      birth_date:     player.birth_date  || prev.birth_date  || '',
-      photo_url:      player.photo       || prev.photo_url   || '',
+      first_name:     player.firstname    || prev.first_name    || '',
+      last_name:      player.lastname     || prev.last_name     || '',
+      nationality:    player.nationality  || prev.nationality   || '',
+      birth_date:     player.birth_date   || prev.birth_date    || '',
+      birth_place:    player.birth_place  || prev.birth_place   || '',
+      birth_country:  player.birth_country || prev.birth_country || '',
+      photo_url:      player.photo        || prev.photo_url     || '',
+      height:         player.height       ?? prev.height        ?? '',
+      weight:         player.weight       ?? prev.weight        ?? '',
+      preferred_foot: player.preferred_foot || prev.preferred_foot || '',
+      preferred_number: player.preferred_number ?? prev.preferred_number ?? '',
       apifootball_id: player.apifootball_id,
       positions:      mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
     }));
@@ -144,16 +164,19 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   const handleTeamApiSelect = (team) => {
     setForm(prev => ({
       ...prev,
-      name:                  team.name              || prev.name || '',
-      country:               team.country           || prev.country || '',
-      city:                  team.city              || prev.city || '',
-      founded:               team.founded           ?? prev.founded ?? '',
-      is_national:           team.is_national       ?? prev.is_national ?? false,
-      crest_url:             team.logo              || prev.crest_url || '',
-      stadium_name:          team.stadium_name      || prev.stadium_name || '',
-      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity ?? '',
-      stadium_surface:       team.stadium_surface   || prev.stadium_surface || '',
+      name:                  team.name              || prev.name              || '',
+      country:               team.country           || prev.country           || '',
+      city:                  team.city              || prev.city              || '',
+      founded:               team.founded           ?? prev.founded           ?? '',
+      is_national:           team.is_national       ?? prev.is_national       ?? false,
+      gender:                team.gender            || prev.gender            || '',
+      crest_url:             team.logo              || prev.crest_url         || '',
+      stadium_name:          team.stadium_name      || prev.stadium_name      || '',
+      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity  ?? '',
+      stadium_surface:       team.stadium_surface   || prev.stadium_surface   || '',
       stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
+      stadium_city:          team.stadium_city      || prev.stadium_city      || '',
+      stadium_country:       team.stadium_country   || prev.stadium_country   || '',
       apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
     }));
   };
@@ -161,14 +184,15 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   const handleLeagueApiSelect = (league) => {
     setForm(prev => ({
       ...prev,
-      name:                    league.name                || prev.name || '',
+      name:                    league.name                || prev.name                || '',
       country_or_region:       league.country_name        || league.country_or_region || prev.country_or_region || '',
-      country_code:            league.country_code        || prev.country_code || '',
-      country_flag:            league.country_flag        || prev.country_flag || '',
-      type:                    league.type                || prev.type || '',
-      scope:                   league.scope               || prev.scope || '',
-      organizer:               league.organizer           || prev.organizer || '',
-      logo_url:                league.apifootball_logo    || league.logo_url || prev.logo_url || '',
+      country_code:            league.country_code        || prev.country_code        || '',
+      country_flag:            league.country_flag        || prev.country_flag        || '',
+      type:                    league.type                || prev.type                || '',
+      gender:                  league.gender              || prev.gender              || '',
+      scope:                   league.scope               || prev.scope               || '',
+      organizer:               league.organizer           || prev.organizer           || '',
+      logo_url:                league.apifootball_logo    || league.logo_url          || prev.logo_url || '',
       apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
     }));
   };
@@ -211,6 +235,12 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     sponsor: 'Add a new Sponsor',
   };
 
+  // Helper: toggle bouton pour les positions
+  const togglePosition = (pos) => {
+    const current = form.positions || [];
+    set('positions', current.includes(pos) ? current.filter(p => p !== pos) : [...current, pos]);
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg bg-background border-border rounded-none p-0 gap-0">
@@ -243,30 +273,55 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Input value={form.full_name || ''} onChange={e => set('full_name', e.target.value)} placeholder="Zinédine Zidane" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Prénom</Label>
+                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="Zinédine" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Nom de famille</Label>
+                  <Input value={form.last_name || ''} onChange={e => set('last_name', e.target.value)} placeholder="Zidane" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Nationality</Label>
                   <Input value={form.nationality || ''} onChange={e => set('nationality', e.target.value)} placeholder="French" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>Date of Birth</Label>
-                  <Input value={form.birth_date || ''} onChange={e => set('birth_date', e.target.value)} placeholder="DD/MM/YYYY" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Date of Birth (DD/MM/YYYY)</Label>
+                  <Input value={form.birth_date || ''} onChange={e => set('birth_date', e.target.value)} placeholder="23/06/1972" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Lieu de naissance</Label>
+                  <Input value={form.birth_place || ''} onChange={e => set('birth_place', e.target.value)} placeholder="Marseille" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Pays de naissance</Label>
+                  <Input value={form.birth_country || ''} onChange={e => set('birth_country', e.target.value)} placeholder="France" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Height (cm)</Label>
+                  <Input type="number" value={form.height || ''} onChange={e => set('height', e.target.value ? parseInt(e.target.value) : '')} placeholder="185" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Weight (kg)</Label>
+                  <Input type="number" value={form.weight || ''} onChange={e => set('weight', e.target.value ? parseInt(e.target.value) : '')} placeholder="80" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Preferred Foot</Label>
+                  <Select value={form.preferred_foot || ''} onValueChange={v => set('preferred_foot', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="Pied" /></SelectTrigger>
+                    <SelectContent>
+                      {FOOT_OPTIONS.map(f => <SelectItem key={f} value={f}>{f.charAt(0).toUpperCase() + f.slice(1)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Preferred Number</Label>
                   <Input type="number" value={form.preferred_number || ''} onChange={e => set('preferred_number', e.target.value ? parseInt(e.target.value) : '')} placeholder="10" className={inputClass} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
-                  <Input type="number" value={form.apifootball_id || ''} onChange={e => set('apifootball_id', e.target.value ? parseInt(e.target.value) : '')} className={inputClass} placeholder="Auto-fillé ci-dessus" />
-                </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Positions</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {POSITIONS.map(pos => (
-                      <button key={pos} type="button"
-                        onClick={() => {
-                          const current = form.positions || [];
-                          set('positions', current.includes(pos) ? current.filter(p => p !== pos) : [...current, pos]);
-                        }}
+                      <button key={pos} type="button" onClick={() => togglePosition(pos)}
                         className={`px-2 py-0.5 text-[11px] border rounded-none transition-colors ${
                           (form.positions || []).includes(pos)
                             ? 'bg-primary text-primary-foreground border-primary'
@@ -318,11 +373,42 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Input type="number" value={form.founded || ''} onChange={e => set('founded', e.target.value ? parseInt(e.target.value) : '')} placeholder="1899" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
-                  <Input type="number" value={form.apifootball_team_id || ''} onChange={e => set('apifootball_team_id', e.target.value ? parseInt(e.target.value) : '')} placeholder="Auto-fillé ci-dessus" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Genre</Label>
+                  <Select value={form.gender || ''} onValueChange={v => set('gender', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="Genre" /></SelectTrigger>
+                    <SelectContent>
+                      {GENDER_OPTIONS.map(g => <SelectItem key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2" style={fieldStyle}>Stadium</p>
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Type</Label>
+                  <div className="flex gap-2">
+                    {[
+                      { label: '🏟️ Club',     value: false },
+                      { label: '🚩 Nationale', value: true  },
+                    ].map(opt => (
+                      <button
+                        key={String(opt.value)}
+                        type="button"
+                        onClick={() => set('is_national', opt.value)}
+                        className={`px-3 py-1.5 text-xs border rounded-none transition-colors ${
+                          form.is_national === opt.value
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+                        }`}
+                        style={fieldStyle}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stade */}
+                <div className="col-span-2 flex items-center gap-2 pt-1">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap" style={fieldStyle}>Stadium</p>
+                  <div className="flex-1 border-t border-border" />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Stadium Name</Label>
@@ -334,7 +420,20 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Surface</Label>
-                  <Input value={form.stadium_surface || ''} onChange={e => set('stadium_surface', e.target.value)} placeholder="grass" className={inputClass} />
+                  <Select value={form.stadium_surface || ''} onValueChange={v => set('stadium_surface', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="Surface" /></SelectTrigger>
+                    <SelectContent>
+                      {['Grass', 'Artificial Turf', 'Hybrid'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Ville du stade</Label>
+                  <Input value={form.stadium_city || ''} onChange={e => set('stadium_city', e.target.value)} placeholder="Barcelona" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Pays du stade</Label>
+                  <Input value={form.stadium_country || ''} onChange={e => set('stadium_country', e.target.value)} placeholder="Spain" className={inputClass} />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Crest / Badge</Label>
@@ -399,8 +498,13 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Input value={form.country_or_region || ''} onChange={e => set('country_or_region', e.target.value)} placeholder="England" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>Type (API)</Label>
-                  <Input value={form.type || ''} onChange={e => set('type', e.target.value)} placeholder="League / Cup" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Type</Label>
+                  <Select value={form.type || ''} onValueChange={v => set('type', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="League / Cup" /></SelectTrigger>
+                    <SelectContent>
+                      {LEAGUE_TYPE_OPTIONS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Level</Label>
@@ -412,12 +516,17 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>Organizer</Label>
-                  <Input value={form.organizer || ''} onChange={e => set('organizer', e.target.value)} placeholder="UEFA" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Genre</Label>
+                  <Select value={form.gender || ''} onValueChange={v => set('gender', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="Genre" /></SelectTrigger>
+                    <SelectContent>
+                      {GENDER_OPTIONS.map(g => <SelectItem key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>API-Football ID</Label>
-                  <Input type="number" value={form.apifootball_league_id || ''} onChange={e => set('apifootball_league_id', e.target.value ? parseInt(e.target.value) : '')} placeholder="Auto-fillé ci-dessus" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Organizer</Label>
+                  <Input value={form.organizer || ''} onChange={e => set('organizer', e.target.value)} placeholder="UEFA" className={inputClass} />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Logo</Label>

@@ -19,6 +19,9 @@ const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM
 const AURA_LEVELS = [1, 2, 3, 4, 5];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
 const FOOT_OPTIONS = ['right', 'left', 'both'];
+const SURFACE_OPTIONS = ['Grass', 'Artificial Turf', 'Hybrid'];
+const GENDER_OPTIONS = ['male', 'female'];
+const LEAGUE_TYPE_OPTIONS = ['League', 'Cup'];
 
 const API_POSITION_MAP = {
   'Goalkeeper': ['GK'],
@@ -45,16 +48,19 @@ const ENTITY_CONFIGS = {
     fields: [
       { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
       // Identité
-      { key: 'name',               label: 'Team Name',        required: true },
-      { key: 'country',            label: 'Country' },
-      { key: 'city',               label: 'City' },
-      { key: 'founded',            label: 'Founded (year)',   type: 'number' },
-      { key: 'apifootball_team_id',label: 'API-Football ID',  type: 'number' },
+      { key: 'name',           label: 'Team Name',     required: true },
+      { key: 'country',        label: 'Country' },
+      { key: 'city',           label: 'City' },
+      { key: 'founded',        label: 'Founded (year)', type: 'number' },
+      { key: 'is_national',    label: 'Type',           type: 'team_type' },
+      { key: 'gender',         label: 'Genre',          type: 'select', options: GENDER_OPTIONS },
       // Stade
-      { key: '_stadium_divider',   label: 'Stadium',          type: 'divider', span: 2 },
-      { key: 'stadium_name',       label: 'Stadium Name',     span: 2 },
-      { key: 'stadium_capacity',   label: 'Capacity',         type: 'number' },
-      { key: 'stadium_surface',    label: 'Surface' },
+      { key: '_stadium_divider', label: 'Stadium', type: 'divider', span: 2 },
+      { key: 'stadium_name',     label: 'Stadium Name', span: 2 },
+      { key: 'stadium_capacity', label: 'Capacity',     type: 'number' },
+      { key: 'stadium_surface',  label: 'Surface',      type: 'select', options: SURFACE_OPTIONS },
+      { key: 'stadium_city',     label: 'Ville du stade' },
+      { key: 'stadium_country',  label: 'Pays du stade' },
     ],
   },
   league: {
@@ -65,10 +71,10 @@ const ENTITY_CONFIGS = {
       { key: '_apifootball_search',   label: '', type: 'apifootball_search', span: 2 },
       { key: 'name',                  label: 'League Name',     required: true },
       { key: 'country_or_region',     label: 'Country / Region' },
-      { key: 'type',                  label: 'Type (League/Cup)' },
+      { key: 'type',                  label: 'Type',            type: 'select', options: LEAGUE_TYPE_OPTIONS },
       { key: 'level',                 label: 'Level',           type: 'select', options: LEAGUE_LEVELS },
+      { key: 'gender',                label: 'Genre',           type: 'select', options: GENDER_OPTIONS },
       { key: 'organizer',             label: 'Organizer' },
-      { key: 'apifootball_league_id', label: 'API-Football ID',  type: 'number' },
     ],
   },
   sponsor: {
@@ -96,8 +102,12 @@ const ENTITY_CONFIGS = {
     fields: [
       { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
       { key: 'full_name',        label: 'Full Name',           required: true, span: 2 },
+      { key: 'first_name',       label: 'Prénom' },
+      { key: 'last_name',        label: 'Nom de famille' },
       { key: 'nationality',      label: 'Nationality' },
       { key: 'birth_date',       label: 'Date of Birth (DD/MM/YYYY)' },
+      { key: 'birth_place',      label: 'Lieu de naissance' },
+      { key: 'birth_country',    label: 'Pays de naissance' },
       { key: 'height',           label: 'Height (cm)',          type: 'number' },
       { key: 'weight',           label: 'Weight (kg)',          type: 'number' },
       { key: 'preferred_foot',   label: 'Preferred Foot',       type: 'select', options: FOOT_OPTIONS },
@@ -133,15 +143,20 @@ export default function EntityEditDialog({
     setForm(prev => ({
       ...prev,
       full_name:        player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
-      nationality:      player.nationality    || prev.nationality    || '',
-      birth_date:       player.birth_date     || prev.birth_date     || '',
-      photo_url:        player.photo          || prev.photo_url      || '',
-      height:           player.height         ?? prev.height         ?? '',
-      weight:           player.weight         ?? prev.weight         ?? '',
-      preferred_foot:   player.preferred_foot || prev.preferred_foot || '',
+      first_name:       player.firstname       || prev.first_name       || '',
+      last_name:        player.lastname        || prev.last_name        || '',
+      nationality:      player.nationality     || prev.nationality      || '',
+      birth_date:       player.birth_date      || prev.birth_date       || '',
+      birth_place:      player.birth_place     || prev.birth_place      || '',
+      birth_country:    player.birth_country   || prev.birth_country    || '',
+      photo_url:        player.photo           || prev.photo_url        || '',
+      height:           player.height          ?? prev.height           ?? '',
+      weight:           player.weight          ?? prev.weight           ?? '',
+      preferred_foot:   player.preferred_foot  || prev.preferred_foot   || '',
       preferred_number: player.preferred_number ?? prev.preferred_number ?? '',
       positions:        normalizedPositions.length > 0 ? normalizedPositions : (prev.positions || []),
-      apifootball_id:   player.apifootball_id,
+      // ID stocké en interne, jamais affiché
+      apifootball_id:   player.apifootball_id  ?? prev.apifootball_id,
     }));
   };
 
@@ -150,16 +165,20 @@ export default function EntityEditDialog({
     setApiFillName(team.name || '');
     setForm(prev => ({
       ...prev,
-      name:                  team.name              || prev.name || '',
-      country:               team.country           || prev.country || '',
-      city:                  team.city              || prev.city || '',
-      founded:               team.founded           ?? prev.founded ?? '',
-      is_national:           team.is_national       ?? prev.is_national ?? false,
-      crest_url:             team.logo              || prev.crest_url || '',
-      stadium_name:          team.stadium_name      || prev.stadium_name || '',
-      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity ?? '',
-      stadium_surface:       team.stadium_surface   || prev.stadium_surface || '',
+      name:                  team.name              || prev.name              || '',
+      country:               team.country           || prev.country           || '',
+      city:                  team.city              || prev.city              || '',
+      founded:               team.founded           ?? prev.founded           ?? '',
+      is_national:           team.is_national       ?? prev.is_national       ?? false,
+      gender:                team.gender            || prev.gender            || '',
+      crest_url:             team.logo              || prev.crest_url         || '',
+      stadium_name:          team.stadium_name      || prev.stadium_name      || '',
+      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity  ?? '',
+      stadium_surface:       team.stadium_surface   || prev.stadium_surface   || '',
       stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
+      stadium_city:          team.stadium_city      || prev.stadium_city      || '',
+      stadium_country:       team.stadium_country   || prev.stadium_country   || '',
+      // ID stocké en interne
       apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
     }));
   };
@@ -169,21 +188,23 @@ export default function EntityEditDialog({
     setApiFillName(league.name || '');
     setForm(prev => ({
       ...prev,
-      name:                    league.name                || prev.name || '',
+      name:                    league.name                || prev.name                || '',
       country_or_region:       league.country_name        || league.country_or_region || prev.country_or_region || '',
-      country_code:            league.country_code        || prev.country_code || '',
-      country_flag:            league.country_flag        || prev.country_flag || '',
-      type:                    league.type                || prev.type || '',
-      scope:                   league.scope               || prev.scope || '',
-      organizer:               league.organizer           || prev.organizer || '',
-      logo_url:                league.apifootball_logo    || league.logo_url || prev.logo_url || '',
+      country_code:            league.country_code        || prev.country_code        || '',
+      country_flag:            league.country_flag        || prev.country_flag        || '',
+      type:                    league.type                || prev.type                || '',
+      gender:                  league.gender              || prev.gender              || '',
+      scope:                   league.scope               || prev.scope               || '',
+      organizer:               league.organizer           || prev.organizer           || '',
+      logo_url:                league.apifootball_logo    || league.logo_url          || prev.logo_url || '',
+      // ID stocké en interne
       apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
     }));
   };
 
   const getApiFillHandler = () => {
     if (entityType === 'player') return handleApiFillPlayer;
-    if (entityType === 'team') return handleApiFillTeam;
+    if (entityType === 'team')   return handleApiFillTeam;
     if (entityType === 'league') return handleApiFillLeague;
     return () => {};
   };
@@ -206,7 +227,7 @@ export default function EntityEditDialog({
         }
       }
       if (mode === 'edit' && entityId) payload.entity_id = entityId;
-      // Nettoyer les pseudo-champs
+      // Nettoyer les pseudo-champs UI
       delete payload._apifootball_search;
       delete payload._stadium_divider;
       await createSubmission({ submission_type: entityType, data: payload });
@@ -268,6 +289,31 @@ export default function EntityEditDialog({
       );
     }
 
+    if (f.type === 'team_type') {
+      return (
+        <div className="flex gap-2">
+          {[
+            { label: '🏟️ Club',     value: false },
+            { label: '🚩 Nationale', value: true  },
+          ].map(opt => (
+            <button
+              key={String(opt.value)}
+              type="button"
+              onClick={() => handleChange('is_national', opt.value)}
+              className={`px-3 py-1.5 text-xs border rounded-none transition-colors ${
+                form.is_national === opt.value
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+              }`}
+              style={labelStyle}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
     if (f.type === 'positions') {
       const current = Array.isArray(form.positions) ? form.positions : [];
       return (
@@ -296,7 +342,7 @@ export default function EntityEditDialog({
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card border-border text-muted-foreground hover:border-primary/50'
               }`}
-              style={labelStyle}>{'\u2605'.repeat(level)}</button>
+              style={labelStyle}>{'★'.repeat(level)}</button>
           ))}
         </div>
       );
@@ -356,7 +402,6 @@ export default function EntityEditDialog({
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => {
-              // Les types structurels (divider, apifootball_search) gèrent leur propre layout
               if (f.type === 'divider' || f.type === 'apifootball_search') {
                 return <React.Fragment key={f.key}>{renderField(f)}</React.Fragment>;
               }
@@ -416,7 +461,7 @@ export default function EntityEditDialog({
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-wider text-destructive" style={labelStyle}>REQUEST REMOVAL</p>
+                  <p className="text-[10px] uppercase tracking-wider text-destructive" style={labelStyle}>REQUEST REMOVAL</p>
                   <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                     The community will vote on this removal request.
                   </p>
