@@ -1,28 +1,25 @@
 // src/pages/KitDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getMasterKit, createReport, proxyImageUrl, getKitPlayers, createSubmission, addToCollection } from '@/lib/api';
+import { getMasterKit, proxyImageUrl, getKitPlayers, createSubmission, addToCollection } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Star, Shirt, Tag, Package, ChevronRight,
-  AlertTriangle, Check, Trash2, User, Plus, X, Loader2,
+  Pencil, Check, Trash2, User, Plus, X, Loader2,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
-import EntityAutocomplete from '@/components/EntityAutocomplete';
+import KitSuggestEditDialog from '@/components/KitSuggestEditDialog';
 
 
-const KIT_TYPES    = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const GENDERS      = ['Man', 'Woman', 'Kid'];
-const MODELS       = ['Authentic', 'Replica', 'Other'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
+const MODELS       = ['Authentic', 'Replica', 'Other'];
 
 
 // ─── Composant interne pour chaque vignette de version ────────────────────────
@@ -59,8 +56,6 @@ function VersionInlineCard({ version: v, kitFallbackPhoto }) {
         style={{ transition: 'border-color 0.2s ease' }}
       >
         <div className="flex gap-4">
-
-          {/* Miniature avec bouton + en overlay */}
           <div className="relative w-20 h-24 bg-secondary overflow-hidden shrink-0">
             <img
               src={proxyImageUrl(v.front_photo || kitFallbackPhoto)}
@@ -87,8 +82,6 @@ function VersionInlineCard({ version: v, kitFallbackPhoto }) {
               </button>
             )}
           </div>
-
-          {/* Infos */}
           <div className="min-w-0 space-y-1.5">
             <Badge variant="outline" className="rounded-none text-[10px]">{v.model}</Badge>
             <h4
@@ -128,14 +121,10 @@ export default function KitDetail() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
 
-  const [kit,               setKit]               = useState(null);
-  const [loading,           setLoading]           = useState(true);
-  const [players,           setPlayers]           = useState([]);
-  const [showReport,        setShowReport]        = useState(false);
-  const [reportCorrections, setReportCorrections] = useState({});
-  const [reportNotes,       setReportNotes]       = useState('');
-  const [showRemovalForm,   setShowRemovalForm]   = useState(false);
-  const [removalNotes,      setRemovalNotes]      = useState('');
+  const [kit,             setKit]           = useState(null);
+  const [loading,         setLoading]       = useState(true);
+  const [players,         setPlayers]       = useState([]);
+  const [showSuggestEdit, setShowSuggestEdit] = useState(false);
 
   const [showAddVersion,  setShowAddVersion]  = useState(false);
   const [vCompetition,    setVCompetition]    = useState('');
@@ -186,17 +175,6 @@ export default function KitDetail() {
     getMasterKit(kitId)
       .then(async r => {
         setKit(r.data);
-        setReportCorrections({
-          club:        r.data.club        || '',
-          season:      r.data.season      || '',
-          kit_type:    r.data.kit_type    || '',
-          brand:       r.data.brand       || '',
-          design:      r.data.design      || '',
-          sponsor:     r.data.sponsor     || '',
-          league:      r.data.league      || '',
-          gender:      r.data.gender      || '',
-          front_photo: r.data.front_photo || '',
-        });
         try {
           const res = await getKitPlayers(r.data.kit_id);
           setPlayers(res.data || []);
@@ -205,42 +183,6 @@ export default function KitDetail() {
       })
       .catch(() => setLoading(false));
   }, [kitId]);
-
-  const handleSubmitReport = async () => {
-    try {
-      await createReport({
-        target_type: 'master_kit',
-        target_id:   kitId,
-        corrections: reportCorrections,
-        notes:       reportNotes,
-        report_type: 'error',
-      });
-      toast.success('Report submitted for community review');
-      setShowReport(false);
-      setReportNotes('');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit report');
-    }
-  };
-
-  const handleRequestRemoval = async () => {
-    try {
-      await createReport({
-        target_type: 'master_kit',
-        target_id:   kitId,
-        corrections: {},
-        notes:       removalNotes,
-        report_type: 'removal',
-      });
-      toast.success('Removal request submitted for community vote');
-      setShowRemovalForm(false);
-      setRemovalNotes('');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit removal request');
-    }
-  };
-
-  const set = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
   if (loading) return (
     <div className="animate-pulse px-4 lg:px-8 py-8 max-w-7xl mx-auto">
@@ -422,100 +364,33 @@ export default function KitDetail() {
               {/* Action Buttons */}
               {user && (
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowReport(!showReport)}
-                    className="rounded-none border-border" data-testid="kit-report-btn">
-                    <AlertTriangle className="w-4 h-4 mr-1" /> Report Error
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSuggestEdit(true)}
+                    className="rounded-none border-border hover:border-primary/50"
+                    data-testid="kit-suggest-edit-btn"
+                  >
+                    <Pencil className="w-3.5 h-3.5 mr-1.5" /> Suggest Edit
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowRemovalForm(!showRemovalForm)}
-                    className="rounded-none border-destructive/50 text-destructive hover:bg-destructive/10"
-                    data-testid="kit-request-removal-btn">
-                    <Trash2 className="w-4 h-4 mr-1" /> Request Removal
-                  </Button>
-                </div>
-              )}
-
-              {/* Report Form */}
-              {showReport && user && (
-                <div className="border border-destructive/30 p-4 space-y-4" data-testid="kit-report-form">
-                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
-                      <EntityAutocomplete entityType="team" value={reportCorrections.club || ''} onChange={set('club')} onSelect={(item) => set('club')(item.label)} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" testId="report-club" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
-                      <Input value={reportCorrections.season || ''} onChange={e => set('season')(e.target.value)} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-season" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
-                      <Select value={reportCorrections.kit_type || ''} onValueChange={set('kit_type')}>
-                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-kit-type"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">{KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
-                      <EntityAutocomplete entityType="brand" value={reportCorrections.brand || ''} onChange={set('brand')} onSelect={(item) => set('brand')(item.label)} placeholder="e.g., Nike" className="bg-card border-border rounded-none" testId="report-brand" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
-                      <EntityAutocomplete entityType="league" value={reportCorrections.league || ''} onChange={set('league')} onSelect={(item) => set('league')(item.label)} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none" testId="report-league" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
-                      <Select value={reportCorrections.gender || ''} onValueChange={set('gender')}>
-                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-gender"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">{GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
-                      <Input value={reportCorrections.design || ''} onChange={e => set('design')(e.target.value)} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-design" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
-                      <Input value={reportCorrections.sponsor || ''} onChange={e => set('sponsor')(e.target.value)} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-sponsor" />
-                    </div>
-                    <div className="space-y-1 col-span-full">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
-                      <ImageUpload value={reportCorrections.front_photo || ''} onChange={set('front_photo')} folder="master_kit" testId="kit-report-front-photo" />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
-                    <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="kit-report-notes" />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSubmitReport} className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="kit-submit-report-btn">
-                      <Check className="w-3 h-3 mr-1" /> Submit Report
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Removal Form */}
-              {showRemovalForm && user && (
-                <div className="border border-destructive/50 p-4 space-y-3" data-testid="kit-removal-form">
-                  <h4 className="text-sm uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
-                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Request removal of this master kit and all its versions. The community will vote on the request.</p>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Reason for removal</Label>
-                    <Textarea value={removalNotes} onChange={e => setRemovalNotes(e.target.value)} placeholder="Explain why this kit should be removed..." className="bg-card border-border rounded-none min-h-[80px] text-sm" data-testid="kit-removal-notes" />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleRequestRemoval} disabled={!removalNotes.trim()} className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="kit-submit-removal-btn">
-                      <Trash2 className="w-3 h-3 mr-1" /> Submit Removal Request
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowRemovalForm(false)} className="rounded-none">Cancel</Button>
-                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Dialog Suggest Edit */}
+      {showSuggestEdit && (
+        <KitSuggestEditDialog
+          open={showSuggestEdit}
+          onOpenChange={setShowSuggestEdit}
+          type="master_kit"
+          initialData={kit}
+          entityId={kit.kit_id}
+          onSuccess={() => toast.success('Merci pour ta contribution !')}
+        />
+      )}
 
       {/* ADD VERSION PANEL */}
       {showAddVersion && (
@@ -592,8 +467,6 @@ export default function KitDetail() {
             <span className="font-mono text-sm text-muted-foreground ml-2">{kit.versions?.length || 0}</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children" data-testid="versions-grid">
-
-            {/* ← MODIFIÉ : utilise VersionInlineCard avec bouton + */}
             {(kit.versions || []).map(v => (
               <VersionInlineCard
                 key={v.version_id}
@@ -602,7 +475,6 @@ export default function KitDetail() {
               />
             ))}
 
-            {/* Add Version */}
             {user && (
               <button
                 onClick={() => setShowAddVersion(true)}

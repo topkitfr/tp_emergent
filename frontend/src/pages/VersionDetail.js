@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   getVersion, getMasterKit, getVersionEstimates, getVersionWornBy, getReviews,
-  createReport, proxyImageUrl, addToWishlist, checkWishlist,
+  createSubmission, proxyImageUrl, addToWishlist, checkWishlist,
   removeFromWishlist, createReview,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,15 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
-  Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
-  Check, Trash2, User, Plus, Loader2, Heart, TrendingDown, TrendingUp, Minus,
+  Star, Shirt, ChevronRight, ChevronLeft, Pencil,
+  Check, User, Plus, Loader2, Heart, TrendingDown, TrendingUp, Minus,
 } from 'lucide-react';
-import ImageUpload from '@/components/ImageUpload';
 import AddToCollectionDialog from '@/components/AddToCollectionDialog';
+import KitSuggestEditDialog from '@/components/KitSuggestEditDialog';
 
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const MODELS       = ['Authentic', 'Replica', 'Other'];
@@ -79,53 +77,23 @@ function ValueEstimation({ estimates }) {
   if (!count || count === 0) return null;
 
   const cards = [
-    {
-      label: 'Low',
-      value: low,
-      icon: <TrendingDown className="w-4 h-4" />,
-      iconColor: 'text-red-400',
-      valueColor: 'text-red-400',
-      borderColor: 'border-red-500/30',
-    },
-    {
-      label: 'Average',
-      value: average,
-      icon: <Minus className="w-4 h-4" />,
-      iconColor: 'text-yellow-300',
-      valueColor: 'text-foreground',
-      borderColor: 'border-yellow-400/30',
-    },
-    {
-      label: 'High',
-      value: high,
-      icon: <TrendingUp className="w-4 h-4" />,
-      iconColor: 'text-green-400',
-      valueColor: 'text-green-400',
-      borderColor: 'border-green-500/30',
-    },
+    { label: 'Low',     value: low,     icon: <TrendingDown className="w-4 h-4" />, iconColor: 'text-red-400',   valueColor: 'text-red-400',   borderColor: 'border-red-500/30' },
+    { label: 'Average', value: average, icon: <Minus        className="w-4 h-4" />, iconColor: 'text-yellow-300',valueColor: 'text-foreground', borderColor: 'border-yellow-400/30' },
+    { label: 'High',    value: high,    icon: <TrendingUp   className="w-4 h-4" />, iconColor: 'text-green-400', valueColor: 'text-green-400',  borderColor: 'border-green-500/30' },
   ];
 
   return (
     <div className="border border-border bg-card p-4 space-y-3" data-testid="value-estimation">
-      {/* Header */}
       <div className="flex items-center gap-2">
         <h4 className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>VALUE ESTIMATION</h4>
-        <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-          ({count} estimate{count !== 1 ? 's' : ''})
-        </span>
+        <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>({count} estimate{count !== 1 ? 's' : ''})</span>
       </div>
-
-      {/* 3 cartes */}
       <div className="grid grid-cols-3 gap-3">
         {cards.map(({ label, value, icon, iconColor, valueColor, borderColor }) => (
           <div key={label} className={`border ${borderColor} bg-background p-3 flex flex-col items-center gap-1.5`}>
             <span className={iconColor}>{icon}</span>
-            <span className={`text-2xl font-mono font-bold ${valueColor}`}>
-              {value != null ? `${value}€` : '—'}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
-              {label}
-            </span>
+            <span className={`text-2xl font-mono font-bold ${valueColor}`}>{value != null ? `${value}€` : '—'}</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>{label}</span>
           </div>
         ))}
       </div>
@@ -138,28 +106,20 @@ export default function VersionDetail() {
   const { versionId } = useParams();
   const { user }      = useAuth();
 
-  const [version,           setVersion]           = useState(null);
-  const [masterKit,         setMasterKit]         = useState(null);
-  const [estimates,         setEstimates]         = useState(null);
-  const [reviews,           setReviews]           = useState([]);
-  const [loading,           setLoading]           = useState(true);
-  const [addStatus,         setAddStatus]         = useState('idle');
-  const [showAddDialog,     setShowAddDialog]     = useState(false);
-  const [wishStatus,        setWishStatus]        = useState('idle');
-  const [wishlistId,        setWishlistId]        = useState(null);
-  const [showReport,        setShowReport]        = useState(false);
-  const [showRemoval,       setShowRemoval]       = useState(false);
-  const [removalNotes,      setRemovalNotes]      = useState('');
-  const [reviewRating,      setReviewRating]      = useState(0);
-  const [reviewHover,       setReviewHover]       = useState(0);
-  const [reviewComment,     setReviewComment]     = useState('');
-  const [submitting,        setSubmitting]        = useState(false);
-
-  const [reportCorrections, setReportCorrections] = useState({
-    competition: '', model: '', sku_code: '', ean_code: '', front_photo: '', back_photo: '',
-  });
-  const [reportNotes, setReportNotes] = useState('');
-  const setField = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
+  const [version,         setVersion]         = useState(null);
+  const [masterKit,       setMasterKit]       = useState(null);
+  const [estimates,       setEstimates]       = useState(null);
+  const [reviews,         setReviews]         = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [addStatus,       setAddStatus]       = useState('idle');
+  const [showAddDialog,   setShowAddDialog]   = useState(false);
+  const [wishStatus,      setWishStatus]      = useState('idle');
+  const [wishlistId,      setWishlistId]      = useState(null);
+  const [showSuggestEdit, setShowSuggestEdit] = useState(false);
+  const [reviewRating,    setReviewRating]    = useState(0);
+  const [reviewHover,     setReviewHover]     = useState(0);
+  const [reviewComment,   setReviewComment]   = useState('');
+  const [submitting,      setSubmitting]      = useState(false);
 
   const fetchReviews = useCallback(async () => {
     try { const res = await getReviews(versionId); setReviews(Array.isArray(res.data) ? res.data : []); }
@@ -175,11 +135,6 @@ export default function VersionDetail() {
       const v = versionRes.data;
       setVersion(v);
       setEstimates(estimatesRes?.data || null);
-      setReportCorrections({
-        competition: v.competition || '', model: v.model || '',
-        sku_code: v.sku_code || '', ean_code: v.ean_code || '',
-        front_photo: v.front_photo || '', back_photo: v.back_photo || '',
-      });
 
       const kitId = v.kit_id || v.master_kit?.kit_id;
       if (kitId) {
@@ -199,22 +154,6 @@ export default function VersionDetail() {
 
   const handleAdd = () => { if (addStatus !== 'idle') return; setShowAddDialog(true); };
   const handleAddSuccess = () => { setShowAddDialog(false); setAddStatus('done'); toast.success('Added to your collection 🎽'); };
-
-  const handleSubmitReport = async () => {
-    try {
-      await createReport({ target_type: 'version', target_id: versionId, corrections: reportCorrections, notes: reportNotes, report_type: 'error' });
-      toast.success('Report submitted for community review');
-      setShowReport(false); setReportNotes('');
-    } catch (err) { toast.error(err.response?.data?.detail || 'Failed to submit report'); }
-  };
-
-  const handleRequestRemoval = async () => {
-    try {
-      await createReport({ target_type: 'version', target_id: versionId, corrections: {}, notes: removalNotes, report_type: 'removal' });
-      toast.success('Removal request submitted');
-      setShowRemoval(false); setRemovalNotes('');
-    } catch (err) { toast.error(err.response?.data?.detail || 'Failed'); }
-  };
 
   const handleSubmitReview = async () => {
     if (!reviewRating) return toast.error('Please select a rating');
@@ -404,86 +343,34 @@ export default function VersionDetail() {
                         : <Heart className={`w-4 h-4 mr-2 ${wishStatus === 'done' ? 'fill-rose-500 text-rose-500' : ''}`} />}
                       {wishStatus === 'done' ? 'Wishlisted' : 'Add to Wishlist'}
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSuggestEdit(true)}
+                      className="rounded-none border-border hover:border-primary/50"
+                      data-testid="version-suggest-edit-btn"
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1.5" /> Suggest Edit
+                    </Button>
                   </>
                 )}
               </div>
-
-              {/* Report / Removal */}
-              {user && (
-                <div className="flex gap-2 pt-2">
-                  <button onClick={() => { setShowReport(!showReport); setShowRemoval(false); }} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                    <AlertTriangle className="w-3 h-3" /> Report an error
-                  </button>
-                  <span className="text-muted-foreground">·</span>
-                  <button onClick={() => { setShowRemoval(!showRemoval); setShowReport(false); }} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                    <Trash2 className="w-3 h-3" /> Request removal
-                  </button>
-                </div>
-              )}
-
-              {/* Report form */}
-              {showReport && (
-                <div className="border border-border p-4 space-y-4 mt-2">
-                  <p className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Report an Error</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition</Label>
-                      <Select value={reportCorrections.competition} onValueChange={setField('competition')}>
-                        <SelectTrigger className="bg-card border-border rounded-none"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">{COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model</Label>
-                      <Select value={reportCorrections.model} onValueChange={setField('model')}>
-                        <SelectTrigger className="bg-card border-border rounded-none"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">{MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
-                      <Input value={reportCorrections.sku_code} onChange={e => setField('sku_code')(e.target.value)} className="bg-card border-border rounded-none font-mono" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
-                      <Input value={reportCorrections.ean_code} onChange={e => setField('ean_code')(e.target.value)} className="bg-card border-border rounded-none font-mono" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
-                      <ImageUpload value={reportCorrections.front_photo} onChange={setField('front_photo')} folder="version" side="front" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
-                      <ImageUpload value={reportCorrections.back_photo} onChange={setField('back_photo')} folder="version" side="back" />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
-                    <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSubmitReport} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90">Submit Report</Button>
-                    <Button variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Removal form */}
-              {showRemoval && (
-                <div className="border border-destructive/30 p-4 space-y-3 mt-2">
-                  <p className="text-xs uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>Request Removal</p>
-                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>This will create a community vote to remove this version.</p>
-                  <Textarea placeholder="Reason for removal..." value={removalNotes} onChange={e => setRemovalNotes(e.target.value)} className="bg-card border-border rounded-none resize-none" rows={3} />
-                  <div className="flex gap-2">
-                    <Button onClick={handleRequestRemoval} variant="destructive" className="rounded-none">Submit Removal Request</Button>
-                    <Button variant="outline" onClick={() => setShowRemoval(false)} className="rounded-none">Cancel</Button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Dialog Suggest Edit */}
+      {showSuggestEdit && (
+        <KitSuggestEditDialog
+          open={showSuggestEdit}
+          onOpenChange={setShowSuggestEdit}
+          type="version"
+          initialData={version}
+          entityId={version.version_id}
+          onSuccess={() => toast.success('Merci pour ta contribution !')}
+        />
+      )}
 
       <Separator />
 
