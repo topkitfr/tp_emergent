@@ -16,9 +16,9 @@ from ..utils import slugify
 router = APIRouter(prefix="/api", tags=["entities"])
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # Helper — verrou sur entités en attente d'approbation
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 LOCKED_STATUSES = ("for_review", "pending")
 
 
@@ -34,9 +34,9 @@ async def _assert_not_locked(collection: str, id_field: str, entity_id: str):
         )
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # Team Routes
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 
 @router.get("/teams")
 async def list_teams(
@@ -149,9 +149,9 @@ async def update_team(team_id: str, team: TeamCreate):
     return result
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # League Routes
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 
 @router.get("/leagues")
 async def list_leagues(
@@ -266,9 +266,9 @@ async def update_league(league_id: str, league: LeagueCreate):
     return result
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # Brand Routes
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 
 @router.get("/brands")
 async def list_brands(
@@ -377,7 +377,7 @@ async def update_brand(brand_id: str, brand: BrandCreate):
     return result
 
 
-# ── SPONSORS ──────────────────────────────────────────────────────────────────
+# ── SPONSORS ────────────────────────────────────────────────────────────────────────
 
 @router.get("/sponsors")
 async def list_sponsors(
@@ -496,9 +496,9 @@ async def update_sponsor(sponsor_id: str, sponsor: dict):
     return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # Player Routes
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 
 @router.get("/players")
 async def list_players(
@@ -639,9 +639,9 @@ async def update_player(player_id: str, player: PlayerCreate):
     return result
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # Pending Approval Routes
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 
 ENTITY_CONFIG = {
     "team":    {"collection": "teams",    "id_field": "team_id"},
@@ -725,9 +725,19 @@ async def reject_entity(entity_type: str, entity_id: str):
     return {"message": f"{entity_type} rejected"}
 
 
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
 # Autocomplete Route
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────
+
+# Mapping par entité : quels champs logo inclure dans la réponse autocomplete
+_LOGO_FIELDS = {
+    "team":    ["crest_url", "logo_url"],
+    "league":  ["logo_url", "crest_url"],
+    "brand":   ["logo_url"],
+    "player":  ["photo_url"],
+    "sponsor": ["logo_url"],
+}
+
 
 @router.get("/autocomplete")
 async def autocomplete(
@@ -740,27 +750,42 @@ async def autocomplete(
 
     if type:
         entity_config = {
-            "team":    {"collection": "teams",    "search_field": "name",      "id_field": "team_id",    "label_field": "name",      "extra_field": "country"},
-            "league":  {"collection": "leagues",  "search_field": "name",      "id_field": "league_id",  "label_field": "name",      "extra_field": "country_or_region"},
-            "brand":   {"collection": "brands",   "search_field": "name",      "id_field": "brand_id",   "label_field": "name",      "extra_field": "country"},
-            "player":  {"collection": "players",  "search_field": "full_name", "id_field": "player_id",  "label_field": "full_name", "extra_field": "nationality"},
-            "sponsor": {"collection": "sponsors", "search_field": "name",      "id_field": "sponsor_id", "label_field": "name",      "extra_field": "country"},
+            "team":    {"collection": "teams",    "search_fields": ["name", "aka"], "id_field": "team_id",    "label_field": "name",      "extra_field": "country"},
+            "league":  {"collection": "leagues",  "search_fields": ["name"],         "id_field": "league_id",  "label_field": "name",      "extra_field": "country_or_region"},
+            "brand":   {"collection": "brands",   "search_fields": ["name"],         "id_field": "brand_id",   "label_field": "name",      "extra_field": "country"},
+            "player":  {"collection": "players",  "search_fields": ["full_name"],    "id_field": "player_id",  "label_field": "full_name", "extra_field": "nationality"},
+            "sponsor": {"collection": "sponsors", "search_fields": ["name"],         "id_field": "sponsor_id", "label_field": "name",      "extra_field": "country"},
         }
         config = entity_config.get(type)
         if not config:
             return []
 
+        # Filtre de recherche : OR sur tous les search_fields
         filter_q: dict = {"status": {"$ne": "rejected"}}
         if search_q:
-            filter_q[config["search_field"]] = {"$regex": search_q, "$options": "i"}
+            if len(config["search_fields"]) == 1:
+                filter_q[config["search_fields"][0]] = {"$regex": search_q, "$options": "i"}
+            else:
+                filter_q["$or"] = [
+                    {f: {"$regex": search_q, "$options": "i"}}
+                    for f in config["search_fields"]
+                ]
 
         docs = await db[config["collection"]].find(filter_q, {"_id": 0}).limit(20).to_list(20)
+
+        logo_fields = _LOGO_FIELDS.get(type, [])
+
         return [
             {
-                "id":     d.get(config["id_field"], ""),
-                "label":  d.get(config["label_field"], ""),
-                "extra":  d.get(config["extra_field"], ""),
-                "status": d.get("status", "approved"),
+                "id":      d.get(config["id_field"], ""),
+                "label":   d.get(config["label_field"], ""),
+                "extra":   d.get(config["extra_field"], ""),
+                "status":  d.get("status", "approved"),
+                # Inclure le premier champ logo trouvé dans logo_url pour le frontend
+                "logo_url": next(
+                    (d[f] for f in logo_fields if d.get(f)),
+                    None
+                ),
             }
             for d in docs
         ]
