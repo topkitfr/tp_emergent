@@ -6,7 +6,7 @@
 //
 // Props:
 //   entityType   : 'team' | 'player' | 'league' | 'brand' | 'sponsor'
-//   onSelectDb   : fn(item)  — item DB sélectionné { id, label, extra, status, ... }
+//   onSelectDb   : fn(item)  — item DB sélectionné { id, label, extra, status, logo_url, ... }
 //   onSelectApi  : fn(item)  — item API-Football sélectionné (préfill depuis API)
 //   placeholder  : string (optionnel)
 //   disabled     : bool (optionnel)
@@ -57,7 +57,7 @@ function extractSub(item, entityType, source) {
   return item.team?.country || '';
 }
 
-// Logo / photo
+// Logo / photo — DB renvoie maintenant logo_url depuis l'autocomplete enrichi
 function extractLogo(item, entityType, source) {
   if (source === 'db') return item.logo_url || item.crest_url || item.photo_url || null;
   if (entityType === 'player') return item.photo || item.player?.photo || null;
@@ -179,6 +179,8 @@ export default function UnifiedEntitySearch({
   const [apiResults, setApiResults] = useState([]);
   const [loadingDb, setLoadingDb]   = useState(false);
   const [loadingApi, setLoadingApi] = useState(false);
+  // null = pas encore cherché, false = cherché sans résultat, true = a des résultats
+  const [dbSearched, setDbSearched] = useState(false);
   const [errorApi, setErrorApi]     = useState(null);
   const [open, setOpen]             = useState(false);
   const [selectedSource, setSelectedSource] = useState(null); // 'db' | 'api' | null
@@ -198,17 +200,19 @@ export default function UnifiedEntitySearch({
   // ── Fetch DB via /api/autocomplete ─────────────────────────────────────────
   const fetchDb = useCallback(async (q) => {
     setLoadingDb(true);
+    setDbSearched(false);
     try {
       const res = await fetch(getDbEndpoint(entityType, q));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      // /api/autocomplete retourne un tableau direct [{id, label, extra, status}]
+      // /api/autocomplete retourne un tableau direct [{id, label, extra, status, logo_url}]
       const items = Array.isArray(data) ? data : (data.results || []);
       setDbResults(items.slice(0, 6));
     } catch {
       setDbResults([]);
     } finally {
       setLoadingDb(false);
+      setDbSearched(true);
     }
   }, [entityType]);
 
@@ -240,6 +244,7 @@ export default function UnifiedEntitySearch({
       setOpen(false);
       setDbResults([]);
       setApiResults([]);
+      setDbSearched(false);
       clearTimeout(timerDb.current);
       clearTimeout(timerApi.current);
       return;
@@ -285,7 +290,7 @@ export default function UnifiedEntitySearch({
         <Input
           value={query}
           onChange={handleChange}
-          onFocus={() => hasResults && query.trim().length >= 2 && setOpen(true)}
+          onFocus={() => (hasResults || dbSearched) && query.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder || defaultPlaceholders[entityType]}
           className="pl-8 pr-20 rounded-none h-9 text-sm bg-card border-border"
           autoComplete="off"
@@ -316,8 +321,8 @@ export default function UnifiedEntitySearch({
       {showDropdown && (
         <div className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-card border border-border shadow-lg rounded-sm overflow-hidden max-h-80 overflow-y-auto">
 
-          {/* Section DB */}
-          {(loadingDb || dbResults.length > 0) && (
+          {/* Section DB — toujours affichée dès qu'une recherche est en cours ou terminée */}
+          {(loadingDb || dbSearched) && (
             <>
               <SectionHeader
                 icon={Database}
@@ -327,6 +332,10 @@ export default function UnifiedEntitySearch({
               />
               {loadingDb ? (
                 <><SkeletonRow /><SkeletonRow /></>
+              ) : dbResults.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground italic" style={dmSans}>
+                  Aucune fiche existante pour «&nbsp;<em>{query}</em>&nbsp;»
+                </p>
               ) : (
                 dbResults.map((item, idx) => (
                   <ResultRow
@@ -382,8 +391,8 @@ export default function UnifiedEntitySearch({
             </>
           )}
 
-          {/* Empty state global */}
-          {!isLoading && !hasResults && (
+          {/* Empty state global — aucune section ne s'est encore affichée */}
+          {!loadingDb && !dbSearched && !showApiSection && (
             <p className="px-3 py-4 text-xs text-muted-foreground text-center" style={dmSans}>
               Aucun résultat pour «&nbsp;<em>{query}</em>&nbsp;»
             </p>
