@@ -302,6 +302,14 @@ class TeamOut(BaseModel):
 
 # ─── League ───────────────────────────────────────────────────────────────────
 
+class LeagueSeasonEntry(BaseModel):
+    """Une saison d'une compétition (issues de API-Football /leagues?id=X)."""
+    year: int                               # ex: 2024
+    start: Optional[str] = None            # ex: "2024-08-16"
+    end: Optional[str] = None              # ex: "2025-05-25"
+    current: Optional[bool] = False        # saison en cours
+
+
 class LeagueCreate(BaseModel):
     name: str
     country_or_region: Optional[str] = ""
@@ -320,6 +328,10 @@ class LeagueCreate(BaseModel):
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
     source_payload: Optional[dict] = None   # réponse brute API-Football pour re-sync
+    # Phase 1 — enrichissement detail page
+    gender: Optional[str] = None            # "male" | "female" — API-Football league.gender (via seasons endpoint)
+    level_type: Optional[str] = None        # "League" | "Cup" | "Friendly" — API-Football league.type
+    seasons: Optional[List[LeagueSeasonEntry]] = []  # liste des saisons issues de API-Football
 
 
 class LeagueOut(BaseModel):
@@ -343,6 +355,10 @@ class LeagueOut(BaseModel):
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
     source_payload: Optional[dict] = None
+    # Phase 1
+    gender: Optional[str] = None
+    level_type: Optional[str] = None
+    seasons: Optional[List[dict]] = []
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -428,6 +444,12 @@ class PlayerCreate(BaseModel):
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
     note: Optional[float] = 0.0
+    # Phase 1 — enrichissement detail page
+    gender: Optional[str] = None            # "male" | "female" — API-Football player.gender
+    level: Optional[str] = None             # "Professional" | "Semi-Pro" | "Amateur" | "Youth"
+    position_detail: Optional[str] = None   # poste précis enrichi (ex: "Centre-Back", "Goalkeeper")
+    jersey_number: Optional[int] = None     # numéro de maillot actuel — API-Football statistics[0].games.number
+    current_team_id: Optional[str] = None   # référence vers teams collection
 
 
 class PlayerOut(BaseModel):
@@ -457,6 +479,12 @@ class PlayerOut(BaseModel):
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
     note: Optional[float] = 0.0
+    # Phase 1
+    gender: Optional[str] = None
+    level: Optional[str] = None
+    position_detail: Optional[str] = None
+    jersey_number: Optional[int] = None
+    current_team_id: Optional[str] = None
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
