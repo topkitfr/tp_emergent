@@ -1,5 +1,5 @@
 // frontend/src/components/EntityEditDialog.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -146,30 +146,45 @@ export default function EntityEditDialog({
   const [removalNotes, setRemovalNotes] = useState('');
   const [apiFillName, setApiFillName] = useState('');
 
+  // ── Reset le form à chaque ouverture du dialog ──────────────────────────────
+  useEffect(() => {
+    if (open) {
+      setForm({ ...initialData });
+      setApiFillName('');
+      setShowRemoval(false);
+      setRemovalNotes('');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   // ── Auto-fill player ───────────────────────────────────────────────────────
+  // normalizePlayer (ApiFootballSearch) retourne déjà les clés à plat :
+  // full_name, first_name, last_name, nationality, birth_date, birth_place,
+  // birth_country, photo / photo_url, height, weight, positions, apifootball_id
   const handleApiFillPlayer = (player) => {
-    setApiFillName(player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || '');
-    const normalizedPositions = normalizePositions(player.positions || player.position);
+    setApiFillName(player.full_name || '');
+    const normalizedPositions = normalizePositions(
+      player.positions?.length ? player.positions : player.position
+    );
     setForm(prev => ({
       ...prev,
-      full_name:         player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim() || prev.full_name,
-      first_name:        player.firstname       || prev.first_name       || '',
-      last_name:         player.lastname        || prev.last_name        || '',
-      nationality:       player.nationality     || prev.nationality      || '',
-      birth_date:        player.birth_date      || prev.birth_date       || '',
-      birth_place:       player.birth_place     || prev.birth_place      || '',
-      birth_country:     player.birth_country   || prev.birth_country    || '',
-      photo_url:         player.photo           || prev.photo_url        || '',
-      height:            player.height          ?? prev.height           ?? '',
-      weight:            player.weight          ?? prev.weight           ?? '',
-      preferred_foot:    player.preferred_foot  || prev.preferred_foot   || '',
+      full_name:         player.full_name        || prev.full_name        || '',
+      first_name:        player.first_name       || prev.first_name       || '',
+      last_name:         player.last_name        || prev.last_name        || '',
+      nationality:       player.nationality      || prev.nationality      || '',
+      birth_date:        player.birth_date       || prev.birth_date       || '',
+      birth_place:       player.birth_place      || prev.birth_place      || '',
+      birth_country:     player.birth_country    || prev.birth_country    || '',
+      photo_url:         player.photo_url        || player.photo          || prev.photo_url || '',
+      height:            player.height           ?? prev.height           ?? '',
+      weight:            player.weight           ?? prev.weight           ?? '',
+      preferred_foot:    player.preferred_foot   || prev.preferred_foot   || '',
       preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
-      individual_awards: prev.individual_awards || [],
+      individual_awards: prev.individual_awards  || [],
       positions:         normalizedPositions.length > 0 ? normalizedPositions : (prev.positions || []),
-      // ID stocké en interne, jamais affiché
-      apifootball_id:    player.apifootball_id  ?? prev.apifootball_id,
+      apifootball_id:    player.apifootball_id   ?? prev.apifootball_id,
     }));
   };
 
@@ -191,7 +206,6 @@ export default function EntityEditDialog({
       stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
       stadium_city:          team.stadium_city      || prev.stadium_city      || '',
       stadium_country:       team.stadium_country   || prev.stadium_country   || '',
-      // ID stocké en interne
       apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
     }));
   };
@@ -211,7 +225,6 @@ export default function EntityEditDialog({
       gender:                  league.gender              || prev.gender              || '',
       organizer:               league.organizer           || prev.organizer           || '',
       logo_url:                league.apifootball_logo    || league.logo_url          || prev.logo_url || '',
-      // ID stocké en interne
       apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
     }));
   };
