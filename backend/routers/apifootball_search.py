@@ -17,26 +17,29 @@ HEADERS = {
     "x-apisports-key": API_FOOTBALL_KEY,
 }
 
-# ─── Mapping entité → endpoint + clé de réponse ──────────────────────────────
+# ─── Mapping entité → endpoint + clé de réponse ──────────────────────────────────────────────────
 ENTITY_CONFIG = {
     "team": {
         "endpoint": "/teams",
-        "param": "search",       # paramètre de recherche API-Football
+        "param": "search",
         "min_chars": 3,
+        "timeout": 10.0,
     },
     "league": {
         "endpoint": "/leagues",
         "param": "search",
         "min_chars": 3,
+        "timeout": 10.0,
     },
     "player": {
-        # /players/profiles est réservé aux plans payants
-        # /players?search= fonctionne sur le plan gratuit (nécessite aussi ?season=)
-        # On utilise season courante pour éviter l'erreur 400
+        # /players?search= fonctionne sur le plan gratuit mais est lent.
+        # On force page=1 pour limiter la charge et éviter les 504.
+        # season obligatoire sinon 400.
         "endpoint": "/players",
         "param": "search",
         "min_chars": 4,
-        "extra_params": {"season": "2024"},
+        "extra_params": {"season": "2024", "page": "1"},
+        "timeout": 20.0,   # ↑ l'endpoint /players est notoirement lent
     },
 }
 
@@ -65,16 +68,18 @@ async def search_apifootball(
 
     url = f"{API_FOOTBALL_BASE}{config['endpoint']}"
     params = {config["param"]: q.strip()}
-    # Paramètres supplémentaires éventuels (ex: season pour /players)
     if "extra_params" in config:
         params.update(config["extra_params"])
 
-    async with httpx.AsyncClient(timeout=8.0) as client:
+    timeout = config.get("timeout", 10.0)
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
         try:
             resp = await client.get(url, headers=HEADERS, params=params)
             resp.raise_for_status()
         except httpx.TimeoutException:
-            raise HTTPException(status_code=504, detail="API-Football timeout")
+            # Retourne une liste vide plutôt qu'un 504 qui bloque le frontend
+            return {"results": [], "error": "timeout", "total": 0}
         except httpx.HTTPStatusError as e:
             raise HTTPException(
                 status_code=e.response.status_code,
@@ -83,11 +88,14 @@ async def search_apifootball(
 
     data = resp.json()
 
-    # Gérer les erreurs métier retournées dans le body (ex: quota dépassé)
+    # Erreurs métier (ex: quota dépassé)
     errors = data.get("errors", {})
     if errors:
         first_error = next(iter(errors.values()), "Erreur API-Football")
-        raise HTTPException(status_code=429 if "limit" in str(first_error).lower() else 502, detail=str(first_error))
+        raise HTTPException(
+            status_code=429 if "limit" in str(first_error).lower() else 502,
+            detail=str(first_error),
+        )
 
     results = data.get("response", [])
 
