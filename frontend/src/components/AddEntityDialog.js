@@ -19,6 +19,7 @@ import {
 } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import UnifiedEntitySearch from '@/components/UnifiedEntitySearch';
+import IndividualAwardsField from '@/components/IndividualAwardsField';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
@@ -26,6 +27,8 @@ const SURFACE_OPTIONS = ['Grass', 'Artificial Turf', 'Hybrid'];
 const GENDER_OPTIONS = ['male', 'female'];
 const FOOT_OPTIONS = ['right', 'left', 'both'];
 const LEAGUE_TYPE_OPTIONS = ['League', 'Cup'];
+const LEAGUE_ENTITY_TYPE_OPTIONS = ['league', 'cup', 'confederation'];
+const LEAGUE_SCOPE_OPTIONS = ['domestic', 'international'];
 
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
@@ -91,17 +94,22 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   const handlePlayerDbSelect = (item) => {
     setForm(prev => ({
       ...prev,
-      full_name:      item.full_name || item.name || '',
-      first_name:     item.first_name || '',
-      last_name:      item.last_name || '',
-      nationality:    item.nationality || '',
-      birth_date:     item.birth_date || '',
-      birth_place:    item.birth_place || '',
-      birth_country:  item.birth_country || '',
-      photo_url:      item.photo_url || item.photo || '',
+      full_name:         item.full_name || item.name || '',
+      first_name:        item.first_name || '',
+      last_name:         item.last_name || '',
+      nationality:       item.nationality || '',
+      birth_date:        item.birth_date || '',
+      birth_place:       item.birth_place || '',
+      birth_country:     item.birth_country || '',
+      photo_url:         item.photo_url || item.photo || '',
+      height:            item.height ?? '',
+      weight:            item.weight ?? '',
+      preferred_foot:    item.preferred_foot || '',
+      preferred_number:  item.preferred_number ?? '',
+      individual_awards: item.individual_awards || [],
       // apifootball_id stocké silencieusement
-      apifootball_id: item.apifootball_id || '',
-      positions:      item.positions || [],
+      apifootball_id:    item.apifootball_id || '',
+      positions:         item.positions || [],
     }));
   };
 
@@ -120,6 +128,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       stadium_surface:     item.stadium_surface || '',
       stadium_city:        item.stadium_city || '',
       stadium_country:     item.stadium_country || '',
+      stadium_image_url:   item.stadium_image_url || '',
       apifootball_team_id: item.apifootball_team_id || '',
     }));
   };
@@ -130,9 +139,11 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       name:                  item.name || '',
       country_or_region:     item.country_or_region || '',
       country_code:          item.country_code || '',
+      country_flag:          item.country_flag || '',
       type:                  item.type || '',
-      gender:                item.gender || '',
+      entity_type:           item.entity_type || '',
       scope:                 item.scope || '',
+      gender:                item.gender || '',
       organizer:             item.organizer || '',
       logo_url:              item.logo_url || '',
       apifootball_league_id: item.apifootball_league_id || '',
@@ -144,20 +155,21 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     const mappedPositions = mapApiPosition(player.position);
     setForm(prev => ({
       ...prev,
-      full_name:      player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim(),
-      first_name:     player.firstname    || prev.first_name    || '',
-      last_name:      player.lastname     || prev.last_name     || '',
-      nationality:    player.nationality  || prev.nationality   || '',
-      birth_date:     player.birth_date   || prev.birth_date    || '',
-      birth_place:    player.birth_place  || prev.birth_place   || '',
-      birth_country:  player.birth_country || prev.birth_country || '',
-      photo_url:      player.photo        || prev.photo_url     || '',
-      height:         player.height       ?? prev.height        ?? '',
-      weight:         player.weight       ?? prev.weight        ?? '',
-      preferred_foot: player.preferred_foot || prev.preferred_foot || '',
-      preferred_number: player.preferred_number ?? prev.preferred_number ?? '',
-      apifootball_id: player.apifootball_id,
-      positions:      mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
+      full_name:         player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim(),
+      first_name:        player.firstname       || prev.first_name    || '',
+      last_name:         player.lastname        || prev.last_name     || '',
+      nationality:       player.nationality     || prev.nationality   || '',
+      birth_date:        player.birth_date      || prev.birth_date    || '',
+      birth_place:       player.birth_place     || prev.birth_place   || '',
+      birth_country:     player.birth_country   || prev.birth_country || '',
+      photo_url:         player.photo           || prev.photo_url     || '',
+      height:            player.height          ?? prev.height        ?? '',
+      weight:            player.weight          ?? prev.weight        ?? '',
+      preferred_foot:    player.preferred_foot  || prev.preferred_foot || '',
+      preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
+      individual_awards: prev.individual_awards || [],
+      apifootball_id:    player.apifootball_id,
+      positions:         mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
     }));
   };
 
@@ -189,8 +201,9 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       country_code:            league.country_code        || prev.country_code        || '',
       country_flag:            league.country_flag        || prev.country_flag        || '',
       type:                    league.type                || prev.type                || '',
-      gender:                  league.gender              || prev.gender              || '',
+      entity_type:             league.entity_type         || prev.entity_type         || '',
       scope:                   league.scope               || prev.scope               || '',
+      gender:                  league.gender              || prev.gender              || '',
       organizer:               league.organizer           || prev.organizer           || '',
       logo_url:                league.apifootball_logo    || league.logo_url          || prev.logo_url || '',
       apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
@@ -332,6 +345,13 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   </div>
                 </div>
                 <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Distinctions individuelles</Label>
+                  <IndividualAwardsField
+                    value={form.individual_awards || []}
+                    onChange={val => set('individual_awards', val)}
+                  />
+                </div>
+                <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Bio</Label>
                   <Textarea value={form.bio || ''} onChange={e => set('bio', e.target.value)} placeholder="Brief biography..." className={`${inputClass} min-h-[80px]`} />
                 </div>
@@ -439,6 +459,10 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Label className={fieldLabel} style={fieldStyle}>Crest / Badge</Label>
                   <ImageUpload value={form.crest_url || ''} onChange={url => set('crest_url', url)} folder="team" />
                 </div>
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Stadium Image</Label>
+                  <ImageUpload value={form.stadium_image_url || ''} onChange={url => set('stadium_image_url', url)} folder="team" />
+                </div>
               </div>
             </>
           )}
@@ -498,11 +522,33 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Input value={form.country_or_region || ''} onChange={e => set('country_or_region', e.target.value)} placeholder="England" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Country Code</Label>
+                  <Input value={form.country_code || ''} onChange={e => set('country_code', e.target.value)} placeholder="GB" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Type</Label>
                   <Select value={form.type || ''} onValueChange={v => set('type', v)}>
                     <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="League / Cup" /></SelectTrigger>
                     <SelectContent>
                       {LEAGUE_TYPE_OPTIONS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Entity Type</Label>
+                  <Select value={form.entity_type || ''} onValueChange={v => set('entity_type', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="league / cup / confederation" /></SelectTrigger>
+                    <SelectContent>
+                      {LEAGUE_ENTITY_TYPE_OPTIONS.map(t => <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Scope</Label>
+                  <Select value={form.scope || ''} onValueChange={v => set('scope', v)}>
+                    <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="domestic / international" /></SelectTrigger>
+                    <SelectContent>
+                      {LEAGUE_SCOPE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -532,6 +578,12 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Label className={fieldLabel} style={fieldStyle}>Logo</Label>
                   <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="league" />
                 </div>
+                {form.country_flag && (
+                  <div className="col-span-2 flex items-center gap-2">
+                    <img src={form.country_flag} alt="flag" className="h-4 w-auto rounded-sm border border-border" />
+                    <span className="text-xs text-muted-foreground" style={fieldStyle}>{form.country_code || ''}</span>
+                  </div>
+                )}
               </div>
             </>
           )}
