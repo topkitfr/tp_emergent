@@ -12,7 +12,7 @@ from ..models import (
 )
 from ..auth import get_current_user
 from ..utils import slugify
-from ..utils.image_mirror import mirror_entity_images
+from ..image_mirror import mirror_entity_images
 
 router = APIRouter(prefix="/api", tags=["entities"])
 
@@ -776,7 +776,6 @@ async def autocomplete(
         if not config:
             return []
 
-        # Filtre de recherche : OR sur tous les search_fields
         filter_q: dict = {"status": {"$ne": "rejected"}}
         if search_q:
             if len(config["search_fields"]) == 1:
@@ -797,7 +796,6 @@ async def autocomplete(
                 "label":   d.get(config["label_field"], ""),
                 "extra":   d.get(config["extra_field"], ""),
                 "status":  d.get("status", "approved"),
-                # Inclure le premier champ logo trouvé dans logo_url pour le frontend
                 "logo_url": next(
                     (d[f] for f in logo_fields if d.get(f)),
                     None
