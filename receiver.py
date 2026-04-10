@@ -6,7 +6,7 @@ import os
 
 app = FastAPI()
 
-MEDIA_ROOT = Path("/mnt/Freebox-1/topkit-media")
+MEDIA_ROOT = Path("/mnt/Freebox-1/TP_media")
 BASE_URL = os.getenv("MEDIA_BASE_URL", "http://82.67.103.45")
 SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 
