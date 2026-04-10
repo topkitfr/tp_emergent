@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
 const DEBOUNCE_MS = 400;
 
 // ─── Normalisation ─────────────────────────────────────────────────────────────
