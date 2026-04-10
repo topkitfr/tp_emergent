@@ -22,10 +22,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ApiFootballSearch from './ApiFootballSearch';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
 const DEBOUNCE_MS = 300;
 
-// ─── Skeleton ────────────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 function Skeleton() {
   return (
     <div className="space-y-1 p-1">
@@ -39,7 +39,7 @@ function Skeleton() {
   );
 }
 
-// ─── Ligne résultat DB ────────────────────────────────────────────────────────
+// ─── Ligne résultat DB ────────────────────────────────────────────────────────────────
 function DBRow({ item, onClick }) {
   return (
     <button
@@ -86,7 +86,7 @@ export default function CompetitionSelector({
   const timerRef = useRef(null);
   const containerRef = useRef(null);
 
-  // ── Recherche DB ────────────────────────────────────────────────────────────
+  // ── Recherche DB ───────────────────────────────────────────────────────────────────
   const searchDB = useCallback(async (q) => {
     if (!q || q.trim().length < 2) {
       setDbResults([]);
@@ -120,7 +120,7 @@ export default function CompetitionSelector({
     timerRef.current = setTimeout(() => searchDB(val), DEBOUNCE_MS);
   };
 
-  // ── Sélection depuis DB ─────────────────────────────────────────────────────
+  // ── Sélection depuis DB ─────────────────────────────────────────────────────────────────
   const handleSelectDB = (item) => {
     setQuery(item.name);
     setOpen(false);
@@ -135,7 +135,7 @@ export default function CompetitionSelector({
     });
   };
 
-  // ── Import depuis API-Football ──────────────────────────────────────────────
+  // ── Import depuis API-Football ───────────────────────────────────────────────────────
   const handleSelectFromApi = async (apiItem) => {
     const league = apiItem.league || apiItem;
     const country = apiItem.country || {};
@@ -175,7 +175,7 @@ export default function CompetitionSelector({
     }
   };
 
-  // ── Clear ────────────────────────────────────────────────────────────────────
+  // ── Clear ─────────────────────────────────────────────────────────────────────────
   const handleClear = () => {
     setQuery('');
     setOpen(false);
@@ -184,7 +184,7 @@ export default function CompetitionSelector({
     onChange(null);
   };
 
-  // ── Fermer au clic extérieur ─────────────────────────────────────────────────
+  // ── Fermer au clic extérieur ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
