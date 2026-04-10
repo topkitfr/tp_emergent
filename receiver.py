@@ -13,15 +13,19 @@ SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 FOLDERS = {
-    "master_kit": MEDIA_ROOT / "master_kits" / "photos",
-    "version":    MEDIA_ROOT / "versions"    / "photos",
-    "profile":    MEDIA_ROOT / "users"       / "photos",
-    "brand":      MEDIA_ROOT / "brands"      / "logos",
-    "team":       MEDIA_ROOT / "teams"       / "logos",
-    "stadium":    MEDIA_ROOT / "teams"       / "stadiums",
-    "league":     MEDIA_ROOT / "leagues"     / "logos",
-    "sponsor":    MEDIA_ROOT / "sponsors"    / "logos",
-    "player":     MEDIA_ROOT / "players"     / "photos",
+    # Kits
+    "master_kit": MEDIA_ROOT / "kits"     / "masters",
+    "version":    MEDIA_ROOT / "kits"     / "versions",
+    # Teams
+    "team":       MEDIA_ROOT / "teams"    / "clubs",
+    "nation":     MEDIA_ROOT / "teams"    / "nations",
+    "stadium":    MEDIA_ROOT / "teams"    / "stadiums",
+    # Autres entités
+    "league":     MEDIA_ROOT / "leagues"  / "logos",
+    "brand":      MEDIA_ROOT / "brands"   / "logos",
+    "sponsor":    MEDIA_ROOT / "sponsors" / "logos",
+    "player":     MEDIA_ROOT / "players"  / "photos",
+    "profile":    MEDIA_ROOT / "users"    / "photos",
 }
 
 
@@ -39,7 +43,7 @@ async def receive_upload(
     if file.content_type not in ALLOWED_MIME:
         raise HTTPException(status_code=400, detail=f"Type non autorisé: {file.content_type}")
 
-    dest = FOLDERS.get(folder, MEDIA_ROOT / "master_kits" / "photos")
+    dest = FOLDERS.get(folder, MEDIA_ROOT / "kits" / "masters")
     dest.mkdir(parents=True, exist_ok=True)
 
     ext = Path(file.filename).suffix.lower() or ".jpg"
