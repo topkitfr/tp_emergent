@@ -12,6 +12,7 @@ from ..models import (
 )
 from ..auth import get_current_user
 from ..utils import slugify
+from ..utils.image_mirror import mirror_entity_images
 
 router = APIRouter(prefix="/api", tags=["entities"])
 
@@ -85,6 +86,7 @@ async def create_team(team: TeamCreate):
     doc["status"]     = "approved"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["updated_at"] = doc["created_at"]
+    doc = await mirror_entity_images(doc, "team", doc["team_id"])
     await db.teams.insert_one(doc)
     result = await db.teams.find_one({"team_id": doc["team_id"]}, {"_id": 0})
     result["kit_count"] = 0
@@ -112,6 +114,7 @@ async def create_team_pending(
     doc["submission_id"] = submission_id
     doc["created_at"]    = now
     doc["updated_at"]    = now
+    doc = await mirror_entity_images(doc, "team", team_id)
     await db.teams.insert_one(doc)
 
     sub_data = {"mode": "create", "name": team.name, "entity_id": team_id}
@@ -143,6 +146,7 @@ async def update_team(team_id: str, team: TeamCreate):
     update_data = {k: v for k, v in team.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(team.name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data = await mirror_entity_images(update_data, "team", team_id)
     await db.teams.update_one({"team_id": team_id}, {"$set": update_data})
     result = await db.teams.find_one({"team_id": team_id}, {"_id": 0})
     result["kit_count"] = await db.master_kits.count_documents({"team_id": team_id})
@@ -202,6 +206,7 @@ async def create_league(league: LeagueCreate):
     doc["status"]     = "approved"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["updated_at"] = doc["created_at"]
+    doc = await mirror_entity_images(doc, "league", doc["league_id"])
     await db.leagues.insert_one(doc)
     result = await db.leagues.find_one({"league_id": doc["league_id"]}, {"_id": 0})
     result["kit_count"] = 0
@@ -229,6 +234,7 @@ async def create_league_pending(
     doc["submission_id"] = submission_id
     doc["created_at"]    = now
     doc["updated_at"]    = now
+    doc = await mirror_entity_images(doc, "league", league_id)
     await db.leagues.insert_one(doc)
 
     sub_data = {"mode": "create", "name": league.name, "entity_id": league_id}
@@ -260,6 +266,7 @@ async def update_league(league_id: str, league: LeagueCreate):
     update_data = {k: v for k, v in league.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(league.name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data = await mirror_entity_images(update_data, "league", league_id)
     await db.leagues.update_one({"league_id": league_id}, {"$set": update_data})
     result = await db.leagues.find_one({"league_id": league_id}, {"_id": 0})
     result["kit_count"] = await db.master_kits.count_documents({"league_id": league_id})
@@ -313,6 +320,7 @@ async def create_brand(brand: BrandCreate):
     doc["status"]     = "approved"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["updated_at"] = doc["created_at"]
+    doc = await mirror_entity_images(doc, "brand", doc["brand_id"])
     await db.brands.insert_one(doc)
     result = await db.brands.find_one({"brand_id": doc["brand_id"]}, {"_id": 0})
     result["kit_count"] = 0
@@ -340,6 +348,7 @@ async def create_brand_pending(
     doc["submission_id"] = submission_id
     doc["created_at"]    = now
     doc["updated_at"]    = now
+    doc = await mirror_entity_images(doc, "brand", brand_id)
     await db.brands.insert_one(doc)
 
     sub_data = {"mode": "create", "name": brand.name, "entity_id": brand_id}
@@ -371,6 +380,7 @@ async def update_brand(brand_id: str, brand: BrandCreate):
     update_data = {k: v for k, v in brand.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(brand.name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data = await mirror_entity_images(update_data, "brand", brand_id)
     await db.brands.update_one({"brand_id": brand_id}, {"$set": update_data})
     result = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     result["kit_count"] = await db.master_kits.count_documents({"brand_id": brand_id})
@@ -439,6 +449,7 @@ async def create_sponsor(sponsor: dict):
     doc["status"]      = "approved"
     doc["created_at"]  = datetime.now(timezone.utc).isoformat()
     doc["updated_at"]  = doc["created_at"]
+    doc = await mirror_entity_images(doc, "sponsor", doc["sponsor_id"])
     await db.sponsors.insert_one(doc)
     return await db.sponsors.find_one({"sponsor_id": doc["sponsor_id"]}, {"_id": 0})
 
@@ -464,6 +475,7 @@ async def create_sponsor_pending(
     doc["submission_id"] = submission_id
     doc["created_at"]    = now
     doc["updated_at"]    = now
+    doc = await mirror_entity_images(doc, "sponsor", sponsor_id)
     await db.sponsors.insert_one(doc)
 
     sub_data = {"mode": "create", "name": sponsor.get("name"), "entity_id": sponsor_id}
@@ -492,6 +504,7 @@ async def update_sponsor(sponsor_id: str, sponsor: dict):
     update_data = {k: v for k, v in sponsor.items() if v is not None}
     update_data["slug"]       = slugify(sponsor.get("name", ""))
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data = await mirror_entity_images(update_data, "sponsor", sponsor_id)
     await db.sponsors.update_one({"sponsor_id": sponsor_id}, {"$set": update_data})
     return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
 
@@ -563,6 +576,7 @@ async def create_player(player: PlayerCreate):
     doc["status"]     = "approved"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["updated_at"] = doc["created_at"]
+    doc = await mirror_entity_images(doc, "player", doc["player_id"])
     await db.players.insert_one(doc)
     result = await db.players.find_one({"player_id": doc["player_id"]}, {"_id": 0})
     result["kit_count"] = 0
@@ -592,6 +606,7 @@ async def create_player_pending(
     doc["submission_id"] = submission_id
     doc["created_at"]    = now
     doc["updated_at"]    = now
+    doc = await mirror_entity_images(doc, "player", player_id)
     await db.players.insert_one(doc)
 
     sub_data = {"mode": "create", "full_name": player.full_name, "entity_id": player_id}
@@ -633,6 +648,7 @@ async def update_player(player_id: str, player: PlayerCreate):
     update_data = {k: v for k, v in player.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(player.full_name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data = await mirror_entity_images(update_data, "player", player_id)
     await db.players.update_one({"player_id": player_id}, {"$set": update_data})
     result = await db.players.find_one({"player_id": player_id}, {"_id": 0})
     result["kit_count"] = await db.versions.count_documents({"main_player_id": player_id})
