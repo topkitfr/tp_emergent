@@ -24,19 +24,7 @@ FOLDER_KEYS = {
     "league",
     "sponsor",
     "player",
-}
-
-# Gardé pour /upload et /upload/multiple qui envoient le chemin mappé au receiver
-FOLDER_MAP = {
-    "master_kit": "kits/masters",
-    "version":    "kits/versions",
-    "profile":    "users/photos",
-    "brand":      "brands/logos",
-    "team":       "teams/clubs",
-    "nation":     "teams/nations",
-    "league":     "leagues/logos",
-    "sponsor":    "sponsors/logos",
-    "player":     "players/photos",
+    "stadium",
 }
 
 
@@ -62,7 +50,9 @@ async def _forward_to_receiver(
     entity_id: Optional[str] = None,
     side: Optional[str] = None,
 ) -> dict:
-    """Envoie le fichier au récepteur Freebox et retourne url + relative_path."""
+    """Envoie le fichier au récepteur Freebox et retourne url + relative_path.
+    Le folder doit toujours être une clé courte (ex: 'team', 'league') —
+    le mapping vers le chemin Freebox est fait côté receiver."""
     params = {"folder": folder}
     if entity_id:
         params["entity_id"] = entity_id
@@ -106,9 +96,8 @@ async def download_and_store(
                 detail=f"Échec du téléchargement de l'image : {image_url} (status {resp.status_code})"
             )
         contents = resp.content
-        # Détermine l'extension depuis le Content-Type si pas de filename fourni
         ct = resp.headers.get("content-type", "image/png")
-        ext = ct.split("/")[-1].split(";")[0].strip()  # png, jpeg, webp…
+        ext = ct.split("/")[-1].split(";")[0].strip()
         ext = "jpg" if ext == "jpeg" else ext
         fname = filename or f"{entity_id}.{ext}"
 
@@ -124,21 +113,14 @@ async def upload_from_url(
 ):
     """
     Route pour les seeds API-Football et tout import automatique.
-    Reçoit une URL externe, télécharge l'image et la stocke sur la Freebox.
     Le folder doit être une clé courte (ex: "league", "team", "player") —
     le mapping vers le chemin Freebox est fait côté receiver.
-
-    Exemples d'usage :
-      - seed_leagues  → folder="league",  entity_id="39"
-      - seed_teams    → folder="team",    entity_id="33"
-      - seed_players  → folder="player",  entity_id="276"
     """
     if folder not in FOLDER_KEYS:
         raise HTTPException(
             status_code=400,
             detail=f"Dossier inconnu : '{folder}'. Valeurs valides : {sorted(FOLDER_KEYS)}"
         )
-    # Passe la clé courte directement — le receiver fait son propre mapping
     return await download_and_store(image_url, folder, entity_id, filename)
 
 
@@ -149,6 +131,11 @@ async def upload_image(
     entity_id: Optional[str] = None,
     side: Optional[str] = None,
 ):
+    if folder not in FOLDER_KEYS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Dossier inconnu : '{folder}'. Valeurs valides : {sorted(FOLDER_KEYS)}"
+        )
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -159,8 +146,8 @@ async def upload_image(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
-    mapped_folder = FOLDER_MAP.get(folder, "kits/masters")
-    result = await _forward_to_receiver(contents, file.filename, mapped_folder, entity_id, side)
+    # Passe la clé courte directement — le receiver fait son propre mapping
+    result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
     return {"filename": file.filename, **result}
 
 
@@ -172,7 +159,6 @@ async def upload_multiple_images(
     side: Optional[str] = None,
 ):
     results = []
-    mapped_folder = FOLDER_MAP.get(folder, "kits/masters")
     for file in files:
         ext = Path(file.filename).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
@@ -181,7 +167,8 @@ async def upload_multiple_images(
         if len(contents) > MAX_FILE_SIZE:
             continue
         try:
-            result = await _forward_to_receiver(contents, file.filename, mapped_folder, entity_id, side)
+            # Passe la clé courte directement — le receiver fait son propre mapping
+            result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
             results.append({"filename": file.filename, **result})
         except Exception:
             continue
