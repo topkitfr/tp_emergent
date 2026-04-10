@@ -18,6 +18,7 @@ FOLDERS = {
     "profile":    MEDIA_ROOT / "users"       / "photos",
     "brand":      MEDIA_ROOT / "brands"      / "logos",
     "team":       MEDIA_ROOT / "teams"       / "logos",
+    "stadium":    MEDIA_ROOT / "teams"       / "stadiums",
     "league":     MEDIA_ROOT / "leagues"     / "logos",
     "sponsor":    MEDIA_ROOT / "sponsors"    / "logos",
     "player":     MEDIA_ROOT / "players"     / "photos",
