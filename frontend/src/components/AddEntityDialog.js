@@ -151,23 +151,29 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   };
 
   // ── Handlers API select ───────────────────────────────────────────────────
+  // normalizePlayer (UnifiedEntitySearch) retourne : full_name, first_name, last_name,
+  // photo_url, positions[], birth_date, birth_place, birth_country, apifootball_id, …
   const handlePlayerApiSelect = (player) => {
-    const mappedPositions = mapApiPosition(player.position);
+    // positions est déjà un tableau de strings (ex: ['ST']) sorti de normalizePlayer
+    const mappedPositions = player.positions && player.positions.length > 0
+      ? player.positions
+      : mapApiPosition(player.position || '');
+
     setForm(prev => ({
       ...prev,
-      full_name:         player.name || `${player.firstname || ''} ${player.lastname || ''}`.trim(),
-      first_name:        player.firstname       || prev.first_name    || '',
-      last_name:         player.lastname        || prev.last_name     || '',
-      nationality:       player.nationality     || prev.nationality   || '',
-      birth_date:        player.birth_date      || prev.birth_date    || '',
-      birth_place:       player.birth_place     || prev.birth_place   || '',
-      birth_country:     player.birth_country   || prev.birth_country || '',
-      photo_url:         player.photo           || prev.photo_url     || '',
-      height:            player.height          ?? prev.height        ?? '',
-      weight:            player.weight          ?? prev.weight        ?? '',
-      preferred_foot:    player.preferred_foot  || prev.preferred_foot || '',
+      full_name:         player.full_name        || prev.full_name        || '',
+      first_name:        player.first_name       || prev.first_name       || '',
+      last_name:         player.last_name        || prev.last_name        || '',
+      nationality:       player.nationality      || prev.nationality      || '',
+      birth_date:        player.birth_date       || prev.birth_date       || '',
+      birth_place:       player.birth_place      || prev.birth_place      || '',
+      birth_country:     player.birth_country    || prev.birth_country    || '',
+      photo_url:         player.photo_url        || player.photo          || prev.photo_url || '',
+      height:            player.height           ?? prev.height           ?? '',
+      weight:            player.weight           ?? prev.weight           ?? '',
+      preferred_foot:    player.preferred_foot   || prev.preferred_foot   || '',
       preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
-      individual_awards: prev.individual_awards || [],
+      individual_awards: prev.individual_awards  || [],
       apifootball_id:    player.apifootball_id,
       positions:         mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
     }));
