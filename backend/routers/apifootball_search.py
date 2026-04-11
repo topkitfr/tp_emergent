@@ -32,14 +32,12 @@ ENTITY_CONFIG = {
         "timeout": 10.0,
     },
     "player": {
-        # /players?search= fonctionne sur le plan gratuit mais est lent.
-        # On force page=1 pour limiter la charge et éviter les 504.
-        # season obligatoire sinon 400.
-        "endpoint": "/players",
+        # /players/profiles accepte search= sans league ni season obligatoire.
+        # Contrairement à /players qui exige league ou team en plus du search.
+        "endpoint": "/players/profiles",
         "param": "search",
         "min_chars": 4,
-        "extra_params": {"season": "2024", "page": "1"},
-        "timeout": 20.0,   # ↑ l'endpoint /players est notoirement lent
+        "timeout": 15.0,
     },
 }
 
@@ -78,7 +76,6 @@ async def search_apifootball(
             resp = await client.get(url, headers=HEADERS, params=params)
             resp.raise_for_status()
         except httpx.TimeoutException:
-            # Retourne une liste vide plutôt qu'un 504 qui bloque le frontend
             return {"results": [], "error": "timeout", "total": 0}
         except httpx.HTTPStatusError as e:
             raise HTTPException(
