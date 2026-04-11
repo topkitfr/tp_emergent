@@ -29,7 +29,7 @@ def master_kit_image_url(kit_type: str, kit_id: str, stored_photo: str = "") -> 
     if stored_photo:
         if stored_photo.startswith("/api/images"):
             return f"https://tp-emergent.onrender.com{stored_photo}"
-        if stored_photo.startswith("http://82.67.103.45"):
+        if stored_photo.startswith(("http://82.67.103.45", "https://82.67.103.45")):
             import re
             relative = re.sub(r'^https?://[^/]+', '', stored_photo)
             return f"{MEDIA_BASE_URL}{relative}"
@@ -60,7 +60,7 @@ def local_image_url(original_url: str) -> str:
     if original_url.startswith("/api/images"):
         return f"https://tp-emergent.onrender.com{original_url}"
     # Si c'est une URL Freebox directe (http://82.67.103.45/...)
-    if original_url.startswith("http://82.67.103.45"):
+    if original_url.startswith(("http://82.67.103.45", "https://82.67.103.45")):
         import re
         relative = re.sub(r'^https?://[^/]+', '', original_url)
         return f"{MEDIA_BASE_URL}{relative}"

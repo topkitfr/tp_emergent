@@ -27,7 +27,7 @@ KIT_ID_FIELDS = {
     "sponsor": "sponsor_id",
 }
 
-IMAGE_FIELDS = {"logo_url", "crest_url", "photo_url"}
+IMAGE_FIELDS = {"logo_url", "crest_url", "photo_url", "stadium_image_url"}
 
 SUBMISSION_TYPE_LABELS = {
     "master_kit": "maillot",
@@ -381,9 +381,12 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
     if mode == "create":
         entity_id = data.get("entity_id")
         if entity_id:
+            update_doc = {k: v for k, v in data.items() if k not in ("mode", "parent_submission_id", "entity_id", "entity_type")}
+            update_doc["status"] = "approved"
+            update_doc["updated_at"] = now
             await db[config["collection"]].update_one(
                 {config["id_field"]: entity_id},
-                {"$set": {"status": "approved", "updated_at": now}}
+                {"$set": update_doc}
             )
             return entity_id
         else:

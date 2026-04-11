@@ -74,3 +74,100 @@ INFO:     172.18.0.5:44812 - "POST /receive-upload?folder=team&entity_id=test_te
 INFO:     172.18.0.5:44822 - "POST /receive-upload?folder=nation&entity_id=test_nation HTTP/1.1" 200 OK
 INFO:     172.18.0.5:49606 - "POST /receive-upload?folder=sponsor&entity_id=test_sponsor HTTP/1.1" 200 OK
 INFO:     172.18.0.5:49614 - "POST /receive-upload?folder=player&entity_id=test_player HTTP/1.1" 200 OK
+INFO:     172.18.0.2:57874 - "POST /receive-upload?folder=teams%2Fclubs HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver.py", line 60, in receive_upload
+    await f.write(contents)
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/aiofiles/base.py", line 73, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/aiofiles/base.py", line 69, in __await__
+    self._obj = yield from self._coro.__await__()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tp_admin/delta/receiver_venv/lib/python3.11/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
+    f = await loop.run_in_executor(executor, cb)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/Freebox-1/TP_media/kits/masters/teams/clubs_4121afe73149.jpg'
+INFO:     127.0.0.1:37442 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "POST /receive-upload?folder=league&entity_id=39 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:40570 - "GET / HTTP/1.1" 404 Not Found
+nohup: ignoring input
+INFO:     Started server process [195326]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     172.18.0.2:60816 - "POST /receive-upload?folder=team&entity_id=team_259840ea2edd HTTP/1.1" 403 Forbidden
+INFO:     172.18.0.2:60830 - "POST /receive-upload?folder=stadium&entity_id=team_259840ea2edd HTTP/1.1" 403 Forbidden
+nohup: ignoring input
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [195326]
+INFO:     Started server process [195517]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:46792 - "POST /receive-upload?folder=team&entity_id=test_curl HTTP/1.1" 200 OK
+INFO:     172.18.0.2:52790 - "POST /receive-upload?folder=team&entity_id=team_a566e793749d HTTP/1.1" 200 OK
+INFO:     172.18.0.2:52802 - "POST /receive-upload?folder=stadium&entity_id=team_a566e793749d HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45808 - "POST /receive-upload?folder=team&entity_id=team_6ee4bc4f240b HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45816 - "POST /receive-upload?folder=stadium&entity_id=team_6ee4bc4f240b HTTP/1.1" 200 OK
+INFO:     172.18.0.2:53400 - "POST /receive-upload?folder=team&entity_id=team_ab5526c12d8b HTTP/1.1" 200 OK
+INFO:     172.18.0.2:53406 - "POST /receive-upload?folder=stadium&entity_id=team_ab5526c12d8b HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45764 - "POST /receive-upload?folder=team&entity_id=team_8f6c367dec72 HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45766 - "POST /receive-upload?folder=stadium&entity_id=team_8f6c367dec72 HTTP/1.1" 200 OK
+INFO:     172.18.0.2:38958 - "POST /receive-upload?folder=team&entity_id=team_0cd5cd311d61 HTTP/1.1" 200 OK
+INFO:     172.18.0.2:38968 - "POST /receive-upload?folder=stadium&entity_id=team_0cd5cd311d61 HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45564 - "POST /receive-upload?folder=team&entity_id=team_911565f4b5ea HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45570 - "POST /receive-upload?folder=stadium&entity_id=team_911565f4b5ea HTTP/1.1" 200 OK
+INFO:     172.18.0.5:42672 - "POST /receive-upload?folder=team&entity_id=team_0de308361bdf HTTP/1.1" 200 OK
+INFO:     172.18.0.5:42688 - "POST /receive-upload?folder=stadium&entity_id=team_0de308361bdf HTTP/1.1" 200 OK
+INFO:     172.18.0.3:43658 - "POST /receive-upload?folder=team&entity_id=team_1a55a92884a9 HTTP/1.1" 200 OK
+INFO:     172.18.0.3:43662 - "POST /receive-upload?folder=stadium&entity_id=team_1a55a92884a9 HTTP/1.1" 200 OK

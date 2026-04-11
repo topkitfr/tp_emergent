@@ -13,7 +13,7 @@ ALLOWED_DOMAINS = [
 ]
 
 # IP publique Freebox — racine des médias
-FREEBOX_BASE = os.getenv("FREEBOX_BASE_URL", "http://82.67.103.45")
+FREEBOX_BASE = os.getenv("FREEBOX_BASE_URL", "https://82.67.103.45")
 
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
