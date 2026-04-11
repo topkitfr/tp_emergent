@@ -1,5 +1,6 @@
 """Download an external image URL and forward it to the Freebox receiver."""
 import os
+import re
 import httpx
 from pathlib import Path
 
@@ -27,6 +28,22 @@ FOLDER_MAP: dict[str, str] = {
     "stadium": "stadium",   # → TP_media/teams/stadiums
 }
 
+_ABS_URL_RE = re.compile(r'^https?://[^/]+')
+
+
+def _to_relative_path(public_url: str) -> str:
+    """
+    Convertit l'URL absolue retournée par le receiver Freebox
+    (ex: http://82.67.103.45/leagues/logos/39.png)
+    en chemin relatif servi par le backend
+    (ex: /api/images/leagues/logos/39.png).
+    Évite les erreurs Mixed Content HTTPS → HTTP.
+    """
+    match = _ABS_URL_RE.match(public_url)
+    if not match:
+        return public_url
+    return f"/api/images{public_url[match.end():]}"
+
 
 async def mirror_image(
     source_url: str,
@@ -34,7 +51,7 @@ async def mirror_image(
     entity_id: str,
 ) -> str:
     """Télécharge source_url et le poste au receiver.
-    Retourne l'URL Freebox, ou source_url en fallback silencieux."""
+    Retourne le chemin relatif /api/images/..., ou source_url en fallback silencieux."""
     if not source_url or not source_url.startswith("http"):
         return source_url
     try:
@@ -60,7 +77,9 @@ async def mirror_image(
                 files={"file": (fname, dl.content, content_type)},
             )
             resp.raise_for_status()
-            return resp.json().get("url", source_url)
+            raw_url = resp.json().get("url", source_url)
+            # Convertir http://IP/... → /api/images/... pour éviter Mixed Content
+            return _to_relative_path(raw_url)
     except Exception as exc:
         print(f"[image_mirror] WARN: could not mirror {source_url!r}: {exc}")
         return source_url  # fallback gracieux — on garde l'URL originale
