@@ -10,6 +10,9 @@
 //   onSelectApi  : fn(normalized)  — item API-Football normalisé (à plat, prêt pour préfill)
 //   placeholder  : string (optionnel)
 //   disabled     : bool (optionnel)
+//
+// ⚠️  API-Football (quota 100 req/jour) est déclenché UNIQUEMENT sur Enter ou
+//     clic du bouton « Rechercher sur API ». La frappe ne déclenche que la DB.
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Search, Database, Zap, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
@@ -17,8 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 const BACKEND = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
-const DEBOUNCE_DB  = 200;
-const DEBOUNCE_API = 350;
+const DEBOUNCE_DB = 200;
 
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const dmSans     = { fontFamily: 'DM Sans' };
@@ -251,15 +253,16 @@ export default function UnifiedEntitySearch({
   const [errorApi, setErrorApi]     = useState(null);
   const [open, setOpen]             = useState(false);
   const [selectedSource, setSelectedSource] = useState(null);
+  // true une fois que l'API-Football a été interrogée pour la query courante
+  const [apiTriggered, setApiTriggered] = useState(false);
 
   const timerDb      = useRef(null);
-  const timerApi     = useRef(null);
   const containerRef = useRef(null);
 
   const defaultPlaceholders = {
-    team:    'Rechercher un club... (DB + API-Football)',
-    player:  'Rechercher un joueur... (DB + API-Football)',
-    league:  'Rechercher une compétition... (DB + API-Football)',
+    team:    'Rechercher un club... (DB + ↵ API-Football)',
+    player:  'Rechercher un joueur... (DB + ↵ API-Football)',
+    league:  'Rechercher une compétition... (DB + ↵ API-Football)',
     brand:   'Rechercher une marque dans la base...',
     sponsor: 'Rechercher un sponsor dans la base...',
   };
@@ -284,6 +287,7 @@ export default function UnifiedEntitySearch({
   const fetchApi = useCallback(async (q) => {
     setLoadingApi(true);
     setErrorApi(null);
+    setApiTriggered(true);
     try {
       const res = await fetch(getApiEndpoint(entityType, q));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -302,20 +306,29 @@ export default function UnifiedEntitySearch({
     const val = e.target.value;
     setQuery(val);
     setSelectedSource(null);
+    // Réinitialise les résultats API quand la query change
+    setApiResults([]);
+    setApiTriggered(false);
+    setErrorApi(null);
     if (val.trim().length < 2) {
       setOpen(false);
       setDbResults([]);
-      setApiResults([]);
       setDbSearched(false);
       clearTimeout(timerDb.current);
-      clearTimeout(timerApi.current);
       return;
     }
     clearTimeout(timerDb.current);
-    clearTimeout(timerApi.current);
-    timerDb.current  = setTimeout(() => fetchDb(val.trim()), DEBOUNCE_DB);
-    timerApi.current = setTimeout(() => fetchApi(val.trim()), DEBOUNCE_API);
+    // DB : debounce automatique à chaque frappe
+    timerDb.current = setTimeout(() => fetchDb(val.trim()), DEBOUNCE_DB);
     setOpen(true);
+  };
+
+  // ⚡ API-Football : déclenché UNIQUEMENT sur Enter
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && query.trim().length >= 2 && showApiSection) {
+      e.preventDefault();
+      fetchApi(query.trim());
+    }
   };
 
   // ✔️ Normalise l'item API avant de le passer au parent
@@ -348,6 +361,7 @@ export default function UnifiedEntitySearch({
         <Input
           value={query}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           onFocus={() => (hasResults || dbSearched) && query.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder || defaultPlaceholders[entityType]}
           className="pl-8 pr-20 rounded-none h-9 text-sm bg-card border-border"
@@ -382,7 +396,7 @@ export default function UnifiedEntitySearch({
                 <><SkeletonRow /><SkeletonRow /></>
               ) : dbResults.length === 0 ? (
                 <p className="px-3 py-2 text-xs text-muted-foreground italic" style={dmSans}>
-                  Aucune fiche existante pour « <em>{query}</em> »
+                  Aucune fiche existante pour « <em>{query}</em> »
                 </p>
               ) : (
                 dbResults.map((item, idx) => (
@@ -394,7 +408,7 @@ export default function UnifiedEntitySearch({
 
           {showApiSection && (
             <>
-              <SectionHeader icon={Zap} label="API-Football" count={apiResults.length} color="bg-blue-500/5" />
+              <SectionHeader icon={Zap} label="API-Football (↵ pour chercher)" count={apiResults.length} color="bg-blue-500/5" />
               {loadingApi ? (
                 <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
               ) : errorApi ? (
@@ -405,9 +419,13 @@ export default function UnifiedEntitySearch({
                     <RefreshCw className="w-3 h-3" /> Réessayer
                   </button>
                 </div>
+              ) : !apiTriggered ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground" style={dmSans}>
+                  Appuyez sur <kbd className="px-1 py-0.5 rounded bg-muted border border-border text-[10px]">↵ Entrée</kbd> pour chercher sur API-Football
+                </p>
               ) : apiResults.length === 0 ? (
                 <p className="px-3 py-2 text-xs text-muted-foreground" style={dmSans}>
-                  Aucun résultat API pour « <em>{query}</em> »
+                  Aucun résultat API pour « <em>{query}</em> »
                 </p>
               ) : (
                 apiResults.map((item, idx) => (
@@ -419,7 +437,7 @@ export default function UnifiedEntitySearch({
 
           {!loadingDb && !dbSearched && !showApiSection && (
             <p className="px-3 py-4 text-xs text-muted-foreground text-center" style={dmSans}>
-              Aucun résultat pour « <em>{query}</em> »
+              Aucun résultat pour « <em>{query}</em> »
             </p>
           )}
         </div>
