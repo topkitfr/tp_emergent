@@ -17,9 +17,9 @@ from ..image_mirror import mirror_entity_images
 router = APIRouter(prefix="/api", tags=["entities"])
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # Helper — verrou sur entités en attente d'approbation
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 LOCKED_STATUSES = ("for_review", "pending")
 
 
@@ -35,9 +35,9 @@ async def _assert_not_locked(collection: str, id_field: str, entity_id: str):
         )
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # Team Routes
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 
 @router.get("/teams")
 async def list_teams(
@@ -117,7 +117,14 @@ async def create_team_pending(
     doc = await mirror_entity_images(doc, "team", team_id)
     await db.teams.insert_one(doc)
 
-    sub_data = {"mode": "create", "name": team.name, "entity_id": team_id}
+    # sub_data inclut les champs image après mirroring pour affichage dans la review
+    sub_data = {
+        "mode":               "create",
+        "name":               team.name,
+        "entity_id":          team_id,
+        "crest_url":          doc.get("crest_url"),
+        "stadium_image_url":  doc.get("stadium_image_url"),
+    }
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
@@ -153,9 +160,9 @@ async def update_team(team_id: str, team: TeamCreate):
     return result
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # League Routes
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 
 @router.get("/leagues")
 async def list_leagues(
@@ -237,7 +244,14 @@ async def create_league_pending(
     doc = await mirror_entity_images(doc, "league", league_id)
     await db.leagues.insert_one(doc)
 
-    sub_data = {"mode": "create", "name": league.name, "entity_id": league_id}
+    # sub_data inclut les champs image après mirroring pour affichage dans la review
+    sub_data = {
+        "mode":       "create",
+        "name":       league.name,
+        "entity_id":  league_id,
+        "logo_url":   doc.get("logo_url"),
+        "apifootball_logo": doc.get("apifootball_logo"),
+    }
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
@@ -273,9 +287,9 @@ async def update_league(league_id: str, league: LeagueCreate):
     return result
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # Brand Routes
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 
 @router.get("/brands")
 async def list_brands(
@@ -351,7 +365,13 @@ async def create_brand_pending(
     doc = await mirror_entity_images(doc, "brand", brand_id)
     await db.brands.insert_one(doc)
 
-    sub_data = {"mode": "create", "name": brand.name, "entity_id": brand_id}
+    # sub_data inclut les champs image après mirroring pour affichage dans la review
+    sub_data = {
+        "mode":      "create",
+        "name":      brand.name,
+        "entity_id": brand_id,
+        "logo_url":  doc.get("logo_url"),
+    }
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
@@ -387,7 +407,7 @@ async def update_brand(brand_id: str, brand: BrandCreate):
     return result
 
 
-# ── SPONSORS ────────────────────────────────────────────────────────────────────────
+# ── SPONSORS ────────────────────────────────────────────────────────────────────────────
 
 @router.get("/sponsors")
 async def list_sponsors(
@@ -478,7 +498,13 @@ async def create_sponsor_pending(
     doc = await mirror_entity_images(doc, "sponsor", sponsor_id)
     await db.sponsors.insert_one(doc)
 
-    sub_data = {"mode": "create", "name": sponsor.get("name"), "entity_id": sponsor_id}
+    # sub_data inclut les champs image après mirroring pour affichage dans la review
+    sub_data = {
+        "mode":      "create",
+        "name":      sponsor.get("name"),
+        "entity_id": sponsor_id,
+        "logo_url":  doc.get("logo_url"),
+    }
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
@@ -509,9 +535,9 @@ async def update_sponsor(sponsor_id: str, sponsor: dict):
     return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # Player Routes
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 
 @router.get("/players")
 async def list_players(
@@ -609,7 +635,13 @@ async def create_player_pending(
     doc = await mirror_entity_images(doc, "player", player_id)
     await db.players.insert_one(doc)
 
-    sub_data = {"mode": "create", "full_name": player.full_name, "entity_id": player_id}
+    # sub_data inclut les champs image après mirroring pour affichage dans la review
+    sub_data = {
+        "mode":      "create",
+        "full_name": player.full_name,
+        "entity_id": player_id,
+        "photo_url": doc.get("photo_url"),
+    }
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
@@ -655,9 +687,9 @@ async def update_player(player_id: str, player: PlayerCreate):
     return result
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # Pending Approval Routes
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 
 ENTITY_CONFIG = {
     "team":    {"collection": "teams",    "id_field": "team_id"},
@@ -741,9 +773,9 @@ async def reject_entity(entity_type: str, entity_id: str):
     return {"message": f"{entity_type} rejected"}
 
 
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 # Autocomplete Route
-# ───────────────────────────────────────────────
+# ────────────────────────────────────────────────
 
 # Mapping par entité : quels champs logo inclure dans la réponse autocomplete
 _LOGO_FIELDS = {
