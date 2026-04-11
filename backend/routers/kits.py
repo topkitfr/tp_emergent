@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
+import re
 
 from ..database import db, client
 from ..models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
@@ -11,61 +12,45 @@ from .notifications import create_notification
 router = APIRouter(prefix="/api", tags=["kits"])
 
 # ─────────────────────────────────────────────────────────────────
-# IMAGE URL → Freebox NAS local
-# Naming convention: master_{kit_type}_{kit_id}.jpg
-# ex: master_Home_kit_abf234ba08ca.jpg
+# IMAGE URL → Freebox NAS
+# Naming convention:
+#   master_kit : kits/masters/master_{kit_type}_{uid}.jpg
+#   version    : kits/versions/version_{kit_type}_{league_id}_{uid}.jpg
+#   autres     : {folder}/{entity_id}_{uid}.jpg
 # ─────────────────────────────────────────────────────────────────
-MEDIA_BASE_URL = "https://tp-emergent.onrender.com/api/images"
+MEDIA_BASE_URL = "https://media.topkit.app"
+
+_LEGACY_HOSTS = ("http://82.67.103.45", "https://82.67.103.45",
+                 "https://tp-emergent.onrender.com")
+
+
+def _normalize_url(url: str) -> str:
+    """Convertit toute URL legacy vers media.topkit.app."""
+    if not url:
+        return url
+    for host in _LEGACY_HOSTS:
+        if url.startswith(host):
+            relative = re.sub(r'^https?://[^/]+', '', url)
+            return f"{MEDIA_BASE_URL}{relative}"
+    return url
 
 
 def master_kit_image_url(kit_type: str, kit_id: str, stored_photo: str = "") -> str:
     """
     Retourne l'URL d'image pour un master kit.
-    - Si une image a été uploadée (contribution), on retourne directement cette URL.
-    - Sinon, on reconstruit l'URL Freebox convention (kits importés du CSV).
+    - Si stored_photo est renseigné, on normalise et retourne.
+    - Sinon, reconstruction selon la convention : kits/masters/master_{kit_type}_{kit_id}.jpg
     """
-    # Priorité 1 : image uploadée (contribution utilisateur)
-    # On détecte si c'est une URL externe (pas Freebox/API) ou une URL /api/images/uploads/
     if stored_photo:
-        if stored_photo.startswith("/api/images"):
-            return f"https://tp-emergent.onrender.com{stored_photo}"
-        if stored_photo.startswith(("http://82.67.103.45", "https://82.67.103.45")):
-            import re
-            relative = re.sub(r'^https?://[^/]+', '', stored_photo)
-            return f"{MEDIA_BASE_URL}{relative}"
-        # URL externe (CDN, etc.) ou URL tp-emergent déjà complète
-        if stored_photo.startswith("http"):
-            # Vérification : si c'est déjà une URL Freebox reconstruite (master_kits/photos/master_...jpg)
-            # on ne l'utilise pas comme "uploadée" car elle peut être invalide pour des contributions
-            if "/api/images/uploads/" in stored_photo or "cloudinary" in stored_photo or "amazonaws" in stored_photo:
-                return stored_photo
-            # Pour les URLs /api/images/master_kits/ (CSV import), on la retourne telle quelle
-            if "/api/images/master_kits/" in stored_photo:
-                return stored_photo
-            # Autre URL externe (CDN FKA etc.)
-            if not stored_photo.startswith(f"{MEDIA_BASE_URL}/master_kits/photos/master_"):
-                return stored_photo
-
-    # Priorité 2 : reconstruction URL Freebox (kits importés via CSV)
+        return _normalize_url(stored_photo)
     if not kit_id:
         return ""
-    return f"{MEDIA_BASE_URL}/master_kits/photos/master_{kit_type}_{kit_id}.jpg"
+    return f"{MEDIA_BASE_URL}/kits/masters/master_{kit_type}_{kit_id}.jpg"
 
 
 def local_image_url(original_url: str) -> str:
-    """Fallback pour les versions/autres entités sans convention Freebox."""
-    if not original_url:
-        return original_url
-    # Si c'est déjà une URL relative /api/images/..., on la retourne telle quelle
-    if original_url.startswith("/api/images"):
-        return f"https://tp-emergent.onrender.com{original_url}"
-    # Si c'est une URL Freebox directe (http://82.67.103.45/...)
-    if original_url.startswith(("http://82.67.103.45", "https://82.67.103.45")):
-        import re
-        relative = re.sub(r'^https?://[^/]+', '', original_url)
-        return f"{MEDIA_BASE_URL}{relative}"
-    # Sinon on retourne l'URL d'origine (CDN externe)
-    return original_url
+    """Normalise toute URL vers media.topkit.app (versions et autres entités)."""
+    return _normalize_url(original_url)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -105,7 +90,7 @@ async def get_filters():
         brands = sorted([b for b in raw if b])
     if not leagues:
         raw = await db.master_kits.distinct("league")
-        leagues = sorted([l for l in raw if l])
+        leagues = sorted([l for l in leagues if l])
 
     # ── Champs sans collection dédiée → distinct() ──
     seasons = await db.master_kits.distinct("season")
