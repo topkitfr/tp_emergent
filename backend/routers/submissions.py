@@ -119,6 +119,41 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     if isinstance(data, dict) and data.get("season"):
         data["season"] = normalize_season(data["season"])
 
+    now = datetime.now(timezone.utc).isoformat()
+    entity_id = data.get("entity_id") if isinstance(data, dict) else None
+    mode = data.get("mode") if isinstance(data, dict) else None
+
+    # Pour les edits d'entités existantes, upsert sur entity_id pour éviter les doublons
+    if entity_id and mode == "edit":
+        submission_id = f"sub_{uuid.uuid4().hex[:12]}"
+        await db.submissions.update_one(
+            {
+                "data.entity_id": entity_id,
+                "submission_type": sub.submission_type,
+                "data.mode": "edit",
+            },
+            {"$set": {
+                "data": data,
+                "updated_at": now,
+                "submitted_by": user["user_id"],
+                "submitter_name": user.get("name", ""),
+                "submitter_username": user.get("username", ""),
+            }, "$setOnInsert": {
+                "submission_id": submission_id,
+                "status": "pending",
+                "votes_up": 0,
+                "votes_down": 0,
+                "voters": [],
+                "created_at": now,
+            }},
+            upsert=True
+        )
+        result = await db.submissions.find_one(
+            {"data.entity_id": entity_id, "submission_type": sub.submission_type, "data.mode": "edit"},
+            {"_id": 0}
+        )
+        return result
+
     doc = {
         "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
         "submission_type": sub.submission_type,
@@ -130,7 +165,7 @@ async def create_submission(sub: SubmissionCreate, request: Request):
         "votes_up": 0,
         "votes_down": 0,
         "voters": [],
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": now,
     }
     await db.submissions.insert_one(doc)
     result = await db.submissions.find_one({"submission_id": doc["submission_id"]}, {"_id": 0})
