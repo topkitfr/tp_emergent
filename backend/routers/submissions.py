@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
+import os
+import httpx
 from ..database import db, client
 from ..models import SubmissionCreate, VoteCreate, ReportCreate
 from ..auth import get_current_user
@@ -37,6 +39,36 @@ SUBMISSION_TYPE_LABELS = {
     "player":     "joueur",
     "sponsor":    "sponsor",
 }
+
+RECEIVER_URL    = os.getenv("RECEIVER_URL", "http://receiver:8001")
+RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
+MEDIA_BASE_URL  = os.getenv("MEDIA_BASE_URL", "https://82.67.103.45")
+
+
+def _url_to_relative_path(url: str) -> Optional[str]:
+    """Convertit une URL publique Freebox en chemin relatif pour DELETE /delete-file."""
+    for prefix in (MEDIA_BASE_URL.rstrip("/"), "https://topkit.fr/media"):
+        if url.startswith(prefix + "/"):
+            return url[len(prefix) + 1:]
+    return None
+
+
+async def _delete_freebox_file(old_url: str) -> None:
+    """Supprime un fichier sur le receiver Freebox. Silencieux en cas d'erreur."""
+    if not old_url:
+        return
+    relative = _url_to_relative_path(old_url)
+    if not relative:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=5.0, verify=False) as client:
+            await client.delete(
+                f"{RECEIVER_URL}/delete-file",
+                params={"relative_path": relative},
+                headers={"x-secret": RECEIVER_SECRET},
+            )
+    except Exception as e:
+        print(f"[DELETE FILE] Erreur suppression {relative}: {e}")
 
 
 def _submission_name(sub: dict) -> str:
@@ -346,6 +378,15 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             {"$set": {"status": "rejected"}}
         )
 
+        # En cas de rejet d'un edit avec image uploadée, supprimer le fichier orphelin
+        if updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
+            data = updated_sub.get("data", {})
+            if data.get("mode") == "edit":
+                for field in IMAGE_FIELDS:
+                    orphan_url = data.get(field)
+                    if orphan_url:
+                        await _delete_freebox_file(orphan_url)
+
         if submitter_id:
             await create_notification(
                 user_id=submitter_id,
@@ -405,14 +446,22 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
 
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
+
+        # Récupérer l'entité existante pour lire les anciennes URLs d'images
+        old_doc = None
+        if entity_id:
+            old_doc = await db[config["collection"]].find_one(
+                {config["id_field"]: entity_id},
+                {"_id": 0}
+            )
+
         update_fields = {}
         for k, v in data.items():
             if k in ("mode", "entity_id", "entity_type", "parent_submission_id"):
                 continue
-            # Champs image : on applique dès que la valeur est non-null
-            # (une string non-vide = nouvelle URL uploadée, ne jamais ignorer)
+            # Champs image : on applique dès que la valeur est une string non-vide
             if k in IMAGE_FIELDS:
-                if v is not None:
+                if v and isinstance(v, str):
                     update_fields[k] = v
             else:
                 if v is not None and v != [] and v != "":
@@ -426,6 +475,14 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
             update_fields["slug"] = slugify(update_fields[name_key])
 
         if entity_id:
+            # Supprimer les anciennes images remplacées sur la Freebox
+            if old_doc:
+                for field in IMAGE_FIELDS:
+                    new_url = update_fields.get(field)
+                    old_url = old_doc.get(field, "")
+                    if new_url and old_url and new_url != old_url:
+                        await _delete_freebox_file(old_url)
+
             await db[config["collection"]].update_one(
                 {config["id_field"]: entity_id},
                 {"$set": update_fields}
@@ -435,6 +492,16 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
     elif mode == "removal":
         entity_id = data.get("entity_id", "")
         if entity_id:
+            # Supprimer les images de l'entité avant de la retirer de la DB
+            old_doc = await db[config["collection"]].find_one(
+                {config["id_field"]: entity_id},
+                {"_id": 0}
+            )
+            if old_doc:
+                for field in IMAGE_FIELDS:
+                    url = old_doc.get(field, "")
+                    if url:
+                        await _delete_freebox_file(url)
             await db[config["collection"]].delete_one(
                 {config["id_field"]: entity_id}
             )
