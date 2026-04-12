@@ -26,6 +26,9 @@ const LEAGUE_TYPE_OPTIONS = ['League', 'Cup'];
 const LEAGUE_ENTITY_TYPE_OPTIONS = ['league', 'cup', 'confederation'];
 const LEAGUE_SCOPE_OPTIONS = ['domestic', 'international'];
 
+// Tous les champs image connus — ne seront envoyés que si l'user a uploadé une nouvelle image
+const IMAGE_FIELDS = new Set(['crest_url', 'logo_url', 'photo_url', 'stadium_image_url']);
+
 const API_POSITION_MAP = {
   'Goalkeeper': ['GK'],
   'Defender': ['CB'], 'Centre-Back': ['CB'], 'Left Back': ['LB'], 'Right Back': ['RB'],
@@ -160,9 +163,6 @@ export default function EntityEditDialog({
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   // ── Auto-fill player ───────────────────────────────────────────────────────
-  // normalizePlayer (ApiFootballSearch) retourne déjà les clés à plat :
-  // full_name, first_name, last_name, nationality, birth_date, birth_place,
-  // birth_country, photo / photo_url, height, weight, positions, apifootball_id
   const handleApiFillPlayer = (player) => {
     setApiFillName(player.full_name || '');
     const normalizedPositions = normalizePositions(
@@ -259,6 +259,18 @@ export default function EntityEditDialog({
       delete payload._stadium_divider;
       delete payload._stadiumimg_divider;
       delete payload._flag_preview;
+
+      // ── En mode edit : ne soumettre les champs image QUE si l'user en a uploadé une nouvelle
+      // Si la valeur image = celle d'initialData → l'user n'a rien changé → on supprime du payload
+      // pour éviter d'écraser la DB avec l'ancienne URL
+      if (mode === 'edit') {
+        for (const imgField of IMAGE_FIELDS) {
+          if (imgField in payload && payload[imgField] === (initialData[imgField] || '')) {
+            delete payload[imgField];
+          }
+        }
+      }
+
       await createSubmission({ submission_type: entityType, data: payload });
       toast.success(
         mode === 'create'
