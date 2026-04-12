@@ -67,7 +67,7 @@ async def _forward_to_receiver(
             params=params,
         )
         if resp.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Receiver error: {resp.text}")
+            raise HTTPException(status_code=resp.status_code, detail=f"Receiver error: {resp.text}")
         data = resp.json()
         return {
             "url": _to_relative_path(data["url"]),

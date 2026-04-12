@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, field_validator
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 class UserOut(BaseModel):
@@ -504,7 +504,7 @@ class PlayerOut(BaseModel):
 class PlayerScoringEnrichRequest(BaseModel):
     """Body pour enrichir/mettre à jour le scoring d'un joueur via API-Football."""
     player_id: str
-    apifootball_id: str
+    apifootball_id: Optional[Union[str, int]] = None
     aura: Optional[float] = 0.0
 
 
@@ -514,6 +514,11 @@ class PlayerScoringOut(BaseModel):
     player_id: str
     full_name: str
     apifootball_id: Optional[str] = ""
+
+    @field_validator("apifootball_id", mode="before")
+    @classmethod
+    def coerce_apifootball_id(cls, v):
+        return str(v) if v is not None else ""
     honours_count: int = 0
     score_palmares: float = 0.0
     aura: float = 0.0

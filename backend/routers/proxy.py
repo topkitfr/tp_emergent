@@ -85,7 +85,7 @@ async def freebox_image_proxy(filepath: str, request: Request):
 
     url = f"{FREEBOX_BASE}/{filepath}"
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=10, verify=False) as client:
             r = await client.get(url)
             if r.status_code != 200:
                 return Response(status_code=404)
