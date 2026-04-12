@@ -40,14 +40,23 @@ SUBMISSION_TYPE_LABELS = {
     "sponsor":    "sponsor",
 }
 
-RECEIVER_URL    = os.getenv("RECEIVER_URL", "http://receiver:8001")
+# RECEIVER_BASE_URL = base sans path (ex: http://172.17.0.1:8001)
+# Fallback: strip /receive-upload depuis RECEIVER_URL si RECEIVER_BASE_URL absent
+_receiver_url_raw = os.getenv("RECEIVER_URL", "http://172.17.0.1:8001/receive-upload")
+RECEIVER_BASE_URL = os.getenv(
+    "RECEIVER_BASE_URL",
+    _receiver_url_raw.replace("/receive-upload", "").rstrip("/")
+)
 RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
-MEDIA_BASE_URL  = os.getenv("MEDIA_BASE_URL", "https://82.67.103.45")
+MEDIA_BASE_URL  = os.getenv("MEDIA_BASE_URL", "https://nas.topkit.app")
 
 
 def _url_to_relative_path(url: str) -> Optional[str]:
     """Convertit une URL publique Freebox en chemin relatif pour DELETE /delete-file."""
-    for prefix in (MEDIA_BASE_URL.rstrip("/"), "https://topkit.fr/media"):
+    # Supporte les URLs /api/images/... (proxy backend) et les URLs directes NAS
+    if url.startswith("/api/images/"):
+        return url[len("/api/images/"):]
+    for prefix in (MEDIA_BASE_URL.rstrip("/"), "https://82.67.103.45", "http://82.67.103.45"):
         if url.startswith(prefix + "/"):
             return url[len(prefix) + 1:]
     return None
@@ -59,14 +68,16 @@ async def _delete_freebox_file(old_url: str) -> None:
         return
     relative = _url_to_relative_path(old_url)
     if not relative:
+        print(f"[DELETE FILE] URL non reconnue, skip: {old_url}")
         return
     try:
         async with httpx.AsyncClient(timeout=5.0, verify=False) as client:
-            await client.delete(
-                f"{RECEIVER_URL}/delete-file",
+            resp = await client.delete(
+                f"{RECEIVER_BASE_URL}/delete-file",
                 params={"relative_path": relative},
                 headers={"x-secret": RECEIVER_SECRET},
             )
+            print(f"[DELETE FILE] {relative} -> {resp.status_code}")
     except Exception as e:
         print(f"[DELETE FILE] Erreur suppression {relative}: {e}")
 
@@ -101,11 +112,9 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     if sub.submission_type not in ("master_kit", "version", "team", "league", "brand", "player", "sponsor"):
         raise HTTPException(status_code=400, detail="Invalid submission type")
 
-    # Quota par user (admins et modérateurs exemptés)
     if user.get("role", "user") == "user":
         await check_user_quota(db, user["user_id"], sub.submission_type)
 
-    # Normalisation de la saison à la soumission
     data = sub.data
     if isinstance(data, dict) and data.get("season"):
         data["season"] = normalize_season(data["season"])
@@ -177,7 +186,6 @@ async def list_submissions(status: Optional[str] = "pending", skip: int = 0, lim
     if status:
         query["status"] = status
     subs = await db.submissions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
-    # Enrichir submitter_username si absent (anciennes soumissions)
     for s in subs:
         if not s.get("submitter_username") and s.get("submitted_by"):
             u = await db.users.find_one({"user_id": s["submitted_by"]}, {"_id": 0, "username": 1})
@@ -250,7 +258,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 
             if updated_sub["submission_type"] == "master_kit":
                 kit_id = f"kit_{uuid.uuid4().hex[:12]}"
-                # Normalisation saison à l'approbation (filet de sécurité)
                 season = normalize_season(data.get("season", ""))
                 kit_doc = {
                     "kit_id":      kit_id,
@@ -558,7 +565,6 @@ async def list_reports(status: Optional[str] = "pending", skip: int = 0, limit: 
     if status:
         query["status"] = status
     reports = await db.reports.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
-    # Enrichir reporter_username si absent (anciens reports)
     for rep in reports:
         if not rep.get("reporter_username") and rep.get("reported_by"):
             u = await db.users.find_one({"user_id": rep["reported_by"]}, {"_id": 0, "username": 1})
@@ -617,7 +623,6 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 await db.versions.delete_one({"version_id": updated["target_id"]})
         else:
             corrections = updated["corrections"]
-            # Normaliser la saison si elle est corrigée
             if "season" in corrections:
                 corrections["season"] = normalize_season(corrections["season"])
             if updated["target_type"] == "master_kit":
