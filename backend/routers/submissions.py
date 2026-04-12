@@ -1,4 +1,3 @@
-# backend/routers/submissions.py
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
@@ -410,11 +409,13 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
         for k, v in data.items():
             if k in ("mode", "entity_id", "entity_type", "parent_submission_id"):
                 continue
+            # Champs image : on applique dès que la valeur est non-null
+            # (une string non-vide = nouvelle URL uploadée, ne jamais ignorer)
             if k in IMAGE_FIELDS:
                 if v is not None:
                     update_fields[k] = v
             else:
-                if v is not None and v != [] and (v != "" or k in IMAGE_FIELDS):
+                if v is not None and v != [] and v != "":
                     update_fields[k] = v
 
         update_fields["updated_at"] = now
