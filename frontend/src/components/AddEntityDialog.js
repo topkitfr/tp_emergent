@@ -216,6 +216,18 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     }));
   };
 
+  // ── Mapper form → payload backend ─────────────────────────────────────────
+  // Le form utilise first_name/last_name (convention normalizePlayer),
+  // mais PlayerCreate attend firstname/lastname (convention API-Football / Pydantic).
+  const buildPlayerPayload = (f) => ({
+    ...f,
+    firstname: f.first_name || f.firstname || '',
+    lastname:  f.last_name  || f.lastname  || '',
+    // Nettoyer les clés frontend-only pour ne pas polluer le payload
+    first_name: undefined,
+    last_name:  undefined,
+  });
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -233,7 +245,9 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
         league:  createLeaguePending,
         sponsor: createSponsorPending,
       };
-      await fns[entityType](form);
+
+      const payload = entityType === 'player' ? buildPlayerPayload(form) : form;
+      await fns[entityType](payload);
 
       const labels = { player: 'Player', team: 'Team', brand: 'Brand', league: 'League', sponsor: 'Sponsor' };
       toast.success(`${labels[entityType]} submitted for community review`);
