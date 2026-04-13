@@ -95,6 +95,11 @@ export default function KitSuggestEditDialog({
         entity_id: entityId,
         entity_type: type,
       };
+      // Pour master_kit, on s'assure que kit_id est explicite
+      if (type === 'master_kit') payload.kit_id = entityId;
+      // Pour version, on s'assure que version_id est explicite
+      if (type === 'version') payload.version_id = entityId;
+
       await createSubmission({ submission_type: type, data: payload });
       toast.success('Edit suggestion submitted for community review');
       onOpenChange(false);
@@ -111,14 +116,23 @@ export default function KitSuggestEditDialog({
     if (!removalNotes.trim()) { toast.error('Please provide a reason for removal'); return; }
     setSubmitting(true);
     try {
-      await createSubmission({
-        submission_type: type,
-        data: { mode: 'removal', entity_id: entityId, entity_type: type, notes: removalNotes },
-      });
+      const removalData = {
+        mode: 'removal',
+        entity_id: entityId,
+        entity_type: type,
+        notes: removalNotes,
+      };
+      // Passe kit_id / version_id explicitement pour que le backend
+      // puisse identifier la cible sans ambiguïté
+      if (type === 'master_kit') removalData.kit_id = entityId;
+      if (type === 'version')    removalData.version_id = entityId;
+
+      await createSubmission({ submission_type: type, data: removalData });
       toast.success('Removal request submitted for community review');
       setShowRemoval(false);
       setRemovalNotes('');
       onOpenChange(false);
+      onSuccess?.(); // FIX: callback manquant
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Submission failed');
     } finally {
