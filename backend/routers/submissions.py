@@ -672,7 +672,7 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 if update_fields:
                     await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
             elif updated["target_type"] == "version":
-                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")]
+                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
                 if update_fields:
                     await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
