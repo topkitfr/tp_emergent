@@ -30,7 +30,7 @@ def _require_superadmin(user: dict):
         raise HTTPException(status_code=403, detail="Rôle admin requis.")
 
 
-# ─── Stats ────────────────────────────────────────────────────────────────────
+# ─── Stats ───────────────────────────────────────────────────────────────────────────────────
 
 @router.get("/stats")
 async def admin_stats(request: Request):
@@ -57,7 +57,7 @@ async def admin_stats(request: Request):
     }
 
 
-# ─── Gestion Users ────────────────────────────────────────────────────────────
+# ─── Gestion Users ──────────────────────────────────────────────────────────────────
 
 @router.get("/users")
 async def list_users(
@@ -89,7 +89,6 @@ async def list_users(
         query, {"password_hash": 0}
     ).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
 
-    # Sérialiser _id en string
     for u in users:
         u["_id"] = str(u["_id"])
 
@@ -131,7 +130,7 @@ async def unban_user(user_id: str, request: Request):
 @router.post("/users/{user_id}/promote")
 async def promote_user(user_id: str, request: Request):
     admin = await get_current_user(request)
-    _require_superadmin(admin)  # seul un admin peut promouvoir
+    _require_superadmin(admin)
 
     target = await db.users.find_one({"user_id": user_id}, {"_id": 0, "role": 1})
     if not target:
@@ -146,13 +145,13 @@ async def promote_user(user_id: str, request: Request):
 @router.post("/users/{user_id}/demote")
 async def demote_user(user_id: str, request: Request):
     admin = await get_current_user(request)
-    _require_superadmin(admin)  # seul un admin peut rétrograder
+    _require_superadmin(admin)
 
     await db.users.update_one({"user_id": user_id}, {"$set": {"role": "user"}})
     return {"message": "Modérateur rétrogradé en user.", "user_id": user_id}
 
 
-# ─── Approve / Reject direct (bypass vote) ───────────────────────────────────
+# ─── Approve / Reject direct (bypass vote) ──────────────────────────────────────────
 
 @router.post("/submissions/{submission_id}/approve")
 async def admin_approve_submission(submission_id: str, request: Request):
@@ -165,7 +164,7 @@ async def admin_approve_submission(submission_id: str, request: Request):
     if sub["status"] != "pending":
         raise HTTPException(status_code=400, detail="La soumission n'est plus en attente.")
 
-    from ..utils import APPROVAL_THRESHOLD
+    from ..utils import APPROVAL_THRESHOLD, normalize_season
     now = datetime.now(timezone.utc).isoformat()
     await db.submissions.update_one(
         {"submission_id": submission_id},
@@ -175,75 +174,130 @@ async def admin_approve_submission(submission_id: str, request: Request):
         }
     )
 
-    from .submissions import _apply_entity_submission
+    from .submissions import (
+        _apply_entity_submission,
+        _apply_master_kit_removal,
+        _apply_master_kit_edit,
+        KIT_ID_FIELDS,
+        VERSION_IMAGE_FIELDS,
+    )
     import uuid
 
     updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
     data = updated_sub["data"]
 
     if updated_sub["submission_type"] == "master_kit":
-        kit_id = f"kit_{uuid.uuid4().hex[:12]}"
-        kit_doc = {
-            "kit_id":      kit_id,
-            "club":        data.get("club", ""),
-            "season":      data.get("season", ""),
-            "kit_type":    data.get("kit_type", ""),
-            "brand":       data.get("brand", ""),
-            "front_photo": data.get("front_photo", ""),
-            "league":      data.get("league", ""),
-            "design":      data.get("design", ""),
-            "sponsor":     data.get("sponsor", ""),
-            "gender":      data.get("gender", ""),
-            "team_id":     data.get("team_id", ""),
-            "league_id":   data.get("league_id", ""),
-            "brand_id":    data.get("brand_id", ""),
-            "created_by":  updated_sub["submitted_by"],
-            "created_at":  now,
-        }
-        await db.master_kits.insert_one(kit_doc)
-        await db.versions.insert_one({
-            "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-            "kit_id":      kit_id,
-            "competition": "National Championship",
-            "model":       "Replica",
-            "sku_code":    "", "ean_code": "",
-            "front_photo": data.get("front_photo", ""),
-            "back_photo":  "",
-            "created_by":  updated_sub["submitted_by"],
-            "created_at":  now,
-        })
-        linked = await db.submissions.find(
-            {"submission_type": {"$in": ["team","league","brand","player","sponsor"]},
-             "status": "pending", "data.parent_submission_id": submission_id},
-            {"_id": 0}
-        ).to_list(50)
-        kit_patch = {}
-        KIT_ID_FIELDS = {"team": "team_id", "brand": "brand_id", "league": "league_id", "sponsor": "sponsor_id"}
-        for entity_sub in linked:
-            new_eid = await _apply_entity_submission(entity_sub)
-            await db.submissions.update_one(
-                {"submission_id": entity_sub["submission_id"]},
-                {"$set": {"status": "approved", "updated_at": now}}
-            )
-            etype = entity_sub["submission_type"]
-            if etype in KIT_ID_FIELDS and new_eid:
-                kit_patch[KIT_ID_FIELDS[etype]] = new_eid
-        if kit_patch:
-            await db.master_kits.update_one({"kit_id": kit_id}, {"$set": kit_patch})
+        master_kit_mode = data.get("mode", "create")
+
+        if master_kit_mode == "removal":
+            # FIX: suppression du kit existant
+            kit_id = data.get("kit_id", "") or data.get("entity_id", "")
+            if kit_id:
+                await _apply_master_kit_removal(kit_id)
+            else:
+                print(f"[ADMIN APPROVE] master_kit removal sans kit_id dans submission {submission_id}")
+
+        elif master_kit_mode == "edit":
+            # FIX: mise à jour du kit existant
+            kit_id = data.get("kit_id", "") or data.get("entity_id", "")
+            if kit_id:
+                await _apply_master_kit_edit(kit_id, data, updated_sub["submitted_by"])
+            else:
+                print(f"[ADMIN APPROVE] master_kit edit sans kit_id dans submission {submission_id}")
+
+        else:
+            # mode create (par défaut)
+            kit_id = f"kit_{uuid.uuid4().hex[:12]}"
+            season = normalize_season(data.get("season", ""))
+            kit_doc = {
+                "kit_id":      kit_id,
+                "club":        data.get("club", ""),
+                "season":      season,
+                "kit_type":    data.get("kit_type", ""),
+                "brand":       data.get("brand", ""),
+                "front_photo": data.get("front_photo", ""),
+                "league":      data.get("league", ""),
+                "design":      data.get("design", ""),
+                "sponsor":     data.get("sponsor", ""),
+                "gender":      data.get("gender", ""),
+                "team_id":     data.get("team_id", ""),
+                "league_id":   data.get("league_id", ""),
+                "brand_id":    data.get("brand_id", ""),
+                "created_by":  updated_sub["submitted_by"],
+                "created_at":  now,
+            }
+            await db.master_kits.insert_one(kit_doc)
+            await db.versions.insert_one({
+                "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
+                "kit_id":      kit_id,
+                "competition": "National Championship",
+                "model":       "Replica",
+                "sku_code":    "", "ean_code": "",
+                "front_photo": data.get("front_photo", ""),
+                "back_photo":  "",
+                "created_by":  updated_sub["submitted_by"],
+                "created_at":  now,
+            })
+            linked = await db.submissions.find(
+                {"submission_type": {"$in": ["team","league","brand","player","sponsor"]},
+                 "status": "pending", "data.parent_submission_id": submission_id},
+                {"_id": 0}
+            ).to_list(50)
+            kit_patch = {}
+            for entity_sub in linked:
+                new_eid = await _apply_entity_submission(entity_sub)
+                await db.submissions.update_one(
+                    {"submission_id": entity_sub["submission_id"]},
+                    {"$set": {"status": "approved", "updated_at": now}}
+                )
+                etype = entity_sub["submission_type"]
+                if etype in KIT_ID_FIELDS and new_eid:
+                    kit_patch[KIT_ID_FIELDS[etype]] = new_eid
+            if kit_patch:
+                await db.master_kits.update_one({"kit_id": kit_id}, {"$set": kit_patch})
 
     elif updated_sub["submission_type"] == "version":
-        await db.versions.insert_one({
-            "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-            "kit_id":      data.get("kit_id", ""),
-            "competition": data.get("competition", ""),
-            "model":       data.get("model", ""),
-            "sku_code":    data.get("sku_code", ""),
-            "ean_code":    data.get("ean_code", ""),
-            "front_photo": data.get("front_photo", ""),
-            "back_photo":  data.get("back_photo", ""),
-            "created_by":  updated_sub["submitted_by"],
-            "created_at":  now,
-        })
+        version_mode = data.get("mode", "create")
+        version_id   = data.get("version_id", "")
+
+        if version_mode == "edit" and version_id:
+            old_ver = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
+            update_fields = {k: v for k, v in data.items()
+                             if k not in ("mode", "version_id") and v not in (None, "", [])}
+            update_fields["updated_at"] = now
+            if old_ver:
+                from .submissions import _delete_freebox_file
+                for field in VERSION_IMAGE_FIELDS:
+                    new_url = update_fields.get(field)
+                    old_url = old_ver.get(field, "")
+                    if new_url and old_url and new_url != old_url:
+                        await _delete_freebox_file(old_url)
+            await db.versions.update_one({"version_id": version_id}, {"$set": update_fields})
+
+        elif version_mode == "removal" and version_id:
+            old_ver = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
+            if old_ver:
+                from .submissions import _delete_freebox_file
+                for field in VERSION_IMAGE_FIELDS:
+                    url = old_ver.get(field, "")
+                    if url:
+                        await _delete_freebox_file(url)
+            await db.versions.delete_one({"version_id": version_id})
+
+        else:
+            await db.versions.insert_one({
+                "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
+                "kit_id":      data.get("kit_id", ""),
+                "competition": data.get("competition", ""),
+                "model":       data.get("model", ""),
+                "sku_code":    data.get("sku_code", ""),
+                "ean_code":    data.get("ean_code", ""),
+                "front_photo": data.get("front_photo", ""),
+                "back_photo":  data.get("back_photo", ""),
+                "created_by":  updated_sub["submitted_by"],
+                "created_at":  now,
+            })
+
     elif updated_sub["submission_type"] in ("team","league","brand","player","sponsor"):
         if not data.get("parent_submission_id"):
             await _apply_entity_submission(updated_sub)
@@ -280,7 +334,7 @@ async def admin_reject_submission(submission_id: str, request: Request):
     return {"message": "Soumission rejetée.", "submission_id": submission_id}
 
 
-# ─── Maintenance ─────────────────────────────────────────────────────────────
+# ─── Maintenance ────────────────────────────────────────────────────────────────────
 
 @router.get("/maintenance")
 async def get_maintenance(request: Request):
