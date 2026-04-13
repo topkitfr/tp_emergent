@@ -253,7 +253,10 @@ export default function EntityEditDialog({
           payload[f.key] = parseInt(payload[f.key], 10) || null;
         }
       }
-      if (mode === 'edit' && entityId) payload.entity_id = entityId;
+      if (mode === 'edit' && entityId) {
+        payload.entity_id = entityId;
+        payload.entity_type = entityType;
+      }
       // Nettoyer les pseudo-champs UI
       delete payload._apifootball_search;
       delete payload._stadium_divider;
