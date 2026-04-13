@@ -29,6 +29,7 @@ KIT_ID_FIELDS = {
 }
 
 IMAGE_FIELDS = {"logo_url", "crest_url", "photo_url", "stadium_image_url"}
+VERSION_IMAGE_FIELDS = {"front_photo", "back_photo"}
 
 SUBMISSION_TYPE_LABELS = {
     "master_kit": "maillot",
@@ -201,7 +202,6 @@ async def get_pending_refs(master_kit_submission_id: str):
 
 @router.get("/pending/submission-id")
 async def get_submission_for_entity(entity_type: str, entity_id: str):
-    # FIX: filtre sur status pending uniquement pour éviter de retourner une ancienne submission approved/rejected
     doc = await db["submissions"].find_one({
         "submission_type": entity_type,
         "data.entity_id": entity_id,
@@ -340,7 +340,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                         {"$set": {"status": "approved", "updated_at": now_iso}}
                     )
                     etype = entity_sub["submission_type"]
-                    # FIX: on patche le kit uniquement pour les creates (mode create ou edit avec entity_id connu)
                     if etype in KIT_ID_FIELDS and new_entity_id:
                         kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
 
@@ -354,22 +353,56 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     )
 
             elif updated_sub["submission_type"] == "version":
-                await db.versions.insert_one({
-                    "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-                    "kit_id":      data.get("kit_id", ""),
-                    "competition": data.get("competition", ""),
-                    "model":       data.get("model", ""),
-                    "sku_code":    data.get("sku_code", ""),
-                    "ean_code":    data.get("ean_code", ""),
-                    "front_photo": data.get("front_photo", ""),
-                    "back_photo":  data.get("back_photo", ""),
-                    "created_by":  updated_sub["submitted_by"],
-                    "created_at":  datetime.now(timezone.utc).isoformat()
-                })
+                version_mode = data.get("mode", "create")
+                version_id   = data.get("version_id", "")
+                now_iso      = datetime.now(timezone.utc).isoformat()
+
+                if version_mode == "edit" and version_id:
+                    # FIX: mise à jour d'une version existante
+                    old_ver = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
+                    update_fields = {k: v for k, v in data.items()
+                                     if k not in ("mode", "version_id") and v not in (None, "", [])}
+                    update_fields["updated_at"] = now_iso
+                    # Supprime les anciennes photos si remplacées
+                    if old_ver:
+                        for field in VERSION_IMAGE_FIELDS:
+                            new_url = update_fields.get(field)
+                            old_url = old_ver.get(field, "")
+                            if new_url and old_url and new_url != old_url:
+                                await _delete_freebox_file(old_url)
+                    await db.versions.update_one(
+                        {"version_id": version_id},
+                        {"$set": update_fields}
+                    )
+                    print(f"[VERSION EDIT] version_id={version_id} mise à jour")
+
+                elif version_mode == "removal" and version_id:
+                    # FIX: suppression d'une version existante
+                    old_ver = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
+                    if old_ver:
+                        for field in VERSION_IMAGE_FIELDS:
+                            url = old_ver.get(field, "")
+                            if url:
+                                await _delete_freebox_file(url)
+                    await db.versions.delete_one({"version_id": version_id})
+                    print(f"[VERSION REMOVAL] version_id={version_id} supprimée")
+
+                else:
+                    # mode create (par défaut)
+                    await db.versions.insert_one({
+                        "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
+                        "kit_id":      data.get("kit_id", ""),
+                        "competition": data.get("competition", ""),
+                        "model":       data.get("model", ""),
+                        "sku_code":    data.get("sku_code", ""),
+                        "ean_code":    data.get("ean_code", ""),
+                        "front_photo": data.get("front_photo", ""),
+                        "back_photo":  data.get("back_photo", ""),
+                        "created_by":  updated_sub["submitted_by"],
+                        "created_at":  datetime.now(timezone.utc).isoformat()
+                    })
 
             elif updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
-                # FIX: on applique dans tous les cas sans parent_submission_id
-                # que ce soit un create ou un edit standalone
                 if not data.get("parent_submission_id"):
                     await _apply_entity_submission(updated_sub)
 
@@ -420,13 +453,19 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             {"$set": {"status": "rejected"}}
         )
 
-        if updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
-            data = updated_sub.get("data", {})
-            if data.get("mode") == "edit":
-                for field in IMAGE_FIELDS:
-                    orphan_url = data.get(field)
-                    if orphan_url:
-                        await _delete_freebox_file(orphan_url)
+        # Supprime les images orphelines uploadées si rejet d'un edit
+        data_rej = updated_sub.get("data", {})
+        mode_rej = data_rej.get("mode", "create")
+        if mode_rej == "edit":
+            orphan_fields = (
+                VERSION_IMAGE_FIELDS
+                if updated_sub["submission_type"] == "version"
+                else IMAGE_FIELDS
+            )
+            for field in orphan_fields:
+                orphan_url = data_rej.get(field)
+                if orphan_url:
+                    await _delete_freebox_file(orphan_url)
 
         if submitter_id:
             await create_notification(
@@ -487,8 +526,6 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
 
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
-
-        # FIX: log explicite si entity_id manquant en mode edit
         if not entity_id:
             print(f"[APPLY ENTITY] mode=edit mais entity_id vide pour submission {sub_id} ({entity_type}), skip")
             return None
