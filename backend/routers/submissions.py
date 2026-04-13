@@ -40,8 +40,6 @@ SUBMISSION_TYPE_LABELS = {
     "sponsor":    "sponsor",
 }
 
-# RECEIVER_BASE_URL = base sans path (ex: http://172.17.0.1:8001)
-# Fallback: strip /receive-upload depuis RECEIVER_URL si RECEIVER_BASE_URL absent
 _receiver_url_raw = os.getenv("RECEIVER_URL", "http://172.17.0.1:8001/receive-upload")
 RECEIVER_BASE_URL = os.getenv(
     "RECEIVER_BASE_URL",
@@ -52,8 +50,6 @@ MEDIA_BASE_URL  = os.getenv("MEDIA_BASE_URL", "https://nas.topkit.app")
 
 
 def _url_to_relative_path(url: str) -> Optional[str]:
-    """Convertit une URL publique Freebox en chemin relatif pour DELETE /delete-file."""
-    # Supporte les URLs /api/images/... (proxy backend) et les URLs directes NAS
     if url.startswith("/api/images/"):
         return url[len("/api/images/"):]
     for prefix in (MEDIA_BASE_URL.rstrip("/"), "https://82.67.103.45", "http://82.67.103.45"):
@@ -63,7 +59,6 @@ def _url_to_relative_path(url: str) -> Optional[str]:
 
 
 async def _delete_freebox_file(old_url: str) -> None:
-    """Supprime un fichier sur le receiver Freebox. Silencieux en cas d'erreur."""
     if not old_url:
         return
     relative = _url_to_relative_path(old_url)
@@ -123,8 +118,6 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     entity_id = data.get("entity_id") if isinstance(data, dict) else None
     mode = data.get("mode") if isinstance(data, dict) else None
 
-    # Pour les edits d'entités existantes, upsert uniquement sur les submissions PENDING
-    # pour éviter de recycler une ancienne submission approved/rejected
     if entity_id and mode == "edit":
         submission_id = f"sub_{uuid.uuid4().hex[:12]}"
         await db.submissions.update_one(
@@ -208,9 +201,11 @@ async def get_pending_refs(master_kit_submission_id: str):
 
 @router.get("/pending/submission-id")
 async def get_submission_for_entity(entity_type: str, entity_id: str):
+    # FIX: filtre sur status pending uniquement pour éviter de retourner une ancienne submission approved/rejected
     doc = await db["submissions"].find_one({
         "submission_type": entity_type,
-        "data.entity_id": entity_id
+        "data.entity_id": entity_id,
+        "status": "pending",
     })
     if not doc:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -345,6 +340,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                         {"$set": {"status": "approved", "updated_at": now_iso}}
                     )
                     etype = entity_sub["submission_type"]
+                    # FIX: on patche le kit uniquement pour les creates (mode create ou edit avec entity_id connu)
                     if etype in KIT_ID_FIELDS and new_entity_id:
                         kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
 
@@ -372,6 +368,8 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 })
 
             elif updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
+                # FIX: on applique dans tous les cas sans parent_submission_id
+                # que ce soit un create ou un edit standalone
                 if not data.get("parent_submission_id"):
                     await _apply_entity_submission(updated_sub)
 
@@ -422,7 +420,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             {"$set": {"status": "rejected"}}
         )
 
-        # En cas de rejet d'un edit avec image uploadée, supprimer le fichier orphelin
         if updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
             data = updated_sub.get("data", {})
             if data.get("mode") == "edit":
@@ -491,19 +488,20 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
 
-        # Récupérer l'entité existante pour lire les anciennes URLs d'images
-        old_doc = None
-        if entity_id:
-            old_doc = await db[config["collection"]].find_one(
-                {config["id_field"]: entity_id},
-                {"_id": 0}
-            )
+        # FIX: log explicite si entity_id manquant en mode edit
+        if not entity_id:
+            print(f"[APPLY ENTITY] mode=edit mais entity_id vide pour submission {sub_id} ({entity_type}), skip")
+            return None
+
+        old_doc = await db[config["collection"]].find_one(
+            {config["id_field"]: entity_id},
+            {"_id": 0}
+        )
 
         update_fields = {}
         for k, v in data.items():
             if k in ("mode", "entity_id", "entity_type", "parent_submission_id"):
                 continue
-            # Champs image : on applique dès que la valeur est une string non-vide
             if k in IMAGE_FIELDS:
                 if v and isinstance(v, str):
                     update_fields[k] = v
@@ -518,25 +516,22 @@ async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
         if name_key in update_fields:
             update_fields["slug"] = slugify(update_fields[name_key])
 
-        if entity_id:
-            # Supprimer les anciennes images remplacées sur la Freebox
-            if old_doc:
-                for field in IMAGE_FIELDS:
-                    new_url = update_fields.get(field)
-                    old_url = old_doc.get(field, "")
-                    if new_url and old_url and new_url != old_url:
-                        await _delete_freebox_file(old_url)
+        if old_doc:
+            for field in IMAGE_FIELDS:
+                new_url = update_fields.get(field)
+                old_url = old_doc.get(field, "")
+                if new_url and old_url and new_url != old_url:
+                    await _delete_freebox_file(old_url)
 
-            await db[config["collection"]].update_one(
-                {config["id_field"]: entity_id},
-                {"$set": update_fields}
-            )
+        await db[config["collection"]].update_one(
+            {config["id_field"]: entity_id},
+            {"$set": update_fields}
+        )
         return entity_id
 
     elif mode == "removal":
         entity_id = data.get("entity_id", "")
         if entity_id:
-            # Supprimer les images de l'entité avant de la retirer de la DB
             old_doc = await db[config["collection"]].find_one(
                 {config["id_field"]: entity_id},
                 {"_id": 0}
