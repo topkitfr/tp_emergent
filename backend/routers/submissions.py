@@ -123,7 +123,8 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     entity_id = data.get("entity_id") if isinstance(data, dict) else None
     mode = data.get("mode") if isinstance(data, dict) else None
 
-    # Pour les edits d'entités existantes, upsert sur entity_id pour éviter les doublons
+    # Pour les edits d'entités existantes, upsert uniquement sur les submissions PENDING
+    # pour éviter de recycler une ancienne submission approved/rejected
     if entity_id and mode == "edit":
         submission_id = f"sub_{uuid.uuid4().hex[:12]}"
         await db.submissions.update_one(
@@ -131,6 +132,7 @@ async def create_submission(sub: SubmissionCreate, request: Request):
                 "data.entity_id": entity_id,
                 "submission_type": sub.submission_type,
                 "data.mode": "edit",
+                "status": "pending",
             },
             {"$set": {
                 "data": data,
@@ -149,7 +151,7 @@ async def create_submission(sub: SubmissionCreate, request: Request):
             upsert=True
         )
         result = await db.submissions.find_one(
-            {"data.entity_id": entity_id, "submission_type": sub.submission_type, "data.mode": "edit"},
+            {"data.entity_id": entity_id, "submission_type": sub.submission_type, "data.mode": "edit", "status": "pending"},
             {"_id": 0}
         )
         return result
@@ -670,7 +672,7 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                 if update_fields:
                     await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
             elif updated["target_type"] == "version":
-                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
+                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")]
                 if update_fields:
                     await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
