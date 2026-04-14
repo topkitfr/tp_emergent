@@ -42,6 +42,9 @@ SUBMISSION_TYPE_LABELS = {
     "sponsor":    "sponsor",
 }
 
+# Champs obligatoires pour créer un nouveau master_kit
+MASTER_KIT_REQUIRED_CREATE_FIELDS = ["club", "season", "kit_type", "brand", "front_photo"]
+
 _receiver_url_raw = os.getenv("RECEIVER_URL", "http://172.17.0.1:8001/receive-upload")
 RECEIVER_BASE_URL = os.getenv(
     "RECEIVER_BASE_URL",
@@ -158,7 +161,7 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     entity_id = data.get("entity_id") if isinstance(data, dict) else None
     mode = data.get("mode") if isinstance(data, dict) else None
 
-    # FIX 2: Pour master_kit removal/edit, utiliser kit_id comme clé d'upsert
+    # Pour master_kit removal/edit, utiliser kit_id comme clé d'upsert
     # (kit_id peut être dans data.kit_id OU data.entity_id)
     if sub.submission_type == "master_kit" and mode in ("removal", "edit"):
         kit_id = (data.get("kit_id") or data.get("entity_id") or "").strip()
@@ -196,6 +199,23 @@ async def create_submission(sub: SubmissionCreate, request: Request):
             {"_id": 0}
         )
         return result
+
+    # GUARD: Pour master_kit sans mode explicite "create", vérifier les champs obligatoires
+    # avant de tomber dans l'insert_one générique. Cela empêche qu'un removal/edit mal formé
+    # crée accidentellement un nouveau master_kit.
+    if sub.submission_type == "master_kit" and mode not in (None, "create"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Mode '{mode}' non reconnu pour master_kit. Utilisez 'create', 'edit' ou 'removal'."
+        )
+
+    if sub.submission_type == "master_kit" and mode in (None, "create"):
+        missing = [f for f in MASTER_KIT_REQUIRED_CREATE_FIELDS if not data.get(f)]
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Champs obligatoires manquants pour créer un master_kit : {', '.join(missing)}"
+            )
 
     # Upsert pour éviter les doublons en mode edit sur les entités
     if entity_id and mode in ("edit", "removal"):
@@ -372,7 +392,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 now_iso = datetime.now(timezone.utc).isoformat()
 
                 if master_kit_mode == "removal":
-                    # FIX 2: kit_id garanti présent dans data.kit_id
                     kit_id = data.get("kit_id", "") or data.get("entity_id", "")
                     if kit_id:
                         await _apply_master_kit_removal(kit_id)
@@ -380,7 +399,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                         print(f"[MASTER KIT REMOVAL] kit_id manquant dans submission {kit_submission_id}, skip")
 
                 elif master_kit_mode == "edit":
-                    # FIX 2: kit_id garanti présent dans data.kit_id
                     kit_id = data.get("kit_id", "") or data.get("entity_id", "")
                     if kit_id:
                         await _apply_master_kit_edit(kit_id, data, updated_sub["submitted_by"])
@@ -388,68 +406,75 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                         print(f"[MASTER KIT EDIT] kit_id manquant dans submission {kit_submission_id}, skip")
 
                 else:
-                    # mode create (par défaut)
-                    kit_id = f"kit_{uuid.uuid4().hex[:12]}"
-                    season = normalize_season(data.get("season", ""))
-                    kit_doc = {
-                        "kit_id":      kit_id,
-                        "club":        data.get("club", ""),
-                        "season":      season,
-                        "kit_type":    data.get("kit_type", ""),
-                        "brand":       data.get("brand", ""),
-                        "front_photo": data.get("front_photo", ""),
-                        "league":      data.get("league", ""),
-                        "design":      data.get("design", ""),
-                        "sponsor":     data.get("sponsor", ""),
-                        "gender":      data.get("gender", ""),
-                        "team_id":     data.get("team_id", ""),
-                        "league_id":   data.get("league_id", ""),
-                        "brand_id":    data.get("brand_id", ""),
-                        "created_by":  updated_sub["submitted_by"],
-                        "created_at":  now_iso,
-                    }
-                    await db.master_kits.insert_one(kit_doc)
-                    await db.versions.insert_one({
-                        "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-                        "kit_id":      kit_id,
-                        "competition": "National Championship",
-                        "model":       "Replica",
-                        "sku_code":    "",
-                        "ean_code":    "",
-                        "front_photo": data.get("front_photo", ""),
-                        "back_photo":  "",
-                        "created_by":  updated_sub["submitted_by"],
-                        "created_at":  now_iso,
-                    })
+                    # mode create — GUARD: vérifier les champs obligatoires avant d'insérer
+                    missing_fields = [f for f in MASTER_KIT_REQUIRED_CREATE_FIELDS if not data.get(f)]
+                    if missing_fields:
+                        print(f"[MASTER KIT CREATE] Création refusée pour submission {kit_submission_id} "
+                              f"— champs manquants : {missing_fields}. "
+                              f"mode='{master_kit_mode}' — possible removal/edit mal routé.")
+                        # On approuve la submission sans créer de kit pour éviter le blocage
+                    else:
+                        kit_id = f"kit_{uuid.uuid4().hex[:12]}"
+                        season = normalize_season(data.get("season", ""))
+                        kit_doc = {
+                            "kit_id":      kit_id,
+                            "club":        data.get("club", ""),
+                            "season":      season,
+                            "kit_type":    data.get("kit_type", ""),
+                            "brand":       data.get("brand", ""),
+                            "front_photo": data.get("front_photo", ""),
+                            "league":      data.get("league", ""),
+                            "design":      data.get("design", ""),
+                            "sponsor":     data.get("sponsor", ""),
+                            "gender":      data.get("gender", ""),
+                            "team_id":     data.get("team_id", ""),
+                            "league_id":   data.get("league_id", ""),
+                            "brand_id":    data.get("brand_id", ""),
+                            "created_by":  updated_sub["submitted_by"],
+                            "created_at":  now_iso,
+                        }
+                        await db.master_kits.insert_one(kit_doc)
+                        await db.versions.insert_one({
+                            "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
+                            "kit_id":      kit_id,
+                            "competition": "National Championship",
+                            "model":       "Replica",
+                            "sku_code":    "",
+                            "ean_code":    "",
+                            "front_photo": data.get("front_photo", ""),
+                            "back_photo":  "",
+                            "created_by":  updated_sub["submitted_by"],
+                            "created_at":  now_iso,
+                        })
 
-                    linked_entity_subs = await db.submissions.find(
-                        {
-                            "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
-                            "status": "pending",
-                            "data.parent_submission_id": kit_submission_id
-                        },
-                        {"_id": 0}
-                    ).to_list(50)
+                        linked_entity_subs = await db.submissions.find(
+                            {
+                                "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
+                                "status": "pending",
+                                "data.parent_submission_id": kit_submission_id
+                            },
+                            {"_id": 0}
+                        ).to_list(50)
 
-                    kit_patch = {}
-                    for entity_sub in linked_entity_subs:
-                        new_entity_id = await _apply_entity_submission(entity_sub)
-                        await db.submissions.update_one(
-                            {"submission_id": entity_sub["submission_id"]},
-                            {"$set": {"status": "approved", "updated_at": now_iso}}
-                        )
-                        etype = entity_sub["submission_type"]
-                        if etype in KIT_ID_FIELDS and new_entity_id:
-                            kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
+                        kit_patch = {}
+                        for entity_sub in linked_entity_subs:
+                            new_entity_id = await _apply_entity_submission(entity_sub)
+                            await db.submissions.update_one(
+                                {"submission_id": entity_sub["submission_id"]},
+                                {"$set": {"status": "approved", "updated_at": now_iso}}
+                            )
+                            etype = entity_sub["submission_type"]
+                            if etype in KIT_ID_FIELDS and new_entity_id:
+                                kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
 
-                    if kit_patch:
-                        await db.master_kits.update_one({"kit_id": kit_id}, {"$set": kit_patch})
+                        if kit_patch:
+                            await db.master_kits.update_one({"kit_id": kit_id}, {"$set": kit_patch})
 
-                    for cfg in ENTITY_COLLECTIONS.values():
-                        await db[cfg["collection"]].update_many(
-                            {"submission_id": kit_submission_id, "status": "pending"},
-                            {"$set": {"status": "approved", "updated_at": now_iso}}
-                        )
+                        for cfg in ENTITY_COLLECTIONS.values():
+                            await db[cfg["collection"]].update_many(
+                                {"submission_id": kit_submission_id, "status": "pending"},
+                                {"$set": {"status": "approved", "updated_at": now_iso}}
+                            )
 
             elif updated_sub["submission_type"] == "version":
                 version_mode = data.get("mode", "create")
