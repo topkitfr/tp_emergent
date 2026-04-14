@@ -368,6 +368,7 @@ export default function VersionDetail() {
           type="version"
           initialData={version}
           entityId={version.version_id}
+          kitId={version.kit_id || masterKit?.kit_id}
           onSuccess={() => toast.success('Merci pour ta contribution !')}
         />
       )}
