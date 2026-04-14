@@ -158,7 +158,46 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     entity_id = data.get("entity_id") if isinstance(data, dict) else None
     mode = data.get("mode") if isinstance(data, dict) else None
 
-    # Upsert pour éviter les doublons en mode edit
+    # FIX 2: Pour master_kit removal/edit, utiliser kit_id comme clé d'upsert
+    # (kit_id peut être dans data.kit_id OU data.entity_id)
+    if sub.submission_type == "master_kit" and mode in ("removal", "edit"):
+        kit_id = (data.get("kit_id") or data.get("entity_id") or "").strip()
+        if not kit_id:
+            raise HTTPException(status_code=400, detail="kit_id est requis pour un removal/edit de master_kit")
+        # S'assurer que kit_id est bien présent dans data
+        data["kit_id"] = kit_id
+
+        submission_id = f"sub_{uuid.uuid4().hex[:12]}"
+        await db.submissions.update_one(
+            {
+                "data.kit_id": kit_id,
+                "submission_type": "master_kit",
+                "data.mode": mode,
+                "status": "pending",
+            },
+            {"$set": {
+                "data": data,
+                "updated_at": now,
+                "submitted_by": user["user_id"],
+                "submitter_name": user.get("name", ""),
+                "submitter_username": user.get("username", ""),
+            }, "$setOnInsert": {
+                "submission_id": submission_id,
+                "status": "pending",
+                "votes_up": 0,
+                "votes_down": 0,
+                "voters": [],
+                "created_at": now,
+            }},
+            upsert=True
+        )
+        result = await db.submissions.find_one(
+            {"data.kit_id": kit_id, "submission_type": "master_kit", "data.mode": mode, "status": "pending"},
+            {"_id": 0}
+        )
+        return result
+
+    # Upsert pour éviter les doublons en mode edit sur les entités
     if entity_id and mode in ("edit", "removal"):
         submission_id = f"sub_{uuid.uuid4().hex[:12]}"
         await db.submissions.update_one(
@@ -333,7 +372,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 now_iso = datetime.now(timezone.utc).isoformat()
 
                 if master_kit_mode == "removal":
-                    # FIX: suppression d'un kit existant
+                    # FIX 2: kit_id garanti présent dans data.kit_id
                     kit_id = data.get("kit_id", "") or data.get("entity_id", "")
                     if kit_id:
                         await _apply_master_kit_removal(kit_id)
@@ -341,7 +380,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                         print(f"[MASTER KIT REMOVAL] kit_id manquant dans submission {kit_submission_id}, skip")
 
                 elif master_kit_mode == "edit":
-                    # FIX: mise à jour d'un kit existant
+                    # FIX 2: kit_id garanti présent dans data.kit_id
                     kit_id = data.get("kit_id", "") or data.get("entity_id", "")
                     if kit_id:
                         await _apply_master_kit_edit(kit_id, data, updated_sub["submitted_by"])
