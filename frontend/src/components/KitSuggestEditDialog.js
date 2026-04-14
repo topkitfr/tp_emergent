@@ -11,6 +11,7 @@
 //   type         : 'master_kit' | 'version'
 //   initialData  : object  — données actuelles du kit/version
 //   entityId     : string  — kit_id ou version_id
+//   kitId        : string  — (version only) kit_id du master kit parent
 //   onSuccess    : fn()    — callback après succès
 
 import React, { useState } from 'react';
@@ -75,6 +76,7 @@ export default function KitSuggestEditDialog({
   type = 'master_kit',
   initialData = {},
   entityId,
+  kitId,        // ← kit_id du master kit parent (requis quand type === 'version')
   onSuccess,
 }) {
   const config = CONFIGS[type];
@@ -97,8 +99,11 @@ export default function KitSuggestEditDialog({
       };
       // Pour master_kit, on s'assure que kit_id est explicite
       if (type === 'master_kit') payload.kit_id = entityId;
-      // Pour version, on s'assure que version_id est explicite
-      if (type === 'version') payload.version_id = entityId;
+      // Pour version, on s'assure que version_id et kit_id sont explicites
+      if (type === 'version') {
+        payload.version_id = entityId;
+        if (kitId) payload.kit_id = kitId;
+      }
 
       await createSubmission({ submission_type: type, data: payload });
       toast.success('Edit suggestion submitted for community review');
@@ -124,15 +129,22 @@ export default function KitSuggestEditDialog({
       };
       // Passe kit_id / version_id explicitement pour que le backend
       // puisse identifier la cible sans ambiguïté
-      if (type === 'master_kit') removalData.kit_id = entityId;
-      if (type === 'version')    removalData.version_id = entityId;
+      if (type === 'master_kit') {
+        removalData.kit_id = entityId;
+      }
+      if (type === 'version') {
+        removalData.version_id = entityId;
+        // FIX: inclure kit_id pour que Contributions.js puisse résoudre
+        // le nom du master kit parent dans getSubmissionTitle
+        if (kitId) removalData.kit_id = kitId;
+      }
 
       await createSubmission({ submission_type: type, data: removalData });
       toast.success('Removal request submitted for community review');
       setShowRemoval(false);
       setRemovalNotes('');
       onOpenChange(false);
-      onSuccess?.(); // FIX: callback manquant
+      onSuccess?.();
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Submission failed');
     } finally {
