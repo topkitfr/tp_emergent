@@ -94,6 +94,19 @@ RATE_LIMITS = {
 DEFAULT_RATE_LIMIT = (200, 60)
 
 
+def _cors_headers_for(request: Request) -> dict:
+    """Retourne les headers CORS appropriés selon l'origine de la requête."""
+    origin = request.headers.get("origin", "")
+    if origin in CORS_ORIGINS:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+        }
+    return {}
+
+
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
@@ -110,7 +123,7 @@ async def rate_limit_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=429,
             content={"detail": "Too many requests. Please slow down."},
-            headers={"Retry-After": str(window)},
+            headers={"Retry-After": str(window), **_cors_headers_for(request)},
         )
     _rate_limit_store[key].append(now)
     return await call_next(request)
