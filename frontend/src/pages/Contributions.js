@@ -142,20 +142,33 @@ function SubmissionDetail({ sub, existingKits }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {fields.map(field => (
-          <div key={field} className="space-y-1">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
-              {FIELD_LABELS[field] || field}
-            </p>
-            <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-              {sub.data?.[field] || '—'}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Pour les removals de kit/version, afficher la raison si présente */}
+      {sub.data?.mode === 'removal' && sub.data?.notes && (
+        <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30">
+          <p className="text-[10px] uppercase tracking-wider text-destructive mb-1" style={{ fontFamily: 'Barlow Condensed' }}>
+            Reason for Removal
+          </p>
+          <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{sub.data.notes}</p>
+        </div>
+      )}
 
-      {sub.data?.front_photo && (
+      {/* N'afficher les champs détaillés que pour les non-removal */}
+      {sub.data?.mode !== 'removal' && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {fields.map(field => (
+            <div key={field} className="space-y-1">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
+                {FIELD_LABELS[field] || field}
+              </p>
+              <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                {sub.data?.[field] || '—'}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sub.data?.front_photo && sub.data?.mode !== 'removal' && (
         <div className="mt-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>Photo</p>
           <img src={proxyImageUrl(sub.data.front_photo)} alt="Jersey" className="w-24 h-32 object-cover border border-border" />
@@ -377,6 +390,24 @@ function UseExistingKitPanel({ onSelect }) {
   );
 }
 
+// ===== HELPER: label d'affichage d'une submission dans la liste =====
+function getSubmissionTitle(sub) {
+  if (sub.submission_type === 'master_kit') {
+    if (sub.data?.mode === 'removal') {
+      return `Removal — ${sub.data?.club || '?'} ${sub.data?.season || ''} (${sub.data?.kit_type || '?'})`.trim();
+    }
+    return `${sub.data?.club || '?'} - ${sub.data?.season || '?'} (${sub.data?.kit_type || '?'})`;
+  }
+  if (sub.submission_type === 'version') {
+    if (sub.data?.mode === 'removal') {
+      return `Removal — Version ${sub.data?.version_id || sub.data?.entity_id || '?'}`;
+    }
+    return `${sub.data?.competition || '?'} - ${sub.data?.model || '?'}`;
+  }
+  if (sub.submission_type === 'player') return sub.data?.full_name || '?';
+  return sub.data?.name || '?';
+}
+
 // ===== COMPOSANT PRINCIPAL: CONTRIBUTIONS =====
 export default function Contributions() {
   const { user } = useAuth();
@@ -577,8 +608,13 @@ export default function Contributions() {
   );
   const standaloneEntitySubs = entityCreateSubs.filter(s => !s.data?.parent_submission_id);
   const kitLinkedEntitySubs = entityCreateSubs.filter(s => !!s.data?.parent_submission_id);
+
+  // FIX: inclure master_kit ET version (create + edit + removal)
+  // en excluant uniquement les entity subs déjà traités dans leurs sections
   const jerseyAndCreateSubs = submissions.filter(s =>
-    !entityEditSubs.includes(s) && !entityCreateSubs.includes(s) && s.submission_type === 'master_kit'
+    !entityEditSubs.includes(s) &&
+    !entityCreateSubs.includes(s) &&
+    (s.submission_type === 'master_kit' || s.submission_type === 'version')
   );
 
   return (
@@ -800,6 +836,11 @@ export default function Contributions() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <Badge variant="outline" className="rounded-none text-[10px]">{TYPE_LABELS[sub.submission_type] || sub.submission_type}</Badge>
+                          {sub.data?.mode === 'removal' && (
+                            <Badge variant="outline" className="rounded-none text-[10px] border-destructive/50 text-destructive">
+                              Removal Request
+                            </Badge>
+                          )}
                           {['team','league','brand','player'].includes(sub.submission_type) && (
                             <Badge variant="outline" className="rounded-none text-[10px] border-primary/30 text-primary">
                               {sub.data?.mode === 'edit' ? 'Edit' : 'New'}
@@ -812,13 +853,7 @@ export default function Contributions() {
                           }`}>{sub.status}</Badge>
                         </div>
                         <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          {sub.submission_type === 'master_kit'
-                            ? `${sub.data?.club || '?'} - ${sub.data?.season || '?'} (${sub.data?.kit_type || '?'})`
-                            : sub.submission_type === 'version'
-                            ? `${sub.data?.competition || '?'} - ${sub.data?.model || '?'}`
-                            : sub.submission_type === 'player'
-                            ? (sub.data?.full_name || '?')
-                            : (sub.data?.name || '?')}
+                          {getSubmissionTitle(sub)}
                         </h4>
                         <p className="text-xs text-muted-foreground mt-1">
                           by{' '}
@@ -952,7 +987,7 @@ export default function Contributions() {
                                   <span className="text-[10px] text-muted-foreground italic">En attente d'approbation du kit</span>
                                 </div>
                               </div>
-            )  )}
+                            ))}
                           </div>
                         </div>
                       );
