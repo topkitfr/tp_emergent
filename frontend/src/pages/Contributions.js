@@ -391,7 +391,8 @@ function UseExistingKitPanel({ onSelect }) {
 }
 
 // ===== HELPER: label d'affichage d'une submission dans la liste =====
-function getSubmissionTitle(sub) {
+// FIX 3: version removal affiche les infos du kit parent via existingKits
+function getSubmissionTitle(sub, existingKits = []) {
   if (sub.submission_type === 'master_kit') {
     if (sub.data?.mode === 'removal') {
       return `Removal — ${sub.data?.club || '?'} ${sub.data?.season || ''} (${sub.data?.kit_type || '?'})`.trim();
@@ -400,6 +401,12 @@ function getSubmissionTitle(sub) {
   }
   if (sub.submission_type === 'version') {
     if (sub.data?.mode === 'removal') {
+      // Résoudre les infos du kit parent depuis existingKits
+      const kitId = sub.data?.kit_id;
+      const parentKit = kitId ? existingKits.find(k => k.kit_id === kitId) : null;
+      if (parentKit) {
+        return `Removal — ${parentKit.club} ${parentKit.season} (${parentKit.kit_type})`;
+      }
       return `Removal — Version ${sub.data?.version_id || sub.data?.entity_id || '?'}`;
     }
     return `${sub.data?.competition || '?'} - ${sub.data?.model || '?'}`;
@@ -483,17 +490,16 @@ export default function Contributions() {
 
   useEffect(() => { fetchData(); }, [activeTab, fetchData]);
 
+  // FIX 3: charger existingKits dès le montage (pas seulement quand showAddForm)
+  // pour pouvoir résoudre les infos kit parent dans getSubmissionTitle
   useEffect(() => {
-    if (showAddForm) {
-      getMasterKits({ limit: 500 })
-        .then(res => {
-          // Le backend retourne { results, total } — correction du parsing
-          const kits = res.data?.results ?? [];
-          setExistingKits(kits);
-        })
-        .catch(console.error);
-    }
-  }, [showAddForm]);
+    getMasterKits({ limit: 500 })
+      .then(res => {
+        const kits = res.data?.results ?? [];
+        setExistingKits(kits);
+      })
+      .catch(console.error);
+  }, []);
 
   // ===== SUBMIT MASTER KIT =====
   const handleSubmitKit = async () => {
@@ -853,7 +859,7 @@ export default function Contributions() {
                           }`}>{sub.status}</Badge>
                         </div>
                         <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          {getSubmissionTitle(sub)}
+                          {getSubmissionTitle(sub, existingKits)}
                         </h4>
                         <p className="text-xs text-muted-foreground mt-1">
                           by{' '}
