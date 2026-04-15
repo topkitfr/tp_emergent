@@ -32,6 +32,7 @@ from .routers.teams_api import router as teams_api_router
 from .routers.players_api import router as players_api_router
 from .routers.awards import router as awards_router
 from .routers.apifootball_search import router as apifootball_search_router  # Sprint 2 — #21
+from .routers.players_chart import router as players_chart_router            # Career chart
 from .middleware import maintenance_middleware
 
 
@@ -184,6 +185,7 @@ app.include_router(teams_api_router)            # ← recherche clubs DB-first
 app.include_router(players_api_router)          # ← recherche joueurs DB-first
 app.include_router(awards_router)               # ← CRUD awards individuels
 app.include_router(apifootball_search_router)   # ← Sprint 2 : proxy search API-Football (#21)
+app.include_router(players_chart_router)        # ← Career chart transferts
 
 
 @app.on_event("startup")
