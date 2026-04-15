@@ -16,6 +16,35 @@ export const proxyImageUrl = (url) => {
   return url;
 };
 
+/**
+ * parseApiError — normalise les erreurs axios en string affichable.
+ *
+ * FastAPI peut retourner :
+ *   - 422 avec detail = [{type, loc, msg, input, url}, ...]  (Pydantic)
+ *   - 4xx/5xx avec detail = "string simple"
+ *   - network errors sans response
+ *
+ * Passer l'objet Pydantic brut dans toast.error() provoque React error #31
+ * car React tente de rendre un objet JS comme nœud DOM.
+ */
+export function parseApiError(e, fallback = 'An error occurred') {
+  const detail = e?.response?.data?.detail;
+  if (!detail) return e?.message || fallback;
+  // Tableau Pydantic [{type, loc, msg, input, url}]
+  if (Array.isArray(detail)) {
+    return detail
+      .map(err => {
+        const field = Array.isArray(err.loc) ? err.loc.filter(l => l !== 'body').join('.') : '';
+        const msg = err.msg || err.message || JSON.stringify(err);
+        return field ? `${field}: ${msg}` : msg;
+      })
+      .join(' | ');
+  }
+  // String ou objet simple
+  if (typeof detail === 'string') return detail;
+  return JSON.stringify(detail);
+}
+
 const api = axios.create({
   baseURL: API,
   withCredentials: true,
@@ -158,83 +187,19 @@ export const updateBrand = (id, data) => api.put(`/brands/${id}`, data);
 // Sponsors
 export const getSponsors = (params) => api.get('/sponsors', { params });
 export const getSponsor = (id) => api.get(`/sponsors/${id}`);
-export const getSponsorKits = (slug) => api.get(`/sponsors/${slug}/kits`);
+export const createSponsor = (data) => api.post('/sponsors', data);
+export const updateSponsor = (id, data) => api.put(`/sponsors/${id}`, data);
 
-// Players
-export const getPlayers = (params) => api.get('/players', { params });
-export const getPlayer = (id) => api.get(`/players/${id}`);
-export const getPlayerKits = (slug) => api.get(`/players/${slug}/kits`);
-export const createPlayer = (data) => api.post('/players', data);
-export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
-export const togglePlayerFollow = (playerId, followed) =>
-  followed
-    ? followEntity({ entity_type: 'player', entity_id: playerId })
-    : unfollowEntity({ entity_type: 'player', entity_id: playerId });
+// Players (pending / scoring)
+export const createPlayerPending = (data) => api.post('/players/pending', data);
+export const createTeamPending = (data) => api.post('/teams/pending', data);
+export const createBrandPending = (data) => api.post('/brands/pending', data);
+export const createLeaguePending = (data) => api.post('/leagues/pending', data);
+export const createSponsorPending = (data) => api.post('/sponsors/pending', data);
 
-// ── Scoring / palmares ──────────────────────────────────────────────
-export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
+// Scoring / Palmar\u00e8s
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
-export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
-  api.post(`/scoring/players/enrich`, {
-    player_id: playerId,
-    apifootball_id: String(apifootballId),
-    aura,
-  });
-
-// ── Career transfer chart ────────────────────────────────────────────
-export const getPlayerTransferChart = (playerId) =>
-  api.get(`/players-chart/${playerId}/transfers`);
-
-// ── API-Football — Players (DB-first search + profil) ──────────────────────
-export const searchApiFootballPlayers = (name) =>
-  api.get('/players-api/search', { params: { name } });
-export const getApiFootballPlayerProfile = (apifootballId) =>
-  api.get(`/players-api/get/${apifootballId}`);
-
-// ── API-Football — Teams (DB-first search + upsert) ────────────────────────
-export const searchApiFootballTeams = (name) =>
-  api.get('/teams-api/search', { params: { name } });
-export const upsertTeamFromApi = (teamData) =>
-  api.post('/teams-api/upsert', teamData);
-
-// ── API-Football — Leagues (DB-first search + upsert) ──────────────────────
-export const searchApiFootballLeagues = (name) =>
-  api.get('/leagues-api/search', { params: { name } });
-export const upsertLeagueFromApi = (leagueData) =>
-  api.post('/leagues-api/upsert', leagueData);
-
-// Migration
-export const migrateEntities = () => api.post('/migrate-entities-from-kits');
-
-// Pending entities
-export const createTeamPending = (data, parentSubmissionId = null) =>
-  api.post('/teams/pending', data, {
-    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
-  });
-export const createBrandPending = (data, parentSubmissionId = null) =>
-  api.post('/brands/pending', data, {
-    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
-  });
-export const createLeaguePending = (data, parentSubmissionId = null) =>
-  api.post('/leagues/pending', data, {
-    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
-  });
-export const createPlayerPending = (data, parentSubmissionId = null) =>
-  api.post('/players/pending', data, {
-    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
-  });
-export const createSponsorPending = (data, parentSubmissionId = null) =>
-  api.post('/sponsors/pending', data, {
-    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
-  });
-
-// Players who wore this kit
-export const getKitPlayers = (kitId) => api.get(`/kits/${kitId}/players`);
-
-// Notifications
-export const getNotifications = () => api.get('/notifications');
-export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`);
-export const markAllNotificationsRead = () => api.patch('/notifications/read-all');
-export const deleteNotification = (id) => api.delete(`/notifications/${id}`);
-
-export default api;
+export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
+export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
+export const enrichPlayerScoring = (data) => api.post('/scoring/players/enrich', data);
+export const searchScoringPlayers = (name) => api.get('/scoring/players/search', { params: { name } });

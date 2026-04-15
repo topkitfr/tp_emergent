@@ -1,6 +1,6 @@
 // frontend/src/components/AddEntityDialog.js
-// Dialog générique pour soumettre une nouvelle entité (player/team/brand/league/sponsor)
-// Les soumissions créées ici sont VOTABLES par la communauté (pas de parent kit)
+// Dialog g\u00e9n\u00e9rique pour soumettre une nouvelle entit\u00e9 (player/team/brand/league/sponsor)
+// Les soumissions cr\u00e9\u00e9es ici sont VOTABLES par la communaut\u00e9 (pas de parent kit)
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
   createBrandPending,
   createLeaguePending,
   createSponsorPending,
+  parseApiError,
 } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import UnifiedEntitySearch from '@/components/UnifiedEntitySearch';
@@ -34,7 +35,7 @@ const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = 'bg-card border-border rounded-none';
 
-// ── Mapping position API → codes Topkit ────────────────────────────────────
+// ── Mapping position API → codes Topkit ──────────────────────────────────────────
 const API_POSITION_MAP = {
   'Goalkeeper': ['GK'],
   'Defender': ['CB'], 'Centre-Back': ['CB'], 'Center Back': ['CB'],
@@ -59,13 +60,13 @@ function mapApiPosition(apiPosition) {
 }
 
 /**
- * AddEntityDialog — modal d'ajout direct d'une entité de référence.
+ * AddEntityDialog — modal d'ajout direct d'une entit\u00e9 de r\u00e9f\u00e9rence.
  *
  * Props:
  * - open: bool
  * - onClose: fn
  * - entityType: 'player' | 'team' | 'brand' | 'league' | 'sponsor'
- * - onSuccess: fn() — appelé après soumission réussie (pour refetch)
+ * - onSuccess: fn() — appel\u00e9 apr\u00e8s soumission r\u00e9ussie (pour refetch)
  */
 export default function AddEntityDialog({ open, onClose, entityType, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -78,10 +79,10 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     onClose();
   };
 
-  // ── Handlers DB sélect ────────────────────────────────────────────────────
+  // ── Handlers DB s\u00e9lect ────────────────────────────────────────────────────
   const handleDbSelect = (item) => {
     toast.warning(
-      `« ${item.name || item.full_name || item.label} » existe déjà en base de données. Préremplissage effectué.`,
+      `\u00ab ${item.name || item.full_name || item.label} \u00bb existe d\u00e9j\u00e0 en base de donn\u00e9es. Pr\u00e9remplissage effectu\u00e9.`,
       { duration: 5000 }
     );
     if (entityType === 'player')  handlePlayerDbSelect(item);
@@ -107,7 +108,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       preferred_foot:    item.preferred_foot || '',
       preferred_number:  item.preferred_number ?? '',
       individual_awards: item.individual_awards || [],
-      // apifootball_id stocké silencieusement
       apifootball_id:    item.apifootball_id || '',
       positions:         item.positions || [],
     }));
@@ -150,11 +150,8 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     }));
   };
 
-  // ── Handlers API select ───────────────────────────────────────────────────
-  // normalizePlayer (UnifiedEntitySearch) retourne : full_name, first_name, last_name,
-  // photo_url, positions[], birth_date, birth_place, birth_country, apifootball_id, …
+  // ── Handlers API select ─────────────────────────────────────────────────
   const handlePlayerApiSelect = (player) => {
-    // positions est déjà un tableau de strings (ex: ['ST']) sorti de normalizePlayer
     const mappedPositions = player.positions && player.positions.length > 0
       ? player.positions
       : mapApiPosition(player.position || '');
@@ -217,13 +214,10 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   };
 
   // ── Mapper form → payload backend ─────────────────────────────────────────
-  // Le form utilise first_name/last_name (convention normalizePlayer),
-  // mais PlayerCreate attend firstname/lastname (convention API-Football / Pydantic).
   const buildPlayerPayload = (f) => ({
     ...f,
     firstname: f.first_name || f.firstname || '',
     lastname:  f.last_name  || f.lastname  || '',
-    // Nettoyer les clés frontend-only pour ne pas polluer le payload
     first_name: undefined,
     last_name:  undefined,
   });
@@ -254,7 +248,9 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       handleClose();
       onSuccess?.();
     } catch (e) {
-      toast.error(e?.response?.data?.detail || 'Submission failed');
+      // parseApiError normalise les erreurs Pydantic [{type,loc,msg}] en string
+      // pour \u00e9viter React error #31 (objet rendu comme noeud DOM dans le toast)
+      toast.error(parseApiError(e, 'Submission failed'));
     } finally {
       setLoading(false);
     }
@@ -268,7 +264,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     sponsor: 'Add a new Sponsor',
   };
 
-  // Helper: toggle bouton pour les positions
   const togglePosition = (pos) => {
     const current = form.positions || [];
     set('positions', current.includes(pos) ? current.filter(p => p !== pos) : [...current, pos]);
@@ -303,11 +298,11 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Full Name *</Label>
-                  <Input value={form.full_name || ''} onChange={e => set('full_name', e.target.value)} placeholder="Zinédine Zidane" className={inputClass} />
+                  <Input value={form.full_name || ''} onChange={e => set('full_name', e.target.value)} placeholder="Zin\u00e9dine Zidane" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>Prénom</Label>
-                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="Zinédine" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Pr\u00e9nom</Label>
+                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="Zin\u00e9dine" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Nom de famille</Label>
@@ -425,8 +420,8 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Label className={fieldLabel} style={fieldStyle}>Type</Label>
                   <div className="flex gap-2">
                     {[
-                      { label: '🏟️ Club',     value: false },
-                      { label: '🚩 Nationale', value: true  },
+                      { label: '\uD83C\uDFDF\uFE0F Club',     value: false },
+                      { label: '\uD83D\uDEA9 Nationale', value: true  },
                     ].map(opt => (
                       <button
                         key={String(opt.value)}
@@ -444,8 +439,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                     ))}
                   </div>
                 </div>
-
-                {/* Stade */}
                 <div className="col-span-2 flex items-center gap-2 pt-1">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap" style={fieldStyle}>Stadium</p>
                   <div className="flex-1 border-t border-border" />
@@ -529,7 +522,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   entityType="league"
                   onSelectDb={handleDbSelect}
                   onSelectApi={handleLeagueApiSelect}
-                  placeholder="Nom de la compétition..."
+                  placeholder="Nom de la comp\u00e9tition..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
