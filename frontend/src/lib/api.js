@@ -56,7 +56,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers?.['retry-after'];
-      error.message = `Trop de requ\u00eates. R\u00e9essayez dans ${retryAfter || 60} secondes.`;
+      error.message = `Trop de requêtes. Réessayez dans ${retryAfter || 60} secondes.`;
     }
     return Promise.reject(error);
   }
@@ -135,7 +135,7 @@ export const getUserPublicCollection = (userId) => api.get(`/users/${userId}/pub
 export const getUserPublicSubmissions = (userId) => api.get(`/users/${userId}/public-submissions`);
 export const getUserPublicFollows = (userId) => api.get(`/users/${userId}/public-follows`);
 
-// Listes personnalis\u00e9es
+// Listes personnalisées
 export const getUserLists = () => api.get('/lists');
 export const getListDetail = (listId) => api.get(`/lists/${listId}`);
 export const createList = (data) => api.post('/lists', data);
@@ -197,9 +197,33 @@ export const createBrandPending = (data) => api.post('/brands/pending', data);
 export const createLeaguePending = (data) => api.post('/leagues/pending', data);
 export const createSponsorPending = (data) => api.post('/sponsors/pending', data);
 
-// Scoring / Palmar\u00e8s
+// Players — getters
+export const getPlayer = (id) => api.get(`/players/${id}`);
+export const getPlayers = (params) => api.get('/players', { params });
+
+// Scoring / Palmarès
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
 export const enrichPlayerScoring = (data) => api.post('/scoring/players/enrich', data);
 export const searchScoringPlayers = (name) => api.get('/scoring/players/search', { params: { name } });
+
+/**
+ * enrichPlayer — déclenche l'enrichissement scoring d'un joueur.
+ * Signature compatible avec PlayerDetail.js et EntityDetailPage.js :
+ *   enrichPlayer(playerId)
+ *   enrichPlayer(playerId, apifootballId, auraAvg)
+ */
+export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
+  api.post('/scoring/players/enrich', {
+    player_id: playerId,
+    ...(apifootballId != null && { apifootball_id: apifootballId }),
+    ...(auraAvg != null && { aura_avg: auraAvg }),
+  });
+
+/**
+ * getPlayerTransferChart — points du graphe de carrière (transferts).
+ * Retourne { points: [...] } depuis /scoring/players/{id}/transfer-chart
+ */
+export const getPlayerTransferChart = (playerId) =>
+  api.get(`/scoring/players/${playerId}/transfer-chart`);
