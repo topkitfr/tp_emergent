@@ -11,13 +11,14 @@ from typing import Literal
 router = APIRouter(prefix="/api/apifootball", tags=["apifootball"])
 
 API_FOOTBALL_BASE = "https://v3.football.api-sports.io"
-API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "")
+# Fallback identique à thesportsdb.py pour garantir la clé même sans variable d'env
+API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "92000910b07df3b860baa17aa7f0ef7d")
 
 HEADERS = {
     "x-apisports-key": API_FOOTBALL_KEY,
 }
 
-# ─── Mapping entité → endpoint + clé de réponse ──────────────────────────────────────────────────
+# ─── Mapping entité → endpoint + clé de réponse ───────────────────────────────
 ENTITY_CONFIG = {
     "team": {
         "endpoint": "/teams",
@@ -51,12 +52,6 @@ async def search_apifootball(
     Proxy de recherche vers API-Football.
     Retourne une liste de résultats bruts selon l'entity_type.
     """
-    if not API_FOOTBALL_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="API_FOOTBALL_KEY non configurée — recherche indisponible.",
-        )
-
     config = ENTITY_CONFIG.get(entity_type)
     if not config:
         raise HTTPException(status_code=400, detail=f"entity_type inconnu : {entity_type}")

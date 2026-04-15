@@ -30,7 +30,6 @@ function normalizeTeam(item) {
   const t = item.team   || item;
   const v = item.venue  || {};
   return {
-    // identité
     name:                 t.name             || '',
     country:              t.country          || '',
     city:                 t.city             || v.city || '',
@@ -38,14 +37,12 @@ function normalizeTeam(item) {
     is_national:          t.national         ?? false,
     gender:               t.gender           || '',
     logo:                 t.logo             || '',
-    // stade
     stadium_name:         v.name             || '',
     stadium_capacity:     v.capacity         ?? '',
     stadium_surface:      v.surface          || '',
     stadium_image_url:    v.image            || '',
     stadium_city:         v.city             || '',
     stadium_country:      v.country          || t.country || '',
-    // ID interne
     apifootball_team_id:  t.id               ?? '',
   };
 }
@@ -76,7 +73,6 @@ function normalizePlayer(item) {
   const p    = item.player     || item;
   const b    = p.birth         || {};
   const stat = (item.statistics || [])[0];
-  // hauteur / poids : API renvoie "183 cm" ou juste 183
   const parseNum = (v) => {
     if (!v && v !== 0) return '';
     const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
@@ -97,8 +93,7 @@ function normalizePlayer(item) {
     preferred_foot:   '',
     preferred_number: '',
     positions:        stat?.games?.position ? [stat.games.position] : [],
-    // ID interne
-    apifootball_id:   p.id          ?? '',
+    apifootball_id:   String(p.id  ?? ''),
   };
 }
 
@@ -107,6 +102,34 @@ function normalizeItem(item, entityType) {
   if (entityType === 'league') return normalizeLeague(item);
   if (entityType === 'player') return normalizePlayer(item);
   return item;
+}
+
+// ─── Helpers d'affichage (lecture des champs bruts API-Football) ──────────────
+// Ces fonctions lisent la structure BRUTE (avant normalisation) pour l'affichage
+// dans la dropdown — la normalisation n'intervient qu'au moment de onSelect.
+
+function getRawLogo(item, entityType) {
+  if (entityType === 'player') return item.player?.photo  || item.photo  || '';
+  if (entityType === 'league') return item.league?.logo   || item.logo   || '';
+  return item.team?.logo || item.logo || '';
+}
+
+function getRawName(item, entityType) {
+  if (entityType === 'player') return item.player?.name   || item.name   || '';
+  if (entityType === 'league') return item.league?.name   || item.name   || '';
+  return item.team?.name || item.name || '';
+}
+
+function getRawSub(item, entityType) {
+  if (entityType === 'player') {
+    const parts = [
+      item.statistics?.[0]?.team?.name,
+      item.player?.nationality,
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }
+  if (entityType === 'league') return item.country?.name  || '';
+  return item.team?.country || '';
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -124,27 +147,9 @@ function SkeletonRow() {
 
 // ─── ResultRow ────────────────────────────────────────────────────────────────
 function ResultRow({ item, entityType, onClick }) {
-  const logoSrc =
-    entityType === 'player'
-      ? item.player?.photo || item.photo
-      : entityType === 'league'
-      ? item.league?.logo  || item.logo
-      : item.team?.logo    || item.logo;
-
-  const name =
-    entityType === 'player'
-      ? item.player?.name  || item.name
-      : entityType === 'league'
-      ? item.league?.name  || item.name
-      : item.team?.name    || item.name;
-
-  const sub =
-    entityType === 'player'
-      ? [item.statistics?.[0]?.team?.name, item.player?.nationality].filter(Boolean).join(' · ')
-      : entityType === 'league'
-      ? item.country?.name
-      : item.team?.country;
-
+  const logoSrc = getRawLogo(item, entityType);
+  const name    = getRawName(item, entityType);
+  const sub     = getRawSub(item, entityType);
   const flagSrc = item.country?.flag;
 
   return (
@@ -182,11 +187,11 @@ export default function ApiFootballSearch({
   label,
   filledName = '',
 }) {
-  const [query, setQuery]     = useState('');
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
-  const [open, setOpen]       = useState(false);
+  const [query, setQuery]       = useState('');
+  const [results, setResults]   = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState(null);
+  const [open, setOpen]         = useState(false);
   const [selected, setSelected] = useState(null);
 
   const timerRef     = useRef(null);
@@ -206,9 +211,16 @@ export default function ApiFootballSearch({
       const res = await fetch(
         `${API_BASE}/api/apifootball/search/${entityType}?q=${encodeURIComponent(q.trim())}`
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Lire le JSON dans tous les cas pour récupérer le message d'erreur
       const data = await res.json();
-      setResults(data.results || data || []);
+      if (!res.ok) {
+        // data.detail peut être un string ou un objet — on force le string
+        const msg = typeof data.detail === 'string'
+          ? data.detail
+          : (data.detail?.[0]?.msg || `Erreur ${res.status}`);
+        throw new Error(msg);
+      }
+      setResults(data.results || []);
       setOpen(true);
     } catch (err) {
       setError(err.message || 'Erreur réseau');
@@ -228,19 +240,13 @@ export default function ApiFootballSearch({
   };
 
   const handleSelect = (item) => {
-    // Afficher le nom brut dans l'input de recherche
-    const rawName =
-      entityType === 'player' ? item.player?.name || item.name
-      : entityType === 'league' ? item.league?.name || item.name
-      : item.team?.name || item.name;
+    const rawName = getRawName(item, entityType);
     setQuery(rawName);
     setSelected(item);
     setOpen(false);
-    // ✅ On passe les données NORMALISÉES (à plat) au parent
     onSelect?.(normalizeItem(item, entityType));
   };
 
-  // Fermer au clic extérieur
   useEffect(() => {
     const handler = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
@@ -295,7 +301,7 @@ export default function ApiFootballSearch({
 
           {!loading && !error && results.length === 0 && (
             <div className="px-3 py-3 text-xs text-muted-foreground text-center" style={{ fontFamily: 'DM Sans' }}>
-              Aucun résultat pour «&nbsp;<em>{query}</em>&nbsp;»
+              Aucun résultat pour «\u00a0<em>{query}</em>\u00a0»
             </div>
           )}
 
