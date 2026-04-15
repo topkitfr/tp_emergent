@@ -65,9 +65,19 @@ async def health():
     return {"status": "ok"}
 
 
+# topkit.app + api.topkit.app sont les origines de production
+# Les origins Render restent pour les previews/CI
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,https://tp-emergent.onrender.com,https://tp-emergent-1.onrender.com",
+    ",".join([
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://topkit.app",
+        "https://www.topkit.app",
+        "https://api.topkit.app",
+        "https://tp-emergent.onrender.com",
+        "https://tp-emergent-1.onrender.com",
+    ])
 ).split(",")
 
 app.add_middleware(
@@ -162,7 +172,7 @@ async def security_headers_middleware(request: Request, call_next):
 
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
-# ─── Routers ─────────────────────────────────────────────────────────────────
+# ─── Routers ────────────────────────────────────────────────────────────────────────────────
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(user_lists_router)
