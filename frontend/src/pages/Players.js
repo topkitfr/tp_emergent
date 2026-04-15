@@ -1,6 +1,6 @@
 // frontend/src/pages/Players.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { getPlayers, togglePlayerFollow } from '@/lib/api';
+import { getPlayers, followEntity, unfollowEntity } from '@/lib/api';
 import { User } from 'lucide-react';
 import EntityListPage from '@/components/EntityListPage';
 import AddEntityDialog from '@/components/AddEntityDialog';
@@ -25,10 +25,10 @@ function diagPlayer(player) {
     k.toLowerCase().includes('note')  || k.toLowerCase().includes('grade') ||
     k.toLowerCase().includes('community')
   );
-  console.group('🔍 [Players] Diagnostic shape joueur');
+  console.group('[Players] Diagnostic shape joueur');
   console.log('Tous les champs :', Object.keys(player));
-  console.log('📸 Champs image :', imageFields.map(([k, v]) => `${k}: ${v}`));
-  console.log('⭐ Champs note  :', auraFields.map(([k, v]) => `${k}: ${v}`));
+  console.log('Champs image :', imageFields.map(([k, v]) => `${k}: ${v}`));
+  console.log('Champs note  :', auraFields.map(([k, v]) => `${k}: ${v}`));
   console.groupEnd();
 }
 
@@ -82,8 +82,13 @@ export default function Players() {
       if (id === playerId) { prev = p; return { ...p, is_followed: nextFollowed, followed: nextFollowed }; }
       return p;
     }));
-    try { await togglePlayerFollow(playerId, nextFollowed); }
-    catch (err) {
+    try {
+      if (nextFollowed) {
+        await followEntity({ target_type: 'player', target_id: playerId });
+      } else {
+        await unfollowEntity({ target_type: 'player', target_id: playerId });
+      }
+    } catch (err) {
       console.error('[Players] follow error:', err);
       setPlayers(list => list.map(p => {
         const id = p._id ?? p.player_id ?? p.id;
