@@ -46,7 +46,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers?.['retry-after'];
-      error.message = `Trop de requêtes. Réessayez dans ${retryAfter || 60} secondes.`;
+      error.message = `Trop de requ\u00eates. R\u00e9essayez dans ${retryAfter || 60} secondes.`;
     }
     return Promise.reject(error);
   }
@@ -126,7 +126,7 @@ export const getUserPublicCollection = (userId) => api.get(`/users/${userId}/pub
 export const getUserPublicSubmissions = (userId) => api.get(`/users/${userId}/public-submissions`);
 export const getUserPublicFollows = (userId) => api.get(`/users/${userId}/public-follows`);
 
-// Listes personnalisées
+// Listes personnalis\u00e9es
 export const getUserLists = () => api.get('/lists');
 export const getListDetail = (listId) => api.get(`/lists/${listId}`);
 export const createList = (data) => api.post('/lists', data);
@@ -192,7 +192,7 @@ export const createSponsorPending = (data) => api.post('/sponsors/pending', data
 export const getPlayer = (id) => api.get(`/players/${id}`);
 export const getPlayers = (params) => api.get('/players', { params });
 
-// Scoring / Palmarès
+// Scoring / Palmar\u00e8s
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
@@ -200,7 +200,7 @@ export const enrichPlayerScoring = (data) => api.post('/scoring/players/enrich',
 export const searchScoringPlayers = (name) => api.get('/scoring/players/search', { params: { name } });
 
 /**
- * enrichPlayer — déclenche l'enrichissement scoring d'un joueur.
+ * enrichPlayer — d\u00e9clenche l'enrichissement scoring d'un joueur.
  */
 export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
   api.post('/scoring/players/enrich', {
@@ -210,9 +210,10 @@ export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
   });
 
 /**
- * getPlayerTransferChart — points du graphe de carrière (transferts).
+ * getPlayerTransferChart — points du graphe de carri\u00e8re (transferts).
+ * Route backend : GET /api/players-chart/{player_id}/transfers
  */
 export const getPlayerTransferChart = (playerId) =>
-  api.get(`/scoring/players/${playerId}/transfer-chart`);
+  api.get(`/players-chart/${playerId}/transfers`);
 
 export default api;
