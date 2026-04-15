@@ -102,7 +102,23 @@ RATE_LIMITS = {
     "/api/reports":               (10, 60),
     "/api/apifootball/search":    (60, 60),  # Sprint 2 — rate limit search API
 }
-DEFAULT_RATE_LIMIT = (200, 60)
+# 500 req/min par IP réelle et par path — suffisant pour usage normal, protège quand même
+DEFAULT_RATE_LIMIT = (500, 60)
+
+
+def _get_client_ip(request: Request) -> str:
+    """
+    Récupère la vraie IP du client en tenant compte du reverse proxy nginx.
+    X-Forwarded-For peut contenir plusieurs IPs séparées par virgule,
+    on prend la première (la plus proche du client réel).
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
 
 
 def _cors_headers_for(request: Request) -> dict:
@@ -115,12 +131,19 @@ def _cors_headers_for(request: Request) -> dict:
             "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
         }
-    return {}
+    # Fallback : si pas d'Origin header (certains proxies le strippent),
+    # on autorise topkit.app par défaut pour ne pas bloquer les legit requests
+    return {
+        "Access-Control-Allow-Origin": "https://topkit.app",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    }
 
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _get_client_ip(request)
     path = request.url.path
     limit, window = DEFAULT_RATE_LIMIT
     for prefix, (lim, win) in RATE_LIMITS.items():
@@ -131,6 +154,7 @@ async def rate_limit_middleware(request: Request, call_next):
     now = time.time()
     _rate_limit_store[key] = [t for t in _rate_limit_store[key] if now - t < window]
     if len(_rate_limit_store[key]) >= limit:
+        logger.warning(f"Rate limit atteint: {client_ip} sur {path}")
         return JSONResponse(
             status_code=429,
             content={"detail": "Too many requests. Please slow down."},
