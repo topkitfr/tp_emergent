@@ -1,6 +1,6 @@
 // frontend/src/components/AddEntityDialog.js
-// Dialog g\u00e9n\u00e9rique pour soumettre une nouvelle entit\u00e9 (player/team/brand/league/sponsor)
-// Les soumissions cr\u00e9\u00e9es ici sont VOTABLES par la communaut\u00e9 (pas de parent kit)
+// Dialog générique pour soumettre une nouvelle entité (player/team/brand/league/sponsor)
+// Les soumissions créées ici sont VOTABLES par la communauté (pas de parent kit)
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -60,13 +60,13 @@ function mapApiPosition(apiPosition) {
 }
 
 /**
- * AddEntityDialog — modal d'ajout direct d'une entit\u00e9 de r\u00e9f\u00e9rence.
+ * AddEntityDialog — modal d'ajout direct d'une entité de référence.
  *
  * Props:
  * - open: bool
  * - onClose: fn
  * - entityType: 'player' | 'team' | 'brand' | 'league' | 'sponsor'
- * - onSuccess: fn() — appel\u00e9 apr\u00e8s soumission r\u00e9ussie (pour refetch)
+ * - onSuccess: fn() — appelé après soumission réussie (pour refetch)
  */
 export default function AddEntityDialog({ open, onClose, entityType, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -79,10 +79,10 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     onClose();
   };
 
-  // ── Handlers DB s\u00e9lect ────────────────────────────────────────────────────
+  // ── Handlers DB séléct ────────────────────────────────────────────────────
   const handleDbSelect = (item) => {
     toast.warning(
-      `\u00ab ${item.name || item.full_name || item.label} \u00bb existe d\u00e9j\u00e0 en base de donn\u00e9es. Pr\u00e9remplissage effectu\u00e9.`,
+      `« ${item.name || item.full_name || item.label} » existe déjà en base de données. Préremplissage effectué.`,
       { duration: 5000 }
     );
     if (entityType === 'player')  handlePlayerDbSelect(item);
@@ -108,7 +108,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       preferred_foot:    item.preferred_foot || '',
       preferred_number:  item.preferred_number ?? '',
       individual_awards: item.individual_awards || [],
-      apifootball_id:    item.apifootball_id || '',
+      apifootball_id:    item.apifootball_id != null ? String(item.apifootball_id) : '',
       positions:         item.positions || [],
     }));
   };
@@ -171,7 +171,8 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       preferred_foot:    player.preferred_foot   || prev.preferred_foot   || '',
       preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
       individual_awards: prev.individual_awards  || [],
-      apifootball_id:    player.apifootball_id,
+      // apifootball_id toujours castée en string (l'API renvoie un int)
+      apifootball_id:    player.apifootball_id != null ? String(player.apifootball_id) : (prev.apifootball_id || ''),
       positions:         mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
     }));
   };
@@ -214,12 +215,28 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
   };
 
   // ── Mapper form → payload backend ─────────────────────────────────────────
+  // Normalise les types pour correspondre au modèle Pydantic backend :
+  // - apifootball_id : str (l'API-Football renvoie un int, on force en string)
+  // - height / weight : str | null (le backend attend Optional[str])
+  // - preferred_number : int | null (le backend attend Optional[int], "" doit devenir null)
   const buildPlayerPayload = (f) => ({
     ...f,
-    firstname: f.first_name || f.firstname || '',
-    lastname:  f.last_name  || f.lastname  || '',
-    first_name: undefined,
-    last_name:  undefined,
+    firstname:        f.first_name || f.firstname || '',
+    lastname:         f.last_name  || f.lastname  || '',
+    first_name:       undefined,
+    last_name:        undefined,
+    apifootball_id:   f.apifootball_id != null && f.apifootball_id !== ''
+                        ? String(f.apifootball_id)
+                        : null,
+    height:           f.height != null && f.height !== ''
+                        ? String(f.height)
+                        : null,
+    weight:           f.weight != null && f.weight !== ''
+                        ? String(f.weight)
+                        : null,
+    preferred_number: f.preferred_number != null && f.preferred_number !== ''
+                        ? parseInt(f.preferred_number, 10)
+                        : null,
   });
 
   const handleSubmit = async () => {
@@ -249,7 +266,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       onSuccess?.();
     } catch (e) {
       // parseApiError normalise les erreurs Pydantic [{type,loc,msg}] en string
-      // pour \u00e9viter React error #31 (objet rendu comme noeud DOM dans le toast)
+      // pour éviter React error #31 (objet rendu comme noeud DOM dans le toast)
       toast.error(parseApiError(e, 'Submission failed'));
     } finally {
       setLoading(false);
@@ -298,11 +315,11 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Full Name *</Label>
-                  <Input value={form.full_name || ''} onChange={e => set('full_name', e.target.value)} placeholder="Zin\u00e9dine Zidane" className={inputClass} />
+                  <Input value={form.full_name || ''} onChange={e => set('full_name', e.target.value)} placeholder="Zinédine Zidane" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className={fieldLabel} style={fieldStyle}>Pr\u00e9nom</Label>
-                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="Zin\u00e9dine" className={inputClass} />
+                  <Label className={fieldLabel} style={fieldStyle}>Prénom</Label>
+                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="Zinédine" className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Nom de famille</Label>
@@ -420,8 +437,8 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Label className={fieldLabel} style={fieldStyle}>Type</Label>
                   <div className="flex gap-2">
                     {[
-                      { label: '\uD83C\uDFDF\uFE0F Club',     value: false },
-                      { label: '\uD83D\uDEA9 Nationale', value: true  },
+                      { label: '🏟️ Club',     value: false },
+                      { label: '🚩 Nationale', value: true  },
                     ].map(opt => (
                       <button
                         key={String(opt.value)}
@@ -522,7 +539,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   entityType="league"
                   onSelectDb={handleDbSelect}
                   onSelectApi={handleLeagueApiSelect}
-                  placeholder="Nom de la comp\u00e9tition..."
+                  placeholder="Nom de la compétition..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
