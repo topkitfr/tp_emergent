@@ -227,3 +227,5 @@ export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
  */
 export const getPlayerTransferChart = (playerId) =>
   api.get(`/scoring/players/${playerId}/transfer-chart`);
+
+export default api;
