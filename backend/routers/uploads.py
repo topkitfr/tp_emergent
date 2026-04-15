@@ -27,6 +27,15 @@ FOLDER_KEYS = {
     "stadium",
 }
 
+# Mapping extension → content_type pour forcer le bon MIME au receiver
+EXT_TO_MIME = {
+    ".jpg":  "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png":  "image/png",
+    ".webp": "image/webp",
+    ".gif":  "image/gif",
+}
+
 
 def _to_relative_path(public_url: str) -> str:
     """
@@ -49,6 +58,7 @@ async def _forward_to_receiver(
     folder: str,
     entity_id: Optional[str] = None,
     side: Optional[str] = None,
+    content_type: Optional[str] = None,
 ) -> dict:
     """Envoie le fichier au récepteur Freebox et retourne url + relative_path.
     Le folder doit toujours être une clé courte (ex: 'team', 'league') —
@@ -59,11 +69,15 @@ async def _forward_to_receiver(
     if side in ("front", "back"):
         params["side"] = side
 
+    # Déduire le content_type depuis l'extension si non fourni ou invalide
+    ext = Path(filename).suffix.lower()
+    mime = content_type if content_type and content_type.startswith("image/") else EXT_TO_MIME.get(ext, "image/jpeg")
+
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             RECEIVER_URL,
             headers={"x-secret": RECEIVER_SECRET},
-            files={"file": (filename, contents)},
+            files={"file": (filename, contents, mime)},
             params=params,
         )
         if resp.status_code != 200:
@@ -96,12 +110,12 @@ async def download_and_store(
                 detail=f"Échec du téléchargement de l'image : {image_url} (status {resp.status_code})"
             )
         contents = resp.content
-        ct = resp.headers.get("content-type", "image/png")
+        ct = resp.headers.get("content-type", "image/jpeg")
         ext = ct.split("/")[-1].split(";")[0].strip()
         ext = "jpg" if ext == "jpeg" else ext
         fname = filename or f"{entity_id}.{ext}"
 
-    return await _forward_to_receiver(contents, fname, folder, entity_id)
+    return await _forward_to_receiver(contents, fname, folder, entity_id, content_type=ct)
 
 
 @router.post("/upload/from-url")
@@ -146,8 +160,10 @@ async def upload_image(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
-    # Passe la clé courte directement — le receiver fait son propre mapping
-    result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
+    result = await _forward_to_receiver(
+        contents, file.filename, folder, entity_id, side,
+        content_type=file.content_type,
+    )
     return {"filename": file.filename, **result}
 
 
@@ -167,8 +183,10 @@ async def upload_multiple_images(
         if len(contents) > MAX_FILE_SIZE:
             continue
         try:
-            # Passe la clé courte directement — le receiver fait son propre mapping
-            result = await _forward_to_receiver(contents, file.filename, folder, entity_id, side)
+            result = await _forward_to_receiver(
+                contents, file.filename, folder, entity_id, side,
+                content_type=file.content_type,
+            )
             results.append({"filename": file.filename, **result})
         except Exception:
             continue
