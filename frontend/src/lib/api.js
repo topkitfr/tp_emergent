@@ -171,7 +171,7 @@ export const togglePlayerFollow = (playerId, followed) =>
     ? followEntity({ entity_type: 'player', entity_id: playerId })
     : unfollowEntity({ entity_type: 'player', entity_id: playerId });
 
-// \u2500\u2500 Scoring / palmar\u00e8s \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ── Scoring / palmares ──────────────────────────────────────────────
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
@@ -181,46 +181,25 @@ export const enrichPlayer = (playerId, apifootballId, aura = 0) =>
     aura,
   });
 
-// \u2500\u2500 API-Football \u2014 Players (DB-first search + profil) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-/**
- * Recherche un joueur : DB d'abord, API-Football en fallback.
- * Retourne { db_results: [...], api_results: [...] }
- */
+// ── Career transfer chart ────────────────────────────────────────────
+export const getPlayerTransferChart = (playerId) =>
+  api.get(`/players-chart/${playerId}/transfers`);
+
+// ── API-Football — Players (DB-first search + profil) ──────────────────────
 export const searchApiFootballPlayers = (name) =>
   api.get('/players-api/search', { params: { name } });
-
-/**
- * R\u00e9cup\u00e8re le profil complet d'un joueur par son apifootball_id.
- * Utilis\u00e9 pour le pr\u00e9fill du formulaire apr\u00e8s s\u00e9lection.
- */
 export const getApiFootballPlayerProfile = (apifootballId) =>
   api.get(`/players-api/get/${apifootballId}`);
 
-// \u2500\u2500 API-Football \u2014 Teams (DB-first search + upsert) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-/**
- * Recherche un club : DB d'abord, API-Football en fallback.
- * Retourne { db_results: [...], api_results: [...] }
- */
+// ── API-Football — Teams (DB-first search + upsert) ────────────────────────
 export const searchApiFootballTeams = (name) =>
   api.get('/teams-api/search', { params: { name } });
-
-/**
- * Sauvegarde un club issu de l'API-Football dans la DB locale.
- */
 export const upsertTeamFromApi = (teamData) =>
   api.post('/teams-api/upsert', teamData);
 
-// \u2500\u2500 API-Football \u2014 Leagues (DB-first search + upsert) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-/**
- * Recherche une comp\u00e9tition : DB d'abord, API-Football en fallback.
- * Retourne { db_results: [...], api_results: [...] }
- */
+// ── API-Football — Leagues (DB-first search + upsert) ──────────────────────
 export const searchApiFootballLeagues = (name) =>
   api.get('/leagues-api/search', { params: { name } });
-
-/**
- * Sauvegarde une comp\u00e9tition issue de l'API-Football dans la DB locale.
- */
 export const upsertLeagueFromApi = (leagueData) =>
   api.post('/leagues-api/upsert', leagueData);
 

@@ -12,12 +12,13 @@ import {
   getPlayer, proxyImageUrl, followEntity, unfollowEntity,
   isFollowing, votePlayerAura, getPlayerAura,
   getPlayerScoring, getPlayerCareer, enrichPlayer,
+  getPlayerTransferChart,
 } from '@/lib/api';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { useAuth } from '@/contexts/AuthContext';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 const SCORE_TIER = (s) => {
   if (s >= 800) return { label: 'Légende', color: '#f59e0b' };
   if (s >= 500) return { label: 'Elite',   color: '#a855f7' };
@@ -31,7 +32,7 @@ const PLACE_META = (place) => {
   if (p === '1st' || p === 'winner') return { icon: '🥇', label: 'Vainqueur', order: 1 };
   if (p === '2nd' || p === 'runner-up') return { icon: '🥈', label: '2e place', order: 2 };
   if (p === '3rd' || p === 'third') return { icon: '🥉', label: '3e place', order: 3 };
-  return { icon: '🏅', label: place, order: 4 };
+  return { icon: '🎖️', label: place, order: 4 };
 };
 
 const formatTransfer = (amount) => {
@@ -41,79 +42,193 @@ const formatTransfer = (amount) => {
   return `${amount}€`;
 };
 
-// ── SECTION 2 : Combined Career + Transfer Chart ──────────────────────────────
-function CareerTransferSection({ entries, loading, hasApiId }) {
-  const canvasRef = useRef(null);
+// ── SVG Area Chart (career timeline) ────────────────────────────────────────────
+function CareerAreaChart({ points }) {
+  const [tooltip, setTooltip] = useState(null);
+  const svgRef = useRef(null);
 
-  const withFees = entries.filter(e => e.transfer_fee && e.transfer_fee > 0);
-  const maxFee = withFees.length > 0 ? Math.max(...withFees.map(e => e.transfer_fee)) : 0;
+  const W = 960;
+  const H = 180;
+  const padL = 16;
+  const padR = 32;
+  const padT = 48;
+  const padB = 16;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
 
-  // Draw bar chart on canvas
-  useEffect(() => {
-    if (!canvasRef.current || withFees.length === 0) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const W = canvas.offsetWidth;
-    const H = 160;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
+  if (!points || points.length === 0) return null;
 
-    // Clear
-    ctx.clearRect(0, 0, W, H);
+  // Assign a cumulative "prestige" value per point for the Y axis.
+  // Loan = small step, Free = medium step, fee = proportional.
+  const maxFee = Math.max(...points.map(p => p.amount || 0), 1);
+  const yValues = points.map((p) => {
+    if (p.amount === null) return 0.15;        // Loan — petit bump
+    if (p.amount === 0)   return 0.3;          // Free — bump moyen
+    return 0.3 + (p.amount / maxFee) * 0.7;   // Fee — 0.3 → 1.0
+  });
 
-    const padL = 10, padR = 16, padT = 16, padB = 28;
-    const chartW = W - padL - padR;
-    const chartH = H - padT - padB;
-    const barCount = withFees.length;
-    const barGap = 6;
-    const barW = Math.max(8, (chartW - (barCount - 1) * barGap) / barCount);
+  // Make cumulative so the line always goes up
+  const cumY = [];
+  let acc = 0;
+  for (const v of yValues) {
+    acc = Math.min(1, acc + v * (1 / points.length) * 2.2);
+    cumY.push(acc);
+  }
 
-    // Grid lines (2)
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    [0.33, 0.66, 1].forEach(ratio => {
-      const y = padT + chartH * (1 - ratio);
-      ctx.beginPath();
-      ctx.moveTo(padL, y);
-      ctx.lineTo(W - padR, y);
-      ctx.stroke();
-    });
+  const xStep = chartW / Math.max(points.length - 1, 1);
 
-    withFees.forEach((e, i) => {
-      const ratio = e.transfer_fee / maxFee;
-      const barH = Math.max(4, ratio * chartH);
-      const x = padL + i * (barW + barGap);
-      const y = padT + chartH - barH;
+  const coords = points.map((_, i) => ({
+    x: padL + i * xStep,
+    y: padT + chartH * (1 - cumY[i]),
+  }));
 
-      // Bar gradient
-      const grad = ctx.createLinearGradient(0, y, 0, y + barH);
-      grad.addColorStop(0, 'hsl(174 70% 42%)');
-      grad.addColorStop(1, 'hsl(174 70% 28%)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(x, y, barW, barH);
+  // Smooth cubic bezier path
+  const linePath = coords.reduce((acc, pt, i) => {
+    if (i === 0) return `M ${pt.x} ${pt.y}`;
+    const prev = coords[i - 1];
+    const cpx = (prev.x + pt.x) / 2;
+    return `${acc} C ${cpx} ${prev.y}, ${cpx} ${pt.y}, ${pt.x} ${pt.y}`;
+  }, '');
 
-      // Amount label on top
-      const label = formatTransfer(e.transfer_fee);
-      ctx.fillStyle = 'hsl(174 70% 65%)';
-      ctx.font = `bold ${Math.min(10, barW * 0.9)}px "DM Sans", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(label, x + barW / 2, y - 4);
+  const last = coords[coords.length - 1];
+  const first = coords[0];
+  const areaPath = `${linePath} L ${last.x} ${H - padB} L ${first.x} ${H - padB} Z`;
 
-      // Club label below
-      const clubLabel = (e.club || '').slice(0, 8);
-      ctx.fillStyle = 'rgba(160,160,155,0.7)';
-      ctx.font = `9px "DM Sans", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(clubLabel, x + barW / 2, H - padB + 14);
-    });
-  }, [withFees, maxFee]);
+  return (
+    <div className="relative w-full" style={{ background: 'transparent' }}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        style={{ height: 200, overflow: 'visible' }}
+        onMouseLeave={() => setTooltip(null)}
+      >
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stopColor="hsl(174,65%,38%)" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="hsl(174,65%,38%)" stopOpacity="0.03" />
+          </linearGradient>
+        </defs>
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#areaGrad)" />
+
+        {/* Line */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="hsl(174,65%,42%)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Points + logos */}
+        {coords.map((pt, i) => {
+          const p = points[i];
+          const logoSize = 28;
+          const logoX = pt.x - logoSize / 2;
+          const logoY = pt.y - logoSize - 10;
+          const isHovered = tooltip?.i === i;
+
+          return (
+            <g
+              key={i}
+              onMouseEnter={(e) => {
+                const svgRect = svgRef.current?.getBoundingClientRect();
+                if (!svgRect) return;
+                setTooltip({ i, x: pt.x, y: pt.y, p });
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {/* Logo club destination */}
+              {p.to_logo && (
+                <image
+                  href={p.to_logo}
+                  x={logoX}
+                  y={logoY}
+                  width={logoSize}
+                  height={logoSize}
+                  style={{ filter: isHovered ? 'brightness(1.2)' : 'none' }}
+                />
+              )}
+
+              {/* Dot */}
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={isHovered ? 6 : 4}
+                fill={isHovered ? 'hsl(174,65%,60%)' : 'hsl(174,65%,42%)'}
+                stroke="hsl(220,14%,10%)"
+                strokeWidth="2"
+              />
+
+              {/* Season label */}
+              <text
+                x={pt.x}
+                y={H - 2}
+                textAnchor="middle"
+                fontSize="9"
+                fill="rgba(160,160,155,0.55)"
+                fontFamily="DM Sans, sans-serif"
+              >
+                {p.season?.slice(0, 4)}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Tooltip HTML (positionné par ratio SVG → conteneur) */}
+      {tooltip && (() => {
+        const svgRect = svgRef.current?.getBoundingClientRect();
+        const scaleX = svgRect ? svgRect.width / W : 1;
+        const scaleY = svgRect ? svgRect.height / H : 1;
+        const leftPx = tooltip.x * scaleX;
+        const topPx  = tooltip.y * scaleY - 12;
+        return (
+          <div
+            className="pointer-events-none absolute z-10 border border-border bg-card px-3 py-2 text-xs shadow-lg"
+            style={{
+              left: leftPx,
+              top: topPx,
+              transform: leftPx > (svgRect?.width || 400) * 0.65
+                ? 'translate(-100%, -100%)'
+                : 'translate(8px, -100%)',
+              fontFamily: 'DM Sans, sans-serif',
+              minWidth: 160,
+            }}
+          >
+            <p className="font-semibold text-foreground mb-0.5">{tooltip.p.to}</p>
+            <p className="text-muted-foreground">
+              {tooltip.p.season}
+              {tooltip.p.from && <span className="ml-1 opacity-60">← {tooltip.p.from}</span>}
+            </p>
+            {tooltip.p.amount_label && tooltip.p.amount_label !== 'N/A' && (
+              <p className="mt-1 font-mono" style={{ color: 'hsl(174,65%,55%)' }}>
+                {tooltip.p.amount_label}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ── SECTION 2 : Career (timeline list + area chart) ────────────────────────────
+function CareerTransferSection({ entries, chartPoints, loading, chartLoading, hasApiId }) {
+  const formatTransferLocal = (amount) => {
+    if (!amount || amount === 0) return null;
+    if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M€`;
+    if (amount >= 1_000) return `${Math.round(amount / 1_000)}K€`;
+    return `${amount}€`;
+  };
 
   if (loading) {
     return (
       <div className="space-y-3 animate-pulse">
-        {[1,2,3].map(i => <div key={i} className="h-14 bg-muted rounded" />)}
+        {[1, 2, 3].map(i => <div key={i} className="h-14 bg-muted rounded" />)}
       </div>
     );
   }
@@ -124,14 +239,23 @@ function CareerTransferSection({ entries, loading, hasApiId }) {
       </div>
     );
   }
-  if (entries.length === 0) {
+  if (entries.length === 0 && (!chartPoints || chartPoints.length === 0)) {
     return <p className="text-sm text-muted-foreground">Aucune donnée de carrière disponible.</p>;
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* LEFT: Timeline clubs */}
-      <div className="flex-1 min-w-0">
+    <div className="space-y-6">
+      {/* Area chart */}
+      {chartLoading ? (
+        <div className="h-48 bg-muted animate-pulse rounded" />
+      ) : chartPoints && chartPoints.length > 0 ? (
+        <div className="border border-border bg-card px-4 pt-2 pb-1">
+          <CareerAreaChart points={chartPoints} />
+        </div>
+      ) : null}
+
+      {/* Timeline list */}
+      {entries.length > 0 && (
         <div className="relative">
           <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
           <div className="space-y-0">
@@ -160,7 +284,7 @@ function CareerTransferSection({ entries, loading, hasApiId }) {
                     <div className="flex items-center gap-2 shrink-0">
                       {entry.transfer_fee > 0 && (
                         <span className="text-xs font-mono text-primary border border-primary/30 px-1.5 py-0.5">
-                          {formatTransfer(entry.transfer_fee)}
+                          {formatTransferLocal(entry.transfer_fee)}
                         </span>
                       )}
                       {entry.topkit_kits?.length > 0 && (
@@ -190,37 +314,15 @@ function CareerTransferSection({ entries, loading, hasApiId }) {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* RIGHT: Transfer bar chart (only shown if there are fees) */}
-      {withFees.length > 0 && (
-        <div className="lg:w-64 shrink-0">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
-            MONTANTS DE TRANSFERT
-          </p>
-          <div className="border border-border bg-card p-3">
-            <canvas ref={canvasRef} className="w-full" style={{ height: 160 }} />
-          </div>
-          {/* Legend list */}
-          <div className="mt-2 space-y-1">
-            {withFees.map((e, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground truncate mr-2">{e.club}</span>
-                <span className="font-mono text-primary shrink-0">{formatTransfer(e.transfer_fee)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       )}
     </div>
   );
 }
 
-// ── SECTION 3 : Trophées + Awards perso ───────────────────────────────────────
+// ── SECTION 3 : Trophées + Awards perso ─────────────────────────────────────────────
 function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, enrichError, onEnrich, scoringLoading }) {
   const allTrophies = scoring?.trophies || player.honours || [];
 
-  // Group titles by competition name, count wins only
   const titlesByComp = {};
   const finalesByComp = {};
 
@@ -236,8 +338,6 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
   }
 
   const titlesCount = allTrophies.filter(t => PLACE_META(t.place).order === 1).length;
-  const finalesCount = allTrophies.filter(t => PLACE_META(t.place).order === 2).length;
-
   const individualAwards = player.individual_awards || [];
   const hasAwards = individualAwards.length > 0;
   const hasTrophies = Object.keys(titlesByComp).length > 0 || Object.keys(finalesByComp).length > 0;
@@ -252,7 +352,6 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
 
   return (
     <div>
-      {/* Header bar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           {tier && (
@@ -290,14 +389,12 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
         </div>
       ) : (
         <div className="space-y-6">
-          {/* ── Trophées collectifs — style "FIFA WORLD CUP ×2" ── */}
           {hasTrophies && (
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
                 PALMARÈS COLLECTIF
                 {titlesCount > 0 && <span className="ml-2 font-mono text-muted-foreground/50">{titlesCount} titre{titlesCount > 1 ? 's' : ''}</span>}
               </p>
-              {/* Wins */}
               {Object.keys(titlesByComp).length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {Object.entries(titlesByComp).map(([comp, count]) => (
@@ -311,7 +408,6 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
                   ))}
                 </div>
               )}
-              {/* Runner-ups */}
               {Object.keys(finalesByComp).length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(finalesByComp).map(([comp, count]) => (
@@ -328,7 +424,6 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
             </div>
           )}
 
-          {/* ── Awards individuels (masqués si vide) ── */}
           {hasAwards && (
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -357,7 +452,7 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────────
 export default function PlayerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -376,6 +471,9 @@ export default function PlayerDetail() {
 
   const [career, setCareer]               = useState(null);
   const [careerLoading, setCareerLoading] = useState(false);
+
+  const [chartPoints, setChartPoints]       = useState(null);
+  const [chartLoading, setChartLoading]     = useState(false);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -401,6 +499,14 @@ export default function PlayerDetail() {
       .finally(() => setCareerLoading(false));
   }, []);
 
+  const loadChart = useCallback((pid) => {
+    setChartLoading(true);
+    getPlayerTransferChart(pid)
+      .then(r => setChartPoints(r.data?.points || []))
+      .catch(() => setChartPoints([]))
+      .finally(() => setChartLoading(false));
+  }, []);
+
   useEffect(() => {
     if (!player) return;
     const pid = player.player_id;
@@ -410,7 +516,8 @@ export default function PlayerDetail() {
     getPlayerAura(pid).then(r => setAura(r.data)).catch(() => {});
     loadScoring(pid);
     loadCareer(pid);
-  }, [player, authUser, loadScoring, loadCareer]);
+    if (player.apifootball_id) loadChart(pid);
+  }, [player, authUser, loadScoring, loadCareer, loadChart]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -446,6 +553,7 @@ export default function PlayerDetail() {
       await enrichPlayer(player.player_id, player.apifootball_id, aura?.aura_avg || 0);
       loadScoring(player.player_id);
       loadCareer(player.player_id);
+      loadChart(player.player_id);
     } catch (e) {
       setEnrichError(e?.response?.data?.detail || "Erreur lors de l'enrichissement");
     } finally {
@@ -463,7 +571,6 @@ export default function PlayerDetail() {
   const isPending = player.status === 'pending' || player.status === 'for_review';
   const canEdit   = !!authUser;
 
-  // Kits pour Section 4
   const versions = player.versions || [];
   const kitsSeen = new Set();
   const allKitsList = [];
@@ -478,30 +585,21 @@ export default function PlayerDetail() {
   const visibleKits = allKitsList.slice(0, 5);
 
   const careerEntries = career?.career || [];
-
   const scorePalmares = scoring?.score_palmares ?? player.score_palmares ?? null;
   const tier = scorePalmares !== null ? SCORE_TIER(scorePalmares) : null;
-
-  // Browse URL with player filter
   const browseUrl = `/browse?player=${encodeURIComponent(player.full_name)}`;
 
   return (
     <div className="animate-fade-in-up" data-testid="player-detail-page">
 
-      {/* ════════════════════════════════════════════════════
-           SECTION 1 — IDENTITÉ JOUEUR
-      ════════════════════════════════════════════════════ */}
+      {/* SECTION 1 — IDENTITÉ */}
       <div className="border-b border-border px-4 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
-          <Link
-            to="/players"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors"
-          >
+          <Link to="/players" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
             <ArrowLeft className="w-3 h-3" />Players
           </Link>
 
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            {/* Photo */}
             <div className="shrink-0 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border w-24 h-24">
               {player.photo_url
                 ? <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-24 h-24 object-cover rounded-full" />
@@ -510,7 +608,6 @@ export default function PlayerDetail() {
             </div>
 
             <div className="flex-1 min-w-0">
-              {/* Nom + actions */}
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   {isPending && (
@@ -549,7 +646,6 @@ export default function PlayerDetail() {
                 </div>
               </div>
 
-              {/* Badges positions / statut / tier */}
               <div className="flex flex-wrap gap-2 mt-3">
                 {player.positions?.map(p => <Badge key={p} variant="outline" className="rounded-none">{p}</Badge>)}
                 <Badge variant="secondary" className="rounded-none">{kitCount} kit{kitCount !== 1 ? 's' : ''}</Badge>
@@ -566,7 +662,6 @@ export default function PlayerDetail() {
                 )}
               </div>
 
-              {/* Aura */}
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>AURA</span>
                 <div className="flex items-center gap-0.5">
@@ -591,9 +686,7 @@ export default function PlayerDetail() {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════
-           SECTION 2 — HISTORIQUE CLUB + TRANSFERTS
-      ════════════════════════════════════════════════════ */}
+      {/* SECTION 2 — CARRIÈRE & TRANSFERTS */}
       <div className="border-b border-border px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-5" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -601,15 +694,15 @@ export default function PlayerDetail() {
           </h2>
           <CareerTransferSection
             entries={careerEntries}
+            chartPoints={chartPoints}
             loading={careerLoading}
+            chartLoading={chartLoading}
             hasApiId={career?.has_apifootball_id ?? !!player.apifootball_id}
           />
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════
-           SECTION 3 — TROPHÉES + AWARDS INDIVIDUELS
-      ════════════════════════════════════════════════════ */}
+      {/* SECTION 3 — PALMARÈS */}
       <div className="border-b border-border px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-5" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -628,9 +721,7 @@ export default function PlayerDetail() {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════
-           SECTION 4 — CAREER IN SHIRTS (5 max + See More)
-      ════════════════════════════════════════════════════ */}
+      {/* SECTION 4 — CAREER IN SHIRTS */}
       <div className="px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-5">
@@ -639,11 +730,7 @@ export default function PlayerDetail() {
               {kitCount > 0 && <span className="ml-2 font-mono text-muted-foreground/50">{kitCount}</span>}
             </h2>
             {kitCount > 5 && (
-              <Link
-                to={browseUrl}
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-              >
+              <Link to={browseUrl} className="inline-flex items-center gap-1 text-xs text-primary hover:underline" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                 See all {kitCount} shirts <ArrowRight className="w-3 h-3" />
               </Link>
             )}
@@ -657,9 +744,7 @@ export default function PlayerDetail() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {visibleKits.map(kit => (
-                <Link to={`/kit/${kit.kit_id}`} key={kit.kit_id}
-                  className="border border-border bg-card hover:border-primary/40 transition-colors duration-200 group"
-                >
+                <Link to={`/kit/${kit.kit_id}`} key={kit.kit_id} className="border border-border bg-card hover:border-primary/40 transition-colors duration-200 group">
                   <div className="aspect-[3/4] overflow-hidden bg-muted">
                     {kit.front_photo
                       ? <img src={proxyImageUrl(kit.front_photo)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -672,16 +757,10 @@ export default function PlayerDetail() {
                   </div>
                 </Link>
               ))}
-              {/* "See More" card tile si > 5 */}
               {kitCount > 5 && (
-                <Link
-                  to={browseUrl}
-                  className="border border-dashed border-border bg-card hover:border-primary/40 transition-colors duration-200 flex flex-col items-center justify-center aspect-[3/4] gap-2 text-muted-foreground hover:text-primary"
-                >
+                <Link to={browseUrl} className="border border-dashed border-border bg-card hover:border-primary/40 transition-colors duration-200 flex flex-col items-center justify-center aspect-[3/4] gap-2 text-muted-foreground hover:text-primary">
                   <ArrowRight className="w-5 h-5" />
-                  <span className="text-xs text-center px-2" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                    +{kitCount - 5} de plus
-                  </span>
+                  <span className="text-xs text-center px-2" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>+{kitCount - 5} de plus</span>
                 </Link>
               )}
             </div>
@@ -689,7 +768,6 @@ export default function PlayerDetail() {
         </div>
       </div>
 
-      {/* Dialog Edit */}
       {showEdit && !isPending && (
         <EntityEditDialog
           open={showEdit}
