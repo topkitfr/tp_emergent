@@ -127,9 +127,6 @@ async def check_user_quota(db, user_id: str, sub_type: str) -> None:
 ESTIMATION_BASE_PRICES = {"Authentic": 140, "Replica": 90, "Other": 60}
 
 # COMPÉTITION
-# National Championship : 0 (base, pas de bonus)
-# National Cup : +0.10
-# Continental / Intercontinental / World Cup : +0.60
 ESTIMATION_COMPETITION_COEFF = {
     "National Championship": 0.0,
     "National Cup": 0.10,
@@ -139,10 +136,6 @@ ESTIMATION_COMPETITION_COEFF = {
 }
 
 # ORIGINE (condition_origin)
-# Shop / Training : 0 (standard)
-# Club Stock : +0.40
-# Match Prepared : +0.80
-# Match Worn : +1.20
 ESTIMATION_ORIGIN_COEFF = {
     "Shop": 0.0,
     "Training": 0.0,
@@ -161,20 +154,12 @@ ESTIMATION_STATE_COEFF = {
 }
 
 # FLOCAGE
-# "Official"     → flocage officiel club/compétition → +0.20
-#                   → afficher le champ joueur flocqué côté UI
-# "Personalized" → flocage perso → 0.0
-#                   → NE PAS afficher le champ joueur côté UI
-# "None"         → pas de flocage → 0.0
 ESTIMATION_FLOCKING_COEFF = {"Official": 0.20, "Personalized": 0.0, "None": 0.0}
 
 # PATCH OFFICIEL DE COMPÉTITION (bool)
 ESTIMATION_PATCH_COEFF = 0.10
 
 # SIGNATURE — type de signataire
-# "player_flocked" : signé par le joueur dont le nom est flocqué → +0.80
-# "team"           : signé par l'équipe (multi signatures) → +1.00
-# "other"          : autre signature (préciser via signed_other_detail) → +0.40
 ESTIMATION_SIGNED_TYPE_COEFF = {
     "player_flocked": 0.80,
     "team": 1.00,
@@ -182,9 +167,6 @@ ESTIMATION_SIGNED_TYPE_COEFF = {
 }
 
 # PREUVE / CERTIFICAT D'AUTHENTICITÉ
-# "none"   : aucune preuve → 0 bonus supplémentaire
-# "light"  : certificat léger / simple provenance → +0.20
-# "strong" : preuve solide (photo/vidéo + COA crédible) → +0.40
 ESTIMATION_SIGNED_PROOF_COEFF = {
     "none": 0.0,
     "light": 0.20,
@@ -195,27 +177,33 @@ ESTIMATION_SIGNED_PROOF_COEFF = {
 ESTIMATION_RARITY_COEFF = 0.40
 
 # ANCIENNETÉ
-# On ne commence à compter qu'à partir de 2 ans après l'année de saison
-# (avant 2 ans, le maillot est encore facilement trouvable dans le commerce)
-# +0.05 par année effective, plafonné à +1.0
-# Exemple en 2026 :
-#   saison 2024 → age=2 → effective=0 → coeff=0.00
-#   saison 2018 → age=8 → effective=6 → coeff=0.30
-#   saison 2000 → age=26 → effective=24 → coeff=1.00 (plafonné)
 ESTIMATION_AGE_DELAY_YEARS = 2
 ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
 
-# PROFIL DU JOUEUR FLOCQUÉ
-# Actif UNIQUEMENT quand : signed == True ET signed_type == "player_flocked" ET flocking_origin == "Official"
-# "football_legend" : légende mondiale → +1.00
-# "club_star"       : star / icône du club → +0.50
-# "none"            : joueur lambda → 0.0
-ESTIMATION_PLAYER_PROFILE_COEFF: dict[str, float] = {
-    "football_legend": 1.00,
-    "club_star": 0.50,
-    "none": 0.0,
-}
+# ─── PROFIL JOUEUR (Option A) ──────────────────────────────────────────────────
+# Dérivé automatiquement depuis note/100 stockée en DB.
+# Actif UNIQUEMENT quand : signed == True ET signed_type == "player_flocked"
+#                          ET flocking_origin == "Official"
+#
+# Barème :
+#   note  0–39  → "none"             → +0.00
+#   note 40–64  → "good_player"      → +0.25  (bon joueur professionnel)
+#   note 65–79  → "club_star"        → +0.50  (star / icône d'un grand club)
+#   note 80–89  → "world_star"       → +0.75  (star mondiale, sélection régulière)
+#   note 90–100 → "football_legend"  → +1.00  (légende absolue du football)
+def _player_note_to_profile(note: float) -> tuple[str, float]:
+    """Convertit une note /100 en (label, coeff) pour l'estimation."""
+    if note >= 90:
+        return "football_legend", 1.00
+    elif note >= 80:
+        return "world_star", 0.75
+    elif note >= 65:
+        return "club_star", 0.50
+    elif note >= 40:
+        return "good_player", 0.25
+    else:
+        return "none", 0.0
 
 
 def calculate_estimation(
@@ -227,7 +215,7 @@ def calculate_estimation(
     signed: bool,
     signed_proof: str,
     season_year: int,
-    flocking_player_profile: str = "none",
+    flocking_player_note: float = 0.0,
     signed_type: str = "",
     signed_other_detail: str = "",
     patch: bool = False,
@@ -241,13 +229,17 @@ def calculate_estimation(
     mode="basic"    → uniquement Modèle + Compétition + État physique
     mode="advanced" → tous les critères
 
+    flocking_player_note : note /100 du joueur flocqué issue de la DB.
+                           Remplace l'ancien flocking_player_profile manuel.
+
     Retourne un dict avec :
-      - base_price     : prix de base selon le modèle
-      - model_type     : type de modèle
-      - coeff_sum      : somme totale des coefficients
-      - estimated_price: prix final arrondi
-      - breakdown      : liste de {label, coeff} pour l'affichage détaillé
-      - mode           : "basic" ou "advanced"
+      - base_price           : prix de base selon le modèle
+      - model_type           : type de modèle
+      - coeff_sum            : somme totale des coefficients
+      - estimated_price      : prix final arrondi
+      - breakdown            : liste de {label, coeff} pour l'affichage détaillé
+      - mode                 : "basic" ou "advanced"
+      - flocking_player_profile : label de profil déduit automatiquement
     """
     base = ESTIMATION_BASE_PRICES.get(model_type, 60)
     coeff_sum = 0.0
@@ -275,9 +267,6 @@ def calculate_estimation(
             breakdown.append({"label": f"Origin: {condition_origin}", "coeff": origin_c})
 
         # Flocage
-        # "Official"     → +0.20 + afficher champ joueur côté UI
-        # "Personalized" → 0.00 + NE PAS afficher champ joueur côté UI
-        # "None"         → 0.00
         flocking_c = ESTIMATION_FLOCKING_COEFF.get(flocking_origin, 0.0)
         coeff_sum += flocking_c
         if flocking_origin and flocking_origin != "None":
@@ -309,17 +298,20 @@ def calculate_estimation(
                 }
                 breakdown.append({"label": proof_labels.get(signed_proof, "Certificate"), "coeff": proof_c})
 
-            # Profil joueur — uniquement si signé par le joueur flocqué en officiel
+            # ── Profil joueur — Option A : déduit depuis note DB ──
+            # Actif uniquement si : signed_type == "player_flocked" ET flocking_origin == "Official"
             if signed_type == "player_flocked" and flocking_origin == "Official":
-                profile_c = ESTIMATION_PLAYER_PROFILE_COEFF.get(flocking_player_profile or "none", 0.0)
+                profile_label, profile_c = _player_note_to_profile(flocking_player_note)
                 if profile_c > 0:
                     coeff_sum += profile_c
-                    profile_labels = {
-                        "football_legend": "Signed by flocked player: Football legend",
-                        "club_star": "Signed by flocked player: Club star",
+                    profile_display = {
+                        "football_legend": f"Player profile: Football legend (note {flocking_player_note:.0f}/100)",
+                        "world_star":      f"Player profile: World star (note {flocking_player_note:.0f}/100)",
+                        "club_star":       f"Player profile: Club star (note {flocking_player_note:.0f}/100)",
+                        "good_player":     f"Player profile: Good player (note {flocking_player_note:.0f}/100)",
                     }
                     breakdown.append({
-                        "label": profile_labels.get(flocking_player_profile, "Signed by flocked player profile"),
+                        "label": profile_display.get(profile_label, f"Player profile (note {flocking_player_note:.0f}/100)"),
                         "coeff": profile_c,
                     })
 
@@ -330,9 +322,6 @@ def calculate_estimation(
             breakdown.append({"label": rare_label, "coeff": ESTIMATION_RARITY_COEFF})
 
         # Ancienneté
-        # Calcul : on part de l'année de saison, on déduit 2 ans de délai
-        # avant que le maillot soit considéré difficile à trouver dans le commerce,
-        # puis +0.05 par année effective, plafonné à +1.0
         current_year = datetime.now(timezone.utc).year
         age = max(0, current_year - season_year) if season_year else 0
         effective_age = max(0, age - ESTIMATION_AGE_DELAY_YEARS)
@@ -345,6 +334,8 @@ def calculate_estimation(
             })
 
     estimated_price = round(base * (1 + coeff_sum), 2)
+    # Profil déduit (pour info frontend)
+    derived_profile, _ = _player_note_to_profile(flocking_player_note)
     return {
         "base_price": base,
         "model_type": model_type,
@@ -352,6 +343,7 @@ def calculate_estimation(
         "estimated_price": estimated_price,
         "breakdown": breakdown,
         "mode": mode,
+        "flocking_player_profile": derived_profile,
     }
 
 
@@ -364,7 +356,7 @@ def calculate_estimation_for_collection_item(
     signed: bool,
     signed_proof: str,
     season_year: int,
-    flocking_player_profile: str = "none",
+    flocking_player_note: float = 0.0,
     signed_type: str = "",
     signed_other_detail: str = "",
     patch: bool = False,
@@ -381,7 +373,7 @@ def calculate_estimation_for_collection_item(
         signed=signed,
         signed_proof=signed_proof,
         season_year=season_year,
-        flocking_player_profile=flocking_player_profile,
+        flocking_player_note=flocking_player_note,
         signed_type=signed_type,
         signed_other_detail=signed_other_detail,
         patch=patch,

@@ -237,6 +237,12 @@ class EstimationRequest(BaseModel):
     mode : "basic" | "advanced"
       - "basic"    : Modèle + Compétition + État physique uniquement
       - "advanced" : Tous les critères (origine, flocage, patch, signature, rareté, ancienneté)
+
+    Option A — profil joueur automatique :
+      Fournir flocking_player_id (player_id en DB) pour que la note du joueur
+      soit récupérée automatiquement et convertie en coefficient.
+      L'ancien champ flocking_player_profile est conservé pour compatibilité
+      descendante mais ignoré si flocking_player_id est fourni.
     """
     model_type: str
     competition: Optional[str] = ""
@@ -244,7 +250,8 @@ class EstimationRequest(BaseModel):
     mode: Optional[str] = "advanced"
     condition_origin: Optional[str] = ""
     flocking_origin: Optional[str] = ""
-    flocking_player_profile: Optional[str] = "none"
+    flocking_player_id: Optional[str] = ""       # Option A : player_id DB → note auto
+    flocking_player_profile: Optional[str] = "none"  # Conservé pour rétrocompat (ignoré si player_id fourni)
     signed: Optional[bool] = False
     signed_type: Optional[str] = ""
     signed_other_detail: Optional[str] = ""
