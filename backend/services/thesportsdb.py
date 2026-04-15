@@ -69,7 +69,24 @@ PLACE_MULTIPLIER: dict[str, float] = {
 }
 
 DEFAULT_HONOUR_WEIGHT = 1.5
-SCORE_MESSI_REF = 100.0
+
+# ── Références de normalisation ───────────────────────────────────────────────
+# Score palmarès collectif de référence (Messi ≈ 100 pts bruts)
+SCORE_PALMARES_REF = 100.0
+# Score awards individuels de référence (Messi : ~7 Ballons d'Or = 56 pts bruts)
+SCORE_AWARDS_REF = 56.0
+# Nombre de maillots TopKit de référence (joueur très présent ≈ 20 maillots)
+TOPKIT_KITS_REF = 20
+
+# ── Pondération de la note finale sur 100 ────────────────────────────────────
+# palmares_collectif : 40 pts — titres collectifs (CL, WC, championnats…)
+# awards_individuels : 20 pts — Ballon d'Or, Golden Boot, POTY…
+# aura              : 25 pts — popularité / icône (saisie manuellement 0-100)
+# presence_topkit   : 15 pts — nombre de maillots référencés dans TopKit
+WEIGHT_PALMARES  = 40.0
+WEIGHT_AWARDS    = 20.0
+WEIGHT_AURA      = 25.0
+WEIGHT_TOPKIT    = 15.0
 
 # ── Confédérations connues ────────────────────────────────────────────────────
 CONFEDERATION_MAP: dict[str, tuple[str, str]] = {
@@ -174,7 +191,7 @@ def parse_colors(raw: str) -> list[str]:
     ))
 
 
-# ── Fonctions existantes ──────────────────────────────────────────────────────
+# ── Fonctions de scoring ──────────────────────────────────────────────────────
 
 def _dedup_honours(honours: List[dict]) -> List[dict]:
     """Supprime les doublons sans saison quand le même titre existe avec une saison."""
@@ -198,7 +215,11 @@ def _dedup_honours(honours: List[dict]) -> List[dict]:
 
 
 def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | None = None) -> float:
-    """Calcule le score palmarès pondéré."""
+    """Calcule le score brut du palmarès COLLECTIF uniquement (hors awards individuels).
+
+    Retourne un score brut non plafonné — la normalisation se fait dans compute_note().
+    Les awards individuels ont leur propre composante via compute_score_awards().
+    """
     clean_honours = _dedup_honours(honours)
 
     total = 0.0
@@ -215,6 +236,8 @@ def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | 
                 break
         total += weight * multiplier
 
+    # Rétrocompatibilité : si individual_awards passés ici, on les inclut dans le total
+    # (ancienne signature) mais on les exclut de la normalisation awards séparée.
     for award in (individual_awards or []):
         award_name = (award.get("award_name") or "").lower()
         weight = award.get("scoring_weight") or DEFAULT_HONOUR_WEIGHT
@@ -228,11 +251,63 @@ def compute_score_palmares(honours: List[dict], individual_awards: List[dict] | 
     return round(total, 2)
 
 
-def compute_note(score_palmares: float, aura: float) -> float:
-    """Note finale sur 100 : 50% palmarès + 50% aura."""
-    palmares_part = min(score_palmares / SCORE_MESSI_REF, 1.0) * 50.0
-    aura_part = min(aura / 100.0, 1.0) * 50.0
-    return round(palmares_part + aura_part, 1)
+def compute_score_awards(individual_awards: List[dict] | None) -> float:
+    """Calcule le score brut des awards INDIVIDUELS uniquement.
+
+    Séparé de compute_score_palmares pour permettre une pondération indépendante
+    dans la note finale.
+    """
+    total = 0.0
+    for award in (individual_awards or []):
+        award_name = (award.get("award_name") or "").lower()
+        weight = award.get("scoring_weight") or DEFAULT_HONOUR_WEIGHT
+        for keyword, w in AWARD_WEIGHTS.items():
+            if keyword in award_name:
+                weight = w
+                break
+        count = award.get("count") or 1
+        total += weight * count
+    return round(total, 2)
+
+
+def compute_note(
+    score_palmares: float,
+    aura: float,
+    individual_awards: List[dict] | None = None,
+    topkit_kits_count: int = 0,
+) -> tuple[float, dict]:
+    """Note finale sur 100 compilant toutes les données disponibles.
+
+    Formule :
+      - 40 pts  : palmarès collectif (normalisé sur SCORE_PALMARES_REF ≈ Messi)
+      - 20 pts  : awards individuels (normalisé sur SCORE_AWARDS_REF ≈ Messi)
+      - 25 pts  : aura (popularité / icône, saisie 0-100)
+      - 15 pts  : présence TopKit (nb maillots référencés, normalisé sur TOPKIT_KITS_REF)
+
+    Retourne (note, breakdown) où breakdown détaille chaque composante.
+    """
+    palmares_part = min(score_palmares / SCORE_PALMARES_REF, 1.0) * WEIGHT_PALMARES
+
+    score_awards = compute_score_awards(individual_awards)
+    awards_part = min(score_awards / SCORE_AWARDS_REF, 1.0) * WEIGHT_AWARDS if SCORE_AWARDS_REF > 0 else 0.0
+
+    aura_part = min(aura / 100.0, 1.0) * WEIGHT_AURA
+
+    topkit_part = min(topkit_kits_count / TOPKIT_KITS_REF, 1.0) * WEIGHT_TOPKIT
+
+    note = round(palmares_part + awards_part + aura_part + topkit_part, 1)
+
+    breakdown = {
+        "palmares": round(palmares_part, 1),
+        "awards": round(awards_part, 1),
+        "aura": round(aura_part, 1),
+        "topkit": round(topkit_part, 1),
+        "score_palmares_brut": score_palmares,
+        "score_awards_brut": score_awards,
+        "topkit_kits_count": topkit_kits_count,
+    }
+
+    return note, breakdown
 
 
 # ── Recherche joueur (DB-first) ───────────────────────────────────────────────

@@ -86,6 +86,20 @@ async def _match_kits(club: str, year_start: str | None, year_end: str | None, l
     return matched, total
 
 
+async def _count_all_player_kits(career: list) -> int:
+    """Compte le nombre total de maillots TopKit liés à la carrière d'un joueur."""
+    total = 0
+    for entry in career:
+        _, count = await _match_kits(
+            entry.get("club", ""),
+            entry.get("year_start"),
+            entry.get("year_end"),
+            limit=None,
+        )
+        total += count
+    return total
+
+
 # ── routes STATIQUES (doivent être déclarées AVANT /{player_id}) ─────────────
 
 @router.get("/search")
@@ -124,8 +138,18 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     ]
 
     individual_awards = player.get("individual_awards", [])
-    score_palmares = compute_score_palmares(honours_raw, individual_awards)
-    note = compute_note(score_palmares, body.aura)
+    score_palmares = compute_score_palmares(honours_raw)
+
+    # Calcul du nombre de maillots TopKit via la carrière stockée
+    career_raw = player.get("career", [])
+    topkit_kits_count = await _count_all_player_kits(career_raw)
+
+    note, note_breakdown = compute_note(
+        score_palmares=score_palmares,
+        aura=body.aura,
+        individual_awards=individual_awards,
+        topkit_kits_count=topkit_kits_count,
+    )
     now = datetime.now(timezone.utc).isoformat()
 
     await coll.update_one(
@@ -136,6 +160,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
             "score_palmares": score_palmares,
             "aura": body.aura,
             "note": note,
+            "note_breakdown": note_breakdown,
             "updated_at": now,
         }},
     )
@@ -162,7 +187,7 @@ async def get_player_full(player_id: str):
       - maillots Topkit (5 max + total)
       - trophées individuels
       - palmarès collectif (Winner / 2nd Place)
-      - score + note sur 100
+      - score + note sur 100 + breakdown
     """
     player = await db["players"].find_one({"player_id": player_id})
     if not player:
@@ -244,7 +269,14 @@ async def get_player_full(player_id: str):
 
     score_palmares = player.get("score_palmares", 0.0)
     aura = player.get("aura", 0.0)
-    note = player.get("note", 0.0)
+
+    # Recalcul de la note avec toutes les données fraîches (maillots issus de la carrière live)
+    note, note_breakdown = compute_note(
+        score_palmares=score_palmares,
+        aura=aura,
+        individual_awards=individual_awards,
+        topkit_kits_count=topkit_kits_total,
+    )
 
     return {
         "identity": identity,
@@ -257,6 +289,7 @@ async def get_player_full(player_id: str):
         "score_palmares": score_palmares,
         "aura": aura,
         "note": note,
+        "note_breakdown": note_breakdown,
         "has_apifootball_id": bool(apifootball_id),
     }
 
@@ -323,14 +356,37 @@ async def update_player_aura(player_id: str, aura: float = Query(..., ge=0, le=1
     player = await db["players"].find_one({"player_id": player_id})
     if not player:
         raise HTTPException(status_code=404, detail="Joueur introuvable")
+
     score_palmares = player.get("score_palmares", 0.0)
     individual_awards = player.get("individual_awards", [])
     honours = player.get("honours", [])
-    score_palmares = compute_score_palmares(honours, individual_awards)
-    note = compute_note(score_palmares, aura)
+    score_palmares = compute_score_palmares(honours)
+
+    # Compte les maillots TopKit via la carrière stockée en DB
+    career_raw = player.get("career", [])
+    topkit_kits_count = await _count_all_player_kits(career_raw)
+
+    note, note_breakdown = compute_note(
+        score_palmares=score_palmares,
+        aura=aura,
+        individual_awards=individual_awards,
+        topkit_kits_count=topkit_kits_count,
+    )
     now = datetime.now(timezone.utc).isoformat()
     await db["players"].update_one(
         {"player_id": player_id},
-        {"$set": {"aura": aura, "score_palmares": score_palmares, "note": note, "updated_at": now}},
+        {"$set": {
+            "aura": aura,
+            "score_palmares": score_palmares,
+            "note": note,
+            "note_breakdown": note_breakdown,
+            "updated_at": now,
+        }},
     )
-    return {"player_id": player_id, "aura": aura, "note": note, "updated_at": now}
+    return {
+        "player_id": player_id,
+        "aura": aura,
+        "note": note,
+        "note_breakdown": note_breakdown,
+        "updated_at": now,
+    }
