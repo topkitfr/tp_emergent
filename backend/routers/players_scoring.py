@@ -7,6 +7,10 @@ Routes :
   GET  /api/scoring/players/{player_id}/career     → carrière clubs + maillots Topkit liés
   GET  /api/scoring/players/{player_id}            → score actuel
   PATCH /api/scoring/players/{player_id}/aura      → mise à jour aura
+
+IMPORTANT: les routes statiques (/search, /enrich) sont déclarées AVANT les routes
+dynamiques (/{player_id}) pour éviter que FastAPI matche "search" ou "enrich"
+comme un player_id et renvoie une Pydantic validation error à la place d'un 404.
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -82,7 +86,7 @@ async def _match_kits(club: str, year_start: str | None, year_end: str | None, l
     return matched, total
 
 
-# ── routes ───────────────────────────────────────────────────────────────────
+# ── routes STATIQUES (doivent être déclarées AVANT /{player_id}) ─────────────
 
 @router.get("/search")
 async def search_players(name: str = Query(..., min_length=2)):
@@ -107,7 +111,6 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"API-Football error: {str(e)}")
 
-    # Dédupliquer et nettoyer
     honours_deduped = _dedup_honours(honours_raw)
     honours_clean = [
         {
@@ -149,6 +152,8 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     )
 
 
+# ── routes DYNAMIQUES /{player_id}/... ───────────────────────────────────────
+
 @router.get("/{player_id}/full")
 async def get_player_full(player_id: str):
     """Fiche complète d'un joueur :
@@ -165,7 +170,6 @@ async def get_player_full(player_id: str):
 
     apifootball_id = player.get("apifootball_id") or player.get("tsdb_id")
 
-    # 1. Identité API-Football (si dispo)
     api_identity = None
     if apifootball_id:
         try:
@@ -190,7 +194,6 @@ async def get_player_full(player_id: str):
         "apifootball_id": apifootball_id or "",
     }
 
-    # 2. Carrière clubs + montant transfert
     career = []
     if apifootball_id:
         try:
@@ -207,13 +210,12 @@ async def get_player_full(player_id: str):
                     "date_end": date_end,
                     "year_start": _extract_year(t["date"]),
                     "year_end": _extract_year(date_end),
-                    "transfer_type": t.get("transfer_type", ""),  # "Free", "Loan", "€ 180M"…
+                    "transfer_type": t.get("transfer_type", ""),
                 })
-            career.reverse()  # plus récent en premier
+            career.reverse()
         except Exception:
             pass
 
-    # 3. Maillots Topkit (5 max, tous clubs confondus)
     all_topkit_kits = []
     for entry in career:
         kits, _ = await _match_kits(
@@ -227,10 +229,8 @@ async def get_player_full(player_id: str):
     topkit_kits_total = len(all_topkit_kits)
     topkit_kits_preview = all_topkit_kits[:KITS_PREVIEW_LIMIT]
 
-    # 4. Trophées individuels
     individual_awards = player.get("individual_awards", [])
 
-    # 5. Palmarès collectif (dédupliqué, groupé Winner / 2nd Place)
     honours_raw = player.get("honours", [])
     honours_deduped = _dedup_honours(honours_raw)
     honours_winner = [
@@ -242,7 +242,6 @@ async def get_player_full(player_id: str):
         if (h.get("place") or "").lower() in ("2nd place", "runner-up")
     ]
 
-    # 6. Score
     score_palmares = player.get("score_palmares", 0.0)
     aura = player.get("aura", 0.0)
     note = player.get("note", 0.0)
@@ -257,7 +256,7 @@ async def get_player_full(player_id: str):
         "honours_runner_up": honours_runner_up,
         "score_palmares": score_palmares,
         "aura": aura,
-        "note": note,  # sur 100
+        "note": note,
         "has_apifootball_id": bool(apifootball_id),
     }
 
