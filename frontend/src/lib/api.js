@@ -18,19 +18,10 @@ export const proxyImageUrl = (url) => {
 
 /**
  * parseApiError — normalise les erreurs axios en string affichable.
- *
- * FastAPI peut retourner :
- *   - 422 avec detail = [{type, loc, msg, input, url}, ...]  (Pydantic)
- *   - 4xx/5xx avec detail = "string simple"
- *   - network errors sans response
- *
- * Passer l'objet Pydantic brut dans toast.error() provoque React error #31
- * car React tente de rendre un objet JS comme nœud DOM.
  */
 export function parseApiError(e, fallback = 'An error occurred') {
   const detail = e?.response?.data?.detail;
   if (!detail) return e?.message || fallback;
-  // Tableau Pydantic [{type, loc, msg, input, url}]
   if (Array.isArray(detail)) {
     return detail
       .map(err => {
@@ -40,7 +31,6 @@ export function parseApiError(e, fallback = 'An error occurred') {
       })
       .join(' | ');
   }
-  // String ou objet simple
   if (typeof detail === 'string') return detail;
   return JSON.stringify(detail);
 }
@@ -77,6 +67,7 @@ export const getMasterKit = (kitId) => api.get(`/master-kits/${kitId}`);
 export const createMasterKit = (data) => api.post('/master-kits', data);
 export const getFilters = () => api.get('/master-kits/filters');
 export const getMasterKitsCount = () => api.get('/master-kits/count');
+export const getKitPlayers = (kitId) => api.get(`/master-kits/${kitId}/players`);
 
 // Versions
 export const getVersion = (versionId) => api.get(`/versions/${versionId}`);
@@ -210,9 +201,6 @@ export const searchScoringPlayers = (name) => api.get('/scoring/players/search',
 
 /**
  * enrichPlayer — déclenche l'enrichissement scoring d'un joueur.
- * Signature compatible avec PlayerDetail.js et EntityDetailPage.js :
- *   enrichPlayer(playerId)
- *   enrichPlayer(playerId, apifootballId, auraAvg)
  */
 export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
   api.post('/scoring/players/enrich', {
@@ -223,7 +211,6 @@ export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
 
 /**
  * getPlayerTransferChart — points du graphe de carrière (transferts).
- * Retourne { points: [...] } depuis /scoring/players/{id}/transfer-chart
  */
 export const getPlayerTransferChart = (playerId) =>
   api.get(`/scoring/players/${playerId}/transfer-chart`);
