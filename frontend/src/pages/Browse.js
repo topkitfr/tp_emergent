@@ -12,13 +12,6 @@ import JerseyCard from "@/components/JerseyCard";
 const EMPTY_FILTER = "__all__";
 const LIMIT = 50;
 
-// Labels affichés pour les valeurs entity_type
-const ENTITY_TYPE_LABELS = {
-  club: "Club",
-  nation: "National",
-};
-
-// Labels affichés pour les valeurs gender
 const GENDER_LABELS = {
   man: "Men",
   woman: "Women",
@@ -28,22 +21,23 @@ const GENDER_LABELS = {
 function FiltersPanel({ entityType, setEntityType, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
   return (
     <div className="space-y-4">
-      {/* Toggle Club / National */}
+      {/* Toggle Club / National — sans "All" */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Type</label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0 border border-border">
           {[
-            { id: "", label: "All" },
-            { id: "club", label: "Club" },
+            { id: "club",   label: "Club" },
             { id: "nation", label: "National" },
-          ].map(({ id, label }) => (
+          ].map(({ id, label }, i) => (
             <button
               key={id}
-              onClick={() => setEntityType(id)}
-              className={`flex-1 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide transition-colors border ${
+              onClick={() => setEntityType(entityType === id ? "" : id)}
+              className={`flex-1 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
+                i === 0 ? "" : "border-l border-border"
+              } ${
                 entityType === id
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
               style={{ fontFamily: "Barlow Condensed, sans-serif" }}
             >
@@ -104,7 +98,7 @@ export default function Browse() {
   const [loadingMore,      setLoadingMore]     = useState(false);
   const [viewMode,         setViewMode]        = useState("grid");
   const [search,           setSearch]          = useState("");
-  const [entityType,       setEntityType]      = useState("");   // "" | "club" | "nation"
+  const [entityType,       setEntityType]      = useState("");
   const [selectedClub,     setSelectedClub]    = useState("");
   const [selectedBrand,    setSelectedBrand]   = useState("");
   const [selectedType,     setSelectedType]    = useState("");
@@ -124,19 +118,14 @@ export default function Browse() {
     setSelectedLeague(""); setSelectedGender("");
   };
 
-  // Reset pagination on filter change
-  useEffect(() => {
-    setSkip(0);
-  }, [search, entityType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
+  useEffect(() => { setSkip(0); }, [search, entityType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
 
-  // Load filter options once
   useEffect(() => {
     getFilters()
       .then((r) => setFilters(r.data))
       .catch((e) => console.error("Filters error:", e));
   }, []);
 
-  // Fetch master kits
   useEffect(() => {
     const isLoadMore = skip > 0;
     if (isLoadMore) setLoadingMore(true);
@@ -252,7 +241,6 @@ export default function Browse() {
             </div>
           )}
 
-          {/* Load more */}
           {!loading && kits.length < total && (
             <div className="flex justify-center pt-4">
               <Button

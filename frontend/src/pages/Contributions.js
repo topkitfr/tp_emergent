@@ -4,7 +4,7 @@ import {
   getSubmissions, getReports, voteOnSubmission, voteOnReport,
   createSubmission, getMasterKits, proxyImageUrl,
   createTeamPending, createBrandPending, createLeaguePending, createSponsorPending,
-  getUserProfile,
+  getUserByUsername,
 } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -176,43 +176,53 @@ function UserAvatar({ username, name, photoUrl, size = 'md' }) {
   );
 }
 
-// ===== COMPOSANT: FEED ITEM =====
-function FeedItem({ sub }) {
+// ===== COMPOSANT: FEED CARD (mini browser style) =====
+function FeedCard({ sub }) {
   const Icon = TYPE_ICONS[sub.submission_type] || Package;
   const colorClass = TYPE_COLORS[sub.submission_type] || 'text-muted-foreground bg-secondary border-border';
   const title = sub.submission_type === 'player'
     ? (sub.data?.full_name || '?')
     : sub.submission_type === 'master_kit'
-      ? `${sub.data?.club || '?'} · ${sub.data?.season || '?'} · ${sub.data?.kit_type || '?'}`
+      ? `${sub.data?.club || '?'}`
       : (sub.data?.name || sub.data?.full_name || '?');
+  const subtitle = sub.submission_type === 'master_kit'
+    ? `${sub.data?.season || ''} · ${sub.data?.kit_type || ''}`
+    : null;
   const imageField = ENTITY_IMAGE_FIELDS[sub.submission_type];
   const imageUrl = sub.data?.front_photo || (imageField && sub.data?.[imageField]);
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0 group">
-      {imageUrl ? (
-        <img
-          src={proxyImageUrl(imageUrl)}
-          alt=""
-          className="w-10 h-10 object-cover border border-border rounded-sm shrink-0 bg-secondary"
-        />
-      ) : (
-        <div className={`w-10 h-10 flex items-center justify-center border rounded-sm shrink-0 ${colorClass}`}>
-          <Icon className="w-4 h-4" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{title}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <Badge variant="outline" className={`rounded-none text-[10px] px-1.5 py-0 border ${colorClass}`}>
-            {TYPE_LABELS[sub.submission_type] || sub.submission_type}
-          </Badge>
-          <span className="text-[11px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-            by <UserLink name={sub.submitter_name} username={sub.submitter_username} className="text-foreground/70 hover:text-primary" />
-          </span>
+    <div className="border border-border bg-card flex flex-col overflow-hidden hover:border-primary/40 transition-colors group">
+      {/* Image zone */}
+      <div className="relative bg-secondary aspect-[3/4] overflow-hidden flex items-center justify-center">
+        {imageUrl ? (
+          <img
+            src={proxyImageUrl(imageUrl)}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className={`w-12 h-12 flex items-center justify-center border rounded-sm ${colorClass}`}>
+            <Icon className="w-6 h-6" />
+          </div>
+        )}
+        {/* Type badge */}
+        <div className={`absolute top-2 left-2 border text-[9px] px-1.5 py-0.5 font-semibold uppercase tracking-wider ${colorClass}`}
+          style={{ fontFamily: 'Barlow Condensed' }}>
+          {TYPE_LABELS[sub.submission_type] || sub.submission_type}
         </div>
       </div>
-      <span className="text-[11px] text-muted-foreground shrink-0">{timeAgo(sub.created_at)}</span>
+      {/* Info zone */}
+      <div className="p-2 flex flex-col gap-0.5 min-w-0">
+        <p className="text-xs font-semibold truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{title}</p>
+        {subtitle && <p className="text-[10px] text-muted-foreground truncate" style={{ fontFamily: 'DM Sans' }}>{subtitle}</p>}
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-[10px] text-muted-foreground truncate" style={{ fontFamily: 'DM Sans' }}>
+            <UserLink name={sub.submitter_name} username={sub.submitter_username} className="text-foreground/60 hover:text-primary" />
+          </span>
+          <span className="text-[10px] text-muted-foreground shrink-0 ml-1">{timeAgo(sub.created_at)}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -508,7 +518,6 @@ function VoteRow({ item, onVoteUp, onVoteDown, hasVoted, expanded, onToggle, chi
 export default function Contributions() {
   const { user } = useAuth();
 
-  // Queue state
   const [activeTab, setActiveTab]               = useState('pending');
   const [submissions, setSubmissions]           = useState([]);
   const [reports, setReports]                   = useState([]);
@@ -520,18 +529,15 @@ export default function Contributions() {
   const [approvedEntities, setApprovedEntities] = useState(emptyEntityBuckets());
   const [loadingPending, setLoadingPending]     = useState(false);
 
-  // Feed + contributors state
   const [recentApproved, setRecentApproved]     = useState([]);
   const [loadingFeed, setLoadingFeed]           = useState(true);
   const [topContributors, setTopContributors]   = useState([]);
 
-  // Add form state
   const [showAddForm, setShowAddForm]           = useState(false);
   const [addStep, setAddStep]                   = useState(1);
   const [subType, setSubType]                   = useState('master_kit');
   const [submitting, setSubmitting]             = useState(false);
 
-  // Master kit form
   const [club, setClub]           = useState('');
   const [teamId, setTeamId]       = useState('');
   const [season, setSeason]       = useState('');
@@ -546,7 +552,6 @@ export default function Contributions() {
   const [league, setLeague]       = useState('');
   const [gender, setGender]       = useState('');
 
-  // Version form
   const [selectedKit, setSelectedKit]           = useState('');
   const [selectedKitLabel, setSelectedKitLabel] = useState('');
   const [competition, setCompetition]           = useState('');
@@ -565,7 +570,7 @@ export default function Contributions() {
         const approved = res.data || [];
         setRecentApproved(approved);
 
-        // Agréger les top contributeurs depuis les approved submissions
+        // Agréger les top contributeurs
         const counts = {};
         approved.forEach(sub => {
           const key = sub.submitter_username || sub.submitter_name || 'anonymous';
@@ -579,8 +584,24 @@ export default function Contributions() {
           }
           counts[key].count++;
         });
+
         const sorted = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 9);
-        setTopContributors(sorted);
+
+        // Fetch photo_url pour chaque contributeur qui a un username
+        const enriched = await Promise.all(
+          sorted.map(async (c) => {
+            if (!c.username) return c;
+            try {
+              const profileRes = await getUserByUsername(c.username);
+              const profile = profileRes?.data;
+              return { ...c, photo_url: profile?.photo_url || null, name: profile?.name || c.name };
+            } catch {
+              return c;
+            }
+          })
+        );
+
+        setTopContributors(enriched);
       } catch (e) {
         console.error('Failed to fetch feed:', e);
       } finally {
@@ -722,7 +743,6 @@ export default function Contributions() {
     (s.submission_type === 'master_kit' || s.submission_type === 'version')
   );
 
-  // Stats globales
   const totalApproved = recentApproved.length;
   const pendingCount = submissions.filter(s => s.status === 'pending').length + reports.filter(r => r.status === 'pending').length;
 
@@ -746,7 +766,6 @@ export default function Contributions() {
             </Button>
           </div>
 
-          {/* Mini stats */}
           <div className="flex items-center gap-6 mt-6 pt-6 border-t border-border">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-primary" />
@@ -922,7 +941,7 @@ export default function Contributions() {
           </div>
         )}
 
-        {/* ===== SECTION 1 : DERNIERS AJOUTS ===== */}
+        {/* ===== SECTION 1 : DERNIERS AJOUTS (image cards) ===== */}
         <section>
           <div className="flex items-center gap-3 mb-5">
             <Activity className="w-5 h-5 text-primary" />
@@ -930,12 +949,12 @@ export default function Contributions() {
           </div>
 
           {loadingFeed ? (
-            <div className="border border-border bg-card p-4 space-y-3">
-              {[1,2,3,4,5].map(i => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-secondary animate-pulse rounded-sm shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 bg-secondary animate-pulse rounded w-3/4" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-[3/4] bg-secondary animate-pulse" />
+                  <div className="p-2 space-y-1">
+                    <div className="h-2.5 bg-secondary animate-pulse rounded w-3/4" />
                     <div className="h-2 bg-secondary animate-pulse rounded w-1/2" />
                   </div>
                 </div>
@@ -947,9 +966,9 @@ export default function Contributions() {
               <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Aucun ajout récent</p>
             </div>
           ) : (
-            <div className="border border-border bg-card px-4 divide-y-0">
-              {recentApproved.slice(0, 15).map(sub => (
-                <FeedItem key={sub.submission_id} sub={sub} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {recentApproved.slice(0, 18).map(sub => (
+                <FeedCard key={sub.submission_id} sub={sub} />
               ))}
             </div>
           )}
@@ -1009,7 +1028,6 @@ export default function Contributions() {
             </TabsList>
 
             <TabsContent value={activeTab}>
-              {/* Jersey Submissions */}
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
                 <Shirt className="w-4 h-4" /> Jersey Submissions
               </h3>
@@ -1045,7 +1063,6 @@ export default function Contributions() {
                 </div>
               )}
 
-              {/* Standalone Entity Subs */}
               {standaloneEntitySubs.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -1076,7 +1093,6 @@ export default function Contributions() {
                 </div>
               )}
 
-              {/* Pending entity buckets */}
               {activeTab === 'pending' && (
                 <div className="mb-8">
                   <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -1112,7 +1128,6 @@ export default function Contributions() {
                 </div>
               )}
 
-              {/* Approved entity buckets */}
               {activeTab === 'approved' && (
                 <div className="mb-8">
                   <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -1149,7 +1164,6 @@ export default function Contributions() {
                 </div>
               )}
 
-              {/* Correction Reports */}
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
                 <AlertTriangle className="w-4 h-4" /> Correction Reports
               </h3>
