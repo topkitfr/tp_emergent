@@ -125,8 +125,8 @@ async def list_master_kits(
     league: Optional[str] = None,
     gender: Optional[str] = None,
     entity_type: Optional[str] = None,
-    # "club" → équipes dont is_national=False (ou absent)
-    # "national" → équipes dont is_national=True
+    # "club"     → équipes dont type != "National"
+    # "national" → équipes dont type == "National"
     team_type: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
@@ -160,20 +160,24 @@ async def list_master_kits(
             {"sponsor": {"$regex": search, "$options": "i"}},
         ]
 
-    # ── Filtre Club / National via lookup sur teams.is_national ──────────────
+    # ── Filtre Club / National via teams.type ────────────────────────────────
     if team_type in ("club", "national"):
-        is_nat = team_type == "national"
-        # Récupère les team_ids correspondant au type demandé
-        if is_nat:
+        if team_type == "national":
+            # Sélections nationales : type contient "National" (insensible à la casse)
             matching_teams = await db.teams.find(
-                {"is_national": True}, {"_id": 0, "team_id": 1}
-            ).to_list(2000)
-        else:
-            # club = is_national absent, False, ou null
-            matching_teams = await db.teams.find(
-                {"$or": [{"is_national": False}, {"is_national": {"$exists": False}}]},
+                {"type": {"$regex": "national", "$options": "i"}},
                 {"_id": 0, "team_id": 1},
             ).to_list(2000)
+        else:
+            # Clubs : type ne contient PAS "National" (ou champ absent)
+            matching_teams = await db.teams.find(
+                {"$or": [
+                    {"type": {"$not": {"$regex": "national", "$options": "i"}}},
+                    {"type": {"$exists": False}},
+                ]},
+                {"_id": 0, "team_id": 1},
+            ).to_list(2000)
+
         team_ids = [t["team_id"] for t in matching_teams if t.get("team_id")]
         if team_ids:
             query["team_id"] = {"$in": team_ids}
