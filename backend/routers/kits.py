@@ -125,8 +125,8 @@ async def list_master_kits(
     league: Optional[str] = None,
     gender: Optional[str] = None,
     entity_type: Optional[str] = None,
-    # "club"     → équipes dont type != "National"
-    # "national" → équipes dont type == "National"
+    # "club"     → équipes dont is_national = False (ou absent)
+    # "national" → équipes dont is_national = True
     team_type: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
@@ -160,20 +160,20 @@ async def list_master_kits(
             {"sponsor": {"$regex": search, "$options": "i"}},
         ]
 
-    # ── Filtre Club / National via teams.type ────────────────────────────────
+    # ── Filtre Club / National via teams.is_national ──────────────────────────
     if team_type in ("club", "national"):
         if team_type == "national":
-            # Sélections nationales : type contient "National" (insensible à la casse)
+            # Sélections nationales : is_national = True
             matching_teams = await db.teams.find(
-                {"type": {"$regex": "national", "$options": "i"}},
+                {"is_national": True},
                 {"_id": 0, "team_id": 1},
             ).to_list(2000)
         else:
-            # Clubs : type ne contient PAS "National" (ou champ absent)
+            # Clubs : is_national = False ou champ absent
             matching_teams = await db.teams.find(
                 {"$or": [
-                    {"type": {"$not": {"$regex": "national", "$options": "i"}}},
-                    {"type": {"$exists": False}},
+                    {"is_national": False},
+                    {"is_national": {"$exists": False}},
                 ]},
                 {"_id": 0, "team_id": 1},
             ).to_list(2000)
