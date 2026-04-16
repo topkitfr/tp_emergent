@@ -18,24 +18,24 @@ const GENDER_LABELS = {
   youth: "Youth",
 };
 
-function FiltersPanel({ entityType, setEntityType, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
+function FiltersPanel({ teamType, setTeamType, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
   return (
     <div className="space-y-4">
-      {/* Toggle Club / National — sans "All" */}
+      {/* Toggle Club / National */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Type</label>
         <div className="flex items-center gap-0 border border-border">
           {[
-            { id: "club",   label: "Club" },
-            { id: "nation", label: "National" },
+            { id: "club",     label: "Club" },
+            { id: "national", label: "National" },
           ].map(({ id, label }, i) => (
             <button
               key={id}
-              onClick={() => setEntityType(entityType === id ? "" : id)}
+              onClick={() => setTeamType(teamType === id ? "" : id)}
               className={`flex-1 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
                 i === 0 ? "" : "border-l border-border"
               } ${
-                entityType === id
+                teamType === id
                   ? "bg-primary text-primary-foreground"
                   : "bg-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
@@ -98,7 +98,7 @@ export default function Browse() {
   const [loadingMore,      setLoadingMore]     = useState(false);
   const [viewMode,         setViewMode]        = useState("grid");
   const [search,           setSearch]          = useState("");
-  const [entityType,       setEntityType]      = useState("");
+  const [teamType,         setTeamType]        = useState("");   // "club" | "national" | ""
   const [selectedClub,     setSelectedClub]    = useState("");
   const [selectedBrand,    setSelectedBrand]   = useState("");
   const [selectedType,     setSelectedType]    = useState("");
@@ -108,17 +108,17 @@ export default function Browse() {
   const [selectedGender,   setSelectedGender]  = useState("");
 
   const activeFilterCount = [
-    search, entityType, selectedClub, selectedBrand, selectedType,
+    search, teamType, selectedClub, selectedBrand, selectedType,
     selectedSeason, selectedDesign, selectedLeague, selectedGender,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
-    setSearch(""); setEntityType(""); setSelectedClub(""); setSelectedBrand("");
+    setSearch(""); setTeamType(""); setSelectedClub(""); setSelectedBrand("");
     setSelectedType(""); setSelectedSeason(""); setSelectedDesign("");
     setSelectedLeague(""); setSelectedGender("");
   };
 
-  useEffect(() => { setSkip(0); }, [search, entityType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
+  useEffect(() => { setSkip(0); }, [search, teamType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
 
   useEffect(() => {
     getFilters()
@@ -133,7 +133,7 @@ export default function Browse() {
 
     const params = { skip, limit: LIMIT };
     if (search)          params.search      = search;
-    if (entityType)      params.entity_type = entityType;
+    if (teamType)        params.team_type   = teamType;   // ← corrigé (était entity_type)
     if (selectedClub)    params.club        = selectedClub;
     if (selectedBrand)   params.brand       = selectedBrand;
     if (selectedType)    params.kit_type    = selectedType;
@@ -151,7 +151,7 @@ export default function Browse() {
         setLoadingMore(false);
       })
       .catch((e) => { console.error("Kits error:", e); setLoading(false); setLoadingMore(false); });
-  }, [skip, search, entityType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
+  }, [skip, search, teamType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
 
   const filterItems = [
     { label: "Club",     value: selectedClub,    set: setSelectedClub,    options: filters.clubs     ?? [] },
@@ -163,7 +163,7 @@ export default function Browse() {
     { label: "Gender",   value: selectedGender,  set: setSelectedGender,  options: filters.genders   ?? [], labelMap: GENDER_LABELS },
   ];
 
-  const filtersPanelProps = { entityType, setEntityType, search, setSearch, filterItems, activeFilterCount, clearFilters };
+  const filtersPanelProps = { teamType, setTeamType, search, setSearch, filterItems, activeFilterCount, clearFilters };
   const gridClass = viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" : "flex flex-col gap-3";
 
   return (
