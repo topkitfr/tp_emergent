@@ -33,12 +33,15 @@ const KIT_TYPES    = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other
 const GENDERS      = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 const MODELS       = ['Authentic', 'Replica', 'Other'];
+const ENTITY_TYPES = ['club', 'nation'];
 
 // ─── Config des champs par type ───────────────────────────────────────────────
 const CONFIGS = {
   master_kit: {
     title: 'SUGGEST EDIT — MASTER KIT',
     fields: [
+      // Toggle Club / Nation
+      { key: 'entity_type', label: 'Team type', type: 'toggle', options: ENTITY_TYPES },
       // Autocomplete entités
       { key: 'club',        label: 'Team',    type: 'entity_autocomplete', entityType: 'team' },
       { key: 'brand',       label: 'Brand',   type: 'entity_autocomplete', entityType: 'brand' },
@@ -154,6 +157,29 @@ export default function KitSuggestEditDialog({
 
   // ─── Render d'un champ ───────────────────────────────────────────────────────
   const renderField = (f) => {
+    if (f.type === 'toggle') {
+      return (
+        <div className="flex items-center gap-0 border border-border">
+          {f.options.map((o, i) => (
+            <button
+              key={o}
+              type="button"
+              onClick={() => set(f.key, o)}
+              className={`flex-1 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
+                i === 0 ? '' : 'border-l border-border'
+              } ${
+                (form[f.key] || 'club') === o
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-transparent text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`}
+              style={labelStyle}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      );
+    }
     if (f.type === 'entity_autocomplete') {
       return (
         <EntityAutocomplete
@@ -205,7 +231,7 @@ export default function KitSuggestEditDialog({
           {/* Champs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => (
-              <div key={f.key} className="space-y-1">
+              <div key={f.key} className={`space-y-1 ${f.type === 'toggle' ? 'sm:col-span-2' : ''}`}>
                 <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
                   {f.label}
                 </Label>
