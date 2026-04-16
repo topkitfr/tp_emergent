@@ -98,6 +98,7 @@ async def get_filters():
     designs = await db.master_kits.distinct("design")
     sponsors = await db.master_kits.distinct("sponsor")
     genders = await db.master_kits.distinct("gender")
+    entity_types = await db.master_kits.distinct("entity_type")
 
     return {
         "clubs": clubs,
@@ -108,6 +109,7 @@ async def get_filters():
         "leagues": leagues,
         "sponsors": sorted([s for s in sponsors if s]),
         "genders": sorted([g for g in genders if g]),
+        "entity_types": sorted([e for e in entity_types if e]),
     }
 
 
@@ -120,6 +122,7 @@ async def list_master_kits(
     design: Optional[str] = None,
     league: Optional[str] = None,
     gender: Optional[str] = None,
+    entity_type: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
@@ -141,6 +144,8 @@ async def list_master_kits(
         query["league"] = league
     if gender:
         query["gender"] = gender
+    if entity_type:
+        query["entity_type"] = entity_type
     if search:
         query["$or"] = [
             {"club": {"$regex": search, "$options": "i"}},

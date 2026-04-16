@@ -1,5 +1,5 @@
 // src/pages/Browse.js
-import { getMasterKits, getFilters, getVersions } from '../lib/api';
+import { getMasterKits, getFilters } from '../lib/api';
 import { useState, useEffect } from "react";
 import { Search, SlidersHorizontal, LayoutGrid, List, Shirt, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -8,24 +8,40 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import JerseyCard from "@/components/JerseyCard";
-import VersionCard from "@/components/VersionCard";
-import AddToCollectionDialog from "@/components/AddToCollectionDialog";
 
 const EMPTY_FILTER = "__all__";
 const LIMIT = 50;
 
-function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
+// Labels affichés pour les valeurs entity_type
+const ENTITY_TYPE_LABELS = {
+  club: "Club",
+  nation: "National",
+};
+
+// Labels affichés pour les valeurs gender
+const GENDER_LABELS = {
+  man: "Men",
+  woman: "Women",
+  youth: "Youth",
+};
+
+function FiltersPanel({ entityType, setEntityType, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
   return (
     <div className="space-y-4">
+      {/* Toggle Club / National */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">View</label>
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Type</label>
         <div className="flex items-center gap-2">
-          {[{ id: "master", label: "Master" }, { id: "version", label: "Version" }].map(({ id, label }) => (
+          {[
+            { id: "", label: "All" },
+            { id: "club", label: "Club" },
+            { id: "nation", label: "National" },
+          ].map(({ id, label }) => (
             <button
               key={id}
-              onClick={() => setBrowseMode(id)}
+              onClick={() => setEntityType(id)}
               className={`flex-1 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide transition-colors border ${
-                browseMode === id
+                entityType === id
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground"
               }`}
@@ -37,6 +53,7 @@ function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItem
         </div>
       </div>
 
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -47,7 +64,8 @@ function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItem
         />
       </div>
 
-      {filterItems.map(({ label, value, set, options }) => (
+      {/* Dynamic filter selects */}
+      {filterItems.map(({ label, value, set, options, labelMap }) => (
         <div key={label} className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</label>
           <Select value={value || EMPTY_FILTER} onValueChange={(v) => set(v === EMPTY_FILTER ? "" : v)}>
@@ -57,7 +75,9 @@ function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItem
             <SelectContent>
               <SelectItem value={EMPTY_FILTER}>All {label.toLowerCase()}s</SelectItem>
               {options.map((o) => (
-                <SelectItem key={o} value={o}>{o}</SelectItem>
+                <SelectItem key={o} value={o}>
+                  {labelMap ? (labelMap[o] ?? o) : o}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -74,63 +94,64 @@ function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItem
 }
 
 export default function Browse() {
-
-  const [browseMode,      setBrowseMode]      = useState("master");
-  const [kits,            setKits]            = useState([]);
-  const [versions,        setVersions]        = useState([]);
-  const [total,           setTotal]           = useState(0);
-  const [skip,            setSkip]            = useState(0);
-  const [filters,         setFilters]         = useState({
-    clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [],
+  const [kits,             setKits]            = useState([]);
+  const [total,            setTotal]           = useState(0);
+  const [skip,             setSkip]            = useState(0);
+  const [filters,          setFilters]         = useState({
+    clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [], genders: [],
   });
-  const [loading,         setLoading]         = useState(true);
-  const [loadingMore,     setLoadingMore]     = useState(false);
-  const [viewMode,        setViewMode]        = useState("grid");
-  const [search,          setSearch]          = useState("");
-  const [selectedClub,    setSelectedClub]    = useState("");
-  const [selectedBrand,   setSelectedBrand]   = useState("");
-  const [selectedType,    setSelectedType]    = useState("");
-  const [selectedSeason,  setSelectedSeason]  = useState("");
-  const [selectedDesign,  setSelectedDesign]  = useState("");
-  const [selectedLeague,  setSelectedLeague]  = useState("");
-  const [quickAddVersion, setQuickAddVersion] = useState(null);
+  const [loading,          setLoading]         = useState(true);
+  const [loadingMore,      setLoadingMore]     = useState(false);
+  const [viewMode,         setViewMode]        = useState("grid");
+  const [search,           setSearch]          = useState("");
+  const [entityType,       setEntityType]      = useState("");   // "" | "club" | "nation"
+  const [selectedClub,     setSelectedClub]    = useState("");
+  const [selectedBrand,    setSelectedBrand]   = useState("");
+  const [selectedType,     setSelectedType]    = useState("");
+  const [selectedSeason,   setSelectedSeason]  = useState("");
+  const [selectedDesign,   setSelectedDesign]  = useState("");
+  const [selectedLeague,   setSelectedLeague]  = useState("");
+  const [selectedGender,   setSelectedGender]  = useState("");
 
   const activeFilterCount = [
-    search, selectedClub, selectedBrand, selectedType,
-    selectedSeason, selectedDesign, selectedLeague,
+    search, entityType, selectedClub, selectedBrand, selectedType,
+    selectedSeason, selectedDesign, selectedLeague, selectedGender,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
-    setSearch(""); setSelectedClub(""); setSelectedBrand("");
-    setSelectedType(""); setSelectedSeason(""); setSelectedDesign(""); setSelectedLeague("");
+    setSearch(""); setEntityType(""); setSelectedClub(""); setSelectedBrand("");
+    setSelectedType(""); setSelectedSeason(""); setSelectedDesign("");
+    setSelectedLeague(""); setSelectedGender("");
   };
 
-  // Reset skip à 0 quand les filtres ou le mode changent
+  // Reset pagination on filter change
   useEffect(() => {
     setSkip(0);
-  }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
+  }, [search, entityType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
 
+  // Load filter options once
   useEffect(() => {
     getFilters()
       .then((r) => setFilters(r.data))
       .catch((e) => console.error("Filters error:", e));
   }, []);
 
-  // useEffect master kits
+  // Fetch master kits
   useEffect(() => {
-    if (browseMode !== "master") return;
     const isLoadMore = skip > 0;
     if (isLoadMore) setLoadingMore(true);
     else setLoading(true);
 
     const params = { skip, limit: LIMIT };
-    if (search)         params.search   = search;
-    if (selectedClub)   params.club     = selectedClub;
-    if (selectedBrand)  params.brand    = selectedBrand;
-    if (selectedType)   params.kit_type = selectedType;
-    if (selectedSeason) params.season   = selectedSeason;
-    if (selectedDesign) params.design   = selectedDesign;
-    if (selectedLeague) params.league   = selectedLeague;
+    if (search)          params.search      = search;
+    if (entityType)      params.entity_type = entityType;
+    if (selectedClub)    params.club        = selectedClub;
+    if (selectedBrand)   params.brand       = selectedBrand;
+    if (selectedType)    params.kit_type    = selectedType;
+    if (selectedSeason)  params.season      = selectedSeason;
+    if (selectedDesign)  params.design      = selectedDesign;
+    if (selectedLeague)  params.league      = selectedLeague;
+    if (selectedGender)  params.gender      = selectedGender;
 
     getMasterKits(params)
       .then((r) => {
@@ -141,49 +162,20 @@ export default function Browse() {
         setLoadingMore(false);
       })
       .catch((e) => { console.error("Kits error:", e); setLoading(false); setLoadingMore(false); });
-  }, [browseMode, skip, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
-
-  // useEffect versions
-  useEffect(() => {
-    if (browseMode !== "version") return;
-    const isLoadMore = skip > 0;
-    if (isLoadMore) setLoadingMore(true);
-    else setLoading(true);
-
-    const params = { skip, limit: LIMIT };
-    if (search)         params.search   = search;
-    if (selectedClub)   params.club     = selectedClub;
-    if (selectedBrand)  params.brand    = selectedBrand;
-    if (selectedType)   params.kit_type = selectedType;
-    if (selectedSeason) params.season   = selectedSeason;
-    if (selectedLeague) params.league   = selectedLeague;
-
-    getVersions(params)
-      .then((r) => {
-        const newVersions = r.data?.results ?? [];
-        setVersions((prev) => skip === 0 ? newVersions : [...prev, ...newVersions]);
-        setTotal(r.data?.total ?? 0);
-        setLoading(false);
-        setLoadingMore(false);
-      })
-      .catch((e) => { console.error("Versions error:", e); setLoading(false); setLoadingMore(false); });
-  }, [browseMode, skip, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedLeague]);
+  }, [skip, search, entityType, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague, selectedGender]);
 
   const filterItems = [
-    { label: "Club",     value: selectedClub,   set: setSelectedClub,   options: filters.clubs     ?? [] },
-    { label: "Brand",    value: selectedBrand,  set: setSelectedBrand,  options: filters.brands    ?? [] },
-    { label: "Season",   value: selectedSeason, set: setSelectedSeason, options: filters.seasons   ?? [] },
-    { label: "Kit type", value: selectedType,   set: setSelectedType,   options: filters.kit_types ?? [] },
-    { label: "League",   value: selectedLeague, set: setSelectedLeague, options: filters.leagues   ?? [] },
-    ...(browseMode === "master"
-      ? [{ label: "Design", value: selectedDesign, set: setSelectedDesign, options: filters.designs ?? [] }]
-      : []),
+    { label: "Club",     value: selectedClub,    set: setSelectedClub,    options: filters.clubs     ?? [] },
+    { label: "Brand",    value: selectedBrand,   set: setSelectedBrand,   options: filters.brands    ?? [] },
+    { label: "Season",   value: selectedSeason,  set: setSelectedSeason,  options: filters.seasons   ?? [] },
+    { label: "Kit type", value: selectedType,    set: setSelectedType,    options: filters.kit_types ?? [] },
+    { label: "League",   value: selectedLeague,  set: setSelectedLeague,  options: filters.leagues   ?? [] },
+    { label: "Design",   value: selectedDesign,  set: setSelectedDesign,  options: filters.designs   ?? [] },
+    { label: "Gender",   value: selectedGender,  set: setSelectedGender,  options: filters.genders   ?? [], labelMap: GENDER_LABELS },
   ];
 
-  const filtersPanelProps = { browseMode, setBrowseMode, search, setSearch, filterItems, activeFilterCount, clearFilters };
+  const filtersPanelProps = { entityType, setEntityType, search, setSearch, filterItems, activeFilterCount, clearFilters };
   const gridClass = viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" : "flex flex-col gap-3";
-  const displayedCount = browseMode === "master" ? kits.length : versions.length;
-  const isEmpty = displayedCount === 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -197,7 +189,7 @@ export default function Browse() {
 
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-muted-foreground">
-              {loading ? "Loading..." : `${total} ${browseMode === "master" ? "kits" : "versions"} found`}
+              {loading ? "Loading..." : `${total} kits found`}
             </span>
 
             <div className="flex items-center gap-2">
@@ -244,7 +236,7 @@ export default function Browse() {
                 <div key={i} className="rounded-xl border bg-muted animate-pulse aspect-[3/4]" />
               ))}
             </div>
-          ) : isEmpty ? (
+          ) : kits.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-24 text-muted-foreground">
               <Shirt className="w-10 h-10" />
               <p>Try adjusting your filters or search term.</p>
@@ -252,43 +244,29 @@ export default function Browse() {
                 <Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button>
               )}
             </div>
-          ) : browseMode === "master" ? (
+          ) : (
             <div className={gridClass}>
               {kits.map((kit) => (
                 <JerseyCard key={kit.kit_id} kit={kit} />
               ))}
             </div>
-          ) : (
-            <div className={gridClass}>
-              {versions.map((v) => (
-                <VersionCard key={v.version_id} version={v} onAddToCollection={setQuickAddVersion} />
-              ))}
-            </div>
           )}
 
           {/* Load more */}
-          {!loading && displayedCount < total && (
+          {!loading && kits.length < total && (
             <div className="flex justify-center pt-4">
               <Button
                 variant="outline"
                 onClick={() => setSkip((s) => s + LIMIT)}
                 disabled={loadingMore}
               >
-                {loadingMore ? "Loading..." : `Load more (${total - displayedCount} remaining)`}
+                {loadingMore ? "Loading..." : `Load more (${total - kits.length} remaining)`}
               </Button>
             </div>
           )}
 
         </div>
       </div>
-
-      {quickAddVersion && (
-        <AddToCollectionDialog
-          version={quickAddVersion}
-          onClose={() => setQuickAddVersion(null)}
-          onSuccess={() => setQuickAddVersion(null)}
-        />
-      )}
     </div>
   );
 }
