@@ -110,6 +110,8 @@ async def get_filters():
         "sponsors": sorted([s for s in sponsors if s]),
         "genders": sorted([g for g in genders if g]),
         "entity_types": sorted([e for e in entity_types if e]),
+        # Toggle Club / National — valeurs fixes, pas besoin de distinct()
+        "team_types": ["club", "national"],
     }
 
 
@@ -123,6 +125,9 @@ async def list_master_kits(
     league: Optional[str] = None,
     gender: Optional[str] = None,
     entity_type: Optional[str] = None,
+    # "club" → équipes dont is_national=False (ou absent)
+    # "national" → équipes dont is_national=True
+    team_type: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
@@ -155,6 +160,27 @@ async def list_master_kits(
             {"sponsor": {"$regex": search, "$options": "i"}},
         ]
 
+    # ── Filtre Club / National via lookup sur teams.is_national ──────────────
+    if team_type in ("club", "national"):
+        is_nat = team_type == "national"
+        # Récupère les team_ids correspondant au type demandé
+        if is_nat:
+            matching_teams = await db.teams.find(
+                {"is_national": True}, {"_id": 0, "team_id": 1}
+            ).to_list(2000)
+        else:
+            # club = is_national absent, False, ou null
+            matching_teams = await db.teams.find(
+                {"$or": [{"is_national": False}, {"is_national": {"$exists": False}}]},
+                {"_id": 0, "team_id": 1},
+            ).to_list(2000)
+        team_ids = [t["team_id"] for t in matching_teams if t.get("team_id")]
+        if team_ids:
+            query["team_id"] = {"$in": team_ids}
+        else:
+            # Aucune équipe de ce type → résultat vide
+            return {"results": [], "total": 0, "skip": skip, "limit": min(limit, 100)}
+
     total = await db.master_kits.count_documents(query)
     capped_limit = min(limit, 100)
 
@@ -171,6 +197,17 @@ async def list_master_kits(
         .to_list(capped_limit)
     )
 
+    # ── version_count dynamique ───────────────────────────────────────────────
+    kit_ids_page = [k.get("kit_id") or k.get("id", "") for k in kits]
+    version_counts: dict = {}
+    if kit_ids_page:
+        pipeline = [
+            {"$match": {"kit_id": {"$in": kit_ids_page}}},
+            {"$group": {"_id": "$kit_id", "count": {"$sum": 1}}},
+        ]
+        async for doc in db.versions.aggregate(pipeline):
+            version_counts[doc["_id"]] = doc["count"]
+
     result = []
     for kit in kits:
         kit["kit_id"] = kit.get("kit_id") or kit.get("id", "")
@@ -178,7 +215,8 @@ async def list_master_kits(
         kit["front_photo"] = master_kit_image_url(
             kit["kit_type"], kit["kit_id"], kit.get("front_photo", "")
         )
-        kit["version_count"] = kit.get("version_count", 0)
+        # version_count calculé dynamiquement (valeur DB en fallback)
+        kit["version_count"] = version_counts.get(kit["kit_id"], kit.get("version_count", 0))
         kit["avg_rating"] = kit.get("avg_rating", 0.0)
         kit["review_count"] = kit.get("review_count", 0)
         ca = kit.get("created_at")
