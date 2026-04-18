@@ -173,6 +173,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
         score_palmares=score_palmares,
         aura=body.aura,
         note=note,
+        note_breakdown=note_breakdown,
         updated_at=now,
     )
 
@@ -347,6 +348,7 @@ async def get_player_scoring(player_id: str):
         score_palmares=player.get("score_palmares", 0.0),
         aura=player.get("aura", 0.0),
         note=player.get("note", 0.0),
+        note_breakdown=player.get("note_breakdown"),
         updated_at=player.get("updated_at"),
     )
 

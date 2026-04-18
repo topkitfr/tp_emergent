@@ -26,11 +26,9 @@ class MasterKitCreate(BaseModel):
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
     sponsor_id: Optional[str] = ""
-    # Sprint 1 — Club vs Nation
-    entity_type: Optional[str] = "club"         # "club" | "nation"
-    confederation_id: Optional[str] = None      # league_id d'une confédération, si entity_type = "nation"
-    # Sprint 1 — Couleurs
-    color: Optional[List[str]] = []             # ["red", "white", "blue"]
+    entity_type: Optional[str] = "club"
+    confederation_id: Optional[str] = None
+    color: Optional[List[str]] = []
 
 
 class MasterKitOut(BaseModel):
@@ -49,7 +47,6 @@ class MasterKitOut(BaseModel):
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
     sponsor_id: Optional[str] = ""
-    # Sprint 1
     entity_type: Optional[str] = "club"
     confederation_id: Optional[str] = None
     color: Optional[List[str]] = []
@@ -68,9 +65,8 @@ class VersionCreate(BaseModel):
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
     main_player_id: Optional[str] = ""
-    # Sprint 4 — lien compétition réelle (#15)
-    competition_id: Optional[str] = None        # league_id de la collection leagues
-    competition_name: Optional[str] = ""        # dénormalisé pour affichage rapide
+    competition_id: Optional[str] = None
+    competition_name: Optional[str] = ""
 
 
 class VersionOut(BaseModel):
@@ -84,7 +80,6 @@ class VersionOut(BaseModel):
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
     main_player_id: Optional[str] = ""
-    # Sprint 4
     competition_id: Optional[str] = None
     competition_name: Optional[str] = ""
     created_by: Optional[str] = None
@@ -231,27 +226,14 @@ class WishlistAdd(BaseModel):
 
 
 class EstimationRequest(BaseModel):
-    """
-    Requête d'estimation de prix d'un maillot.
-
-    mode : "basic" | "advanced"
-      - "basic"    : Modèle + Compétition + État physique uniquement
-      - "advanced" : Tous les critères (origine, flocage, patch, signature, rareté, ancienneté)
-
-    Option A — profil joueur automatique :
-      Fournir flocking_player_id (player_id en DB) pour que la note du joueur
-      soit récupérée automatiquement et convertie en coefficient.
-      L'ancien champ flocking_player_profile est conservé pour compatibilité
-      descendante mais ignoré si flocking_player_id est fourni.
-    """
     model_type: str
     competition: Optional[str] = ""
     physical_state: Optional[str] = ""
     mode: Optional[str] = "advanced"
     condition_origin: Optional[str] = ""
     flocking_origin: Optional[str] = ""
-    flocking_player_id: Optional[str] = ""       # Option A : player_id DB → note auto
-    flocking_player_profile: Optional[str] = "none"  # Conservé pour rétrocompat (ignoré si player_id fourni)
+    flocking_player_id: Optional[str] = ""
+    flocking_player_profile: Optional[str] = "none"
     signed: Optional[bool] = False
     signed_type: Optional[str] = ""
     signed_other_detail: Optional[str] = ""
@@ -262,8 +244,6 @@ class EstimationRequest(BaseModel):
     rare_reason: Optional[str] = ""
 
 
-# ─── Team ─────────────────────────────────────────────────────────────────────
-
 class TeamCreate(BaseModel):
     name: str
     country: Optional[str] = ""
@@ -273,13 +253,12 @@ class TeamCreate(BaseModel):
     secondary_color: Optional[str] = ""
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
-    # Sprint 2 — champs API-Football (#14)
-    apifootball_team_id: Optional[int] = None   # team.id API-Football
-    is_national: Optional[bool] = False          # team.national
-    stadium_name: Optional[str] = ""            # venue.name
-    stadium_capacity: Optional[int] = None      # venue.capacity
-    stadium_surface: Optional[str] = ""         # venue.surface
-    stadium_image_url: Optional[str] = ""       # venue.image
+    apifootball_team_id: Optional[int] = None
+    is_national: Optional[bool] = False
+    stadium_name: Optional[str] = ""
+    stadium_capacity: Optional[int] = None
+    stadium_surface: Optional[str] = ""
+    stadium_image_url: Optional[str] = ""
 
 
 class TeamOut(BaseModel):
@@ -295,7 +274,6 @@ class TeamOut(BaseModel):
     secondary_color: Optional[str] = ""
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
-    # Sprint 2
     apifootball_team_id: Optional[int] = None
     is_national: Optional[bool] = False
     stadium_name: Optional[str] = ""
@@ -307,14 +285,11 @@ class TeamOut(BaseModel):
     updated_at: Optional[str] = None
 
 
-# ─── League ───────────────────────────────────────────────────────────────────
-
 class LeagueSeasonEntry(BaseModel):
-    """Une saison d'une compétition (issues de API-Football /leagues?id=X)."""
-    year: int                               # ex: 2024
-    start: Optional[str] = None            # ex: "2024-08-16"
-    end: Optional[str] = None              # ex: "2025-05-25"
-    current: Optional[bool] = False        # saison en cours
+    year: int
+    start: Optional[str] = None
+    end: Optional[str] = None
+    current: Optional[bool] = False
 
 
 class LeagueCreate(BaseModel):
@@ -323,22 +298,19 @@ class LeagueCreate(BaseModel):
     level: Optional[str] = "domestic"
     organizer: Optional[str] = ""
     logo_url: Optional[str] = ""
-    # Champs API-Football
     apifootball_league_id: Optional[int] = None
     apifootball_logo: Optional[str] = ""
     scoring_weight: Optional[float] = None
-    # Sprint 1 — normalisation domestic/international
-    entity_type: Optional[str] = "league"   # "league" | "cup" | "confederation"
-    scope: Optional[str] = None             # "domestic" | "international"
-    region: Optional[str] = None            # "country" | "europe" | "world" | "africa" | ...
-    country_name: Optional[str] = None      # seulement si scope = "domestic"
+    entity_type: Optional[str] = "league"
+    scope: Optional[str] = None
+    region: Optional[str] = None
+    country_name: Optional[str] = None
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
-    source_payload: Optional[dict] = None   # réponse brute API-Football pour re-sync
-    # Phase 1 — enrichissement detail page
-    gender: Optional[str] = None            # "male" | "female" — API-Football league.gender (via seasons endpoint)
-    level_type: Optional[str] = None        # "League" | "Cup" | "Friendly" — API-Football league.type
-    seasons: Optional[List[LeagueSeasonEntry]] = []  # liste des saisons issues de API-Football
+    source_payload: Optional[dict] = None
+    gender: Optional[str] = None
+    level_type: Optional[str] = None
+    seasons: Optional[List[LeagueSeasonEntry]] = []
 
 
 class LeagueOut(BaseModel):
@@ -354,7 +326,6 @@ class LeagueOut(BaseModel):
     apifootball_league_id: Optional[int] = None
     apifootball_logo: Optional[str] = ""
     scoring_weight: Optional[float] = None
-    # Sprint 1
     entity_type: Optional[str] = "league"
     scope: Optional[str] = None
     region: Optional[str] = None
@@ -362,7 +333,6 @@ class LeagueOut(BaseModel):
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
     source_payload: Optional[dict] = None
-    # Phase 1
     gender: Optional[str] = None
     level_type: Optional[str] = None
     seasons: Optional[List[dict]] = []
@@ -370,8 +340,6 @@ class LeagueOut(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
-
-# ─── Brand ────────────────────────────────────────────────────────────────────
 
 class BrandCreate(BaseModel):
     name: str
@@ -394,13 +362,10 @@ class BrandOut(BaseModel):
     updated_at: Optional[str] = None
 
 
-# ─── Award (trophée individuel) ───────────────────────────────────────────────
-
 class AwardCreate(BaseModel):
-    """Trophée individuel (Ballon d'Or, Golden Boot, FIFA Best…)"""
-    name: str                              # ex: "Ballon d'Or"
-    category: Optional[str] = "individual" # individual | collective
-    scoring_weight: Optional[float] = 5.0  # poids dans score_palmares
+    name: str
+    category: Optional[str] = "individual"
+    scoring_weight: Optional[float] = 5.0
     logo_url: Optional[str] = ""
     description: Optional[str] = ""
 
@@ -418,14 +383,11 @@ class AwardOut(BaseModel):
 
 
 class IndividualAwardEntry(BaseModel):
-    """Référence à un award dans le profil d'un joueur."""
-    award_id: str          # référence à awards collection
-    award_name: str        # dénormalisé pour affichage rapide
+    award_id: str
+    award_name: str
     year: Optional[str] = ""
     count: Optional[int] = 1
 
-
-# ─── Player ───────────────────────────────────────────────────────────────────
 
 class PlayerCreate(BaseModel):
     full_name: str
@@ -437,26 +399,23 @@ class PlayerCreate(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
-    # Sprint 2 — champs API-Football (#10)
     apifootball_id: Optional[str] = ""
-    firstname: Optional[str] = ""           # player.firstname
-    lastname: Optional[str] = ""            # player.lastname
-    birth_place: Optional[str] = ""         # player.birth.place
-    birth_country: Optional[str] = ""       # player.birth.country
-    height: Optional[str] = ""              # player.height (ex: "180 cm")
-    weight: Optional[str] = ""              # player.weight (ex: "75 kg")
-    # Scoring API-Football
+    firstname: Optional[str] = ""
+    lastname: Optional[str] = ""
+    birth_place: Optional[str] = ""
+    birth_country: Optional[str] = ""
+    height: Optional[str] = ""
+    weight: Optional[str] = ""
     honours: Optional[List[dict]] = []
     individual_awards: Optional[List[IndividualAwardEntry]] = []
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
     note: Optional[float] = 0.0
-    # Phase 1 — enrichissement detail page
-    gender: Optional[str] = None            # "male" | "female" — API-Football player.gender
-    level: Optional[str] = None             # "Professional" | "Semi-Pro" | "Amateur" | "Youth"
-    position_detail: Optional[str] = None   # poste précis enrichi (ex: "Centre-Back", "Goalkeeper")
-    jersey_number: Optional[int] = None     # numéro de maillot actuel — API-Football statistics[0].games.number
-    current_team_id: Optional[str] = None   # référence vers teams collection
+    gender: Optional[str] = None
+    level: Optional[str] = None
+    position_detail: Optional[str] = None
+    jersey_number: Optional[int] = None
+    current_team_id: Optional[str] = None
 
 
 class PlayerOut(BaseModel):
@@ -474,7 +433,6 @@ class PlayerOut(BaseModel):
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
     apifootball_id: Optional[str] = ""
-    # Sprint 2
     firstname: Optional[str] = ""
     lastname: Optional[str] = ""
     birth_place: Optional[str] = ""
@@ -486,7 +444,6 @@ class PlayerOut(BaseModel):
     score_palmares: Optional[float] = 0.0
     aura: Optional[float] = 0.0
     note: Optional[float] = 0.0
-    # Phase 1
     gender: Optional[str] = None
     level: Optional[str] = None
     position_detail: Optional[str] = None
@@ -506,17 +463,13 @@ class PlayerOut(BaseModel):
         return [v]
 
 
-# ─── Scoring joueur (API-Football) ───────────────────────────────────────────
-
 class PlayerScoringEnrichRequest(BaseModel):
-    """Body pour enrichir/mettre à jour le scoring d'un joueur via API-Football."""
     player_id: str
     apifootball_id: Optional[Union[str, int]] = None
     aura: Optional[float] = 0.0
 
 
 class PlayerScoringOut(BaseModel):
-    """Réponse après enrichissement scoring."""
     model_config = ConfigDict(extra="ignore")
     player_id: str
     full_name: str
@@ -526,8 +479,10 @@ class PlayerScoringOut(BaseModel):
     @classmethod
     def coerce_apifootball_id(cls, v):
         return str(v) if v is not None else ""
+
     honours_count: int = 0
     score_palmares: float = 0.0
     aura: float = 0.0
     note: float = 0.0
+    note_breakdown: Optional[dict] = None
     updated_at: Optional[str] = None
