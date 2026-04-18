@@ -237,6 +237,7 @@ class EstimationRequest(BaseModel):
     signed: Optional[bool] = False
     signed_type: Optional[str] = ""
     signed_other_detail: Optional[str] = ""
+    signed_personal_message: Optional[bool] = False
     signed_proof: Optional[str] = "none"
     season_year: Optional[int] = 0
     patch: Optional[bool] = False

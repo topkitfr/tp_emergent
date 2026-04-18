@@ -164,7 +164,12 @@ ESTIMATION_SIGNED_TYPE_COEFF = {
     "player_flocked": 0.80,
     "team": 1.00,
     "other": 0.40,
+    "printed_sign": 0.15,
+    "handsigned": 0.40,
 }
+
+# MESSAGE PERSONNEL SUR LA SIGNATURE
+ESTIMATION_SIGNED_PERSONAL_MESSAGE_COEFF = -0.20
 
 # PREUVE / CERTIFICAT D'AUTHENTICITÉ
 ESTIMATION_SIGNED_PROOF_COEFF = {
@@ -218,6 +223,7 @@ def calculate_estimation(
     flocking_player_note: float = 0.0,
     signed_type: str = "",
     signed_other_detail: str = "",
+    signed_personal_message: bool = False,
     patch: bool = False,
     is_rare: bool = False,
     rare_reason: str = "",
@@ -285,8 +291,14 @@ def calculate_estimation(
                 "player_flocked": "Signed by flocked player",
                 "team": "Signed by entire team",
                 "other": f"Signed (other{': ' + signed_other_detail if signed_other_detail else ''})",
+                "printed_sign": "Printed sign (marketing)",
+                "handsigned": "Handsigned autograph",
             }
             breakdown.append({"label": type_labels.get(signed_type, "Signed"), "coeff": signed_type_c})
+
+            if signed_personal_message:
+                coeff_sum += ESTIMATION_SIGNED_PERSONAL_MESSAGE_COEFF
+                breakdown.append({"label": "Personal message with signature", "coeff": ESTIMATION_SIGNED_PERSONAL_MESSAGE_COEFF})
 
             # Preuve / COA
             proof_c = ESTIMATION_SIGNED_PROOF_COEFF.get(signed_proof, 0.0)
@@ -334,7 +346,6 @@ def calculate_estimation(
             })
 
     estimated_price = round(base * (1 + coeff_sum), 2)
-    # Profil déduit (pour info frontend)
     derived_profile, _ = _player_note_to_profile(flocking_player_note)
     return {
         "base_price": base,
@@ -359,6 +370,7 @@ def calculate_estimation_for_collection_item(
     flocking_player_note: float = 0.0,
     signed_type: str = "",
     signed_other_detail: str = "",
+    signed_personal_message: bool = False,
     patch: bool = False,
     is_rare: bool = False,
     rare_reason: str = "",
@@ -376,6 +388,7 @@ def calculate_estimation_for_collection_item(
         flocking_player_note=flocking_player_note,
         signed_type=signed_type,
         signed_other_detail=signed_other_detail,
+        signed_personal_message=signed_personal_message,
         patch=patch,
         is_rare=is_rare,
         rare_reason=rare_reason,

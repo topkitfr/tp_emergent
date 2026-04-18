@@ -1,16 +1,6 @@
 // src/components/CollectionItemForm.js
 // Formulaire unifié pour ajouter OU modifier un item de collection.
 // Utilisé par : AddToCollectionDialog.js (VersionDetail) + MyCollection.js (edit)
-//
-// Props:
-//   form          : object  — état du formulaire (voir INITIAL_FORM_STATE)
-//   onChange      : fn(field, value) — setter de champ
-//   mode          : 'basic' | 'advanced'
-//   onModeChange  : fn('basic'|'advanced')
-//   version       : { model, competition } — données de la version (lecture seule)
-//   seasonYear    : number — année de saison parsée depuis master_kit
-//   showEstimation: bool (default true)
-
 
 import { Zap, SlidersHorizontal } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -22,11 +12,9 @@ import EntityAutocomplete from '@/components/EntityAutocomplete';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { PATCH_OPTIONS } from '@/utils/estimation';
 
-
 export const PHYSICAL_STATES   = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
 export const CONDITION_ORIGINS = ['Shop', 'Training', 'Club Stock', 'Match Prepared', 'Match Worn'];
 export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-
 
 export const FLOCKING_OPTIONS = [
   { value: 'none',         label: 'None' },
@@ -34,13 +22,13 @@ export const FLOCKING_OPTIONS = [
   { value: 'Personalized', label: 'Personalized' },
 ];
 
-
 export const SIGNED_TYPES = [
   { value: 'player_flocked', label: 'Signed by flocked player' },
   { value: 'team',           label: 'Signed by the team' },
+  { value: 'handsigned',     label: 'Handsigned autograph' },
+  { value: 'printed_sign',   label: 'Printed sign (marketing)' },
   { value: 'other',          label: 'Other (specify)' },
 ];
-
 
 export const PROOF_LEVELS = [
   { value: 'none',   label: 'No proof' },
@@ -48,42 +36,27 @@ export const PROOF_LEVELS = [
   { value: 'strong', label: 'Solid proof (photo/video + COA)' },
 ];
 
-
-export const PLAYER_PROFILES = [
-  { value: 'legend', label: '⭐ Football Legend' },
-  { value: 'star',   label: '🔥 Club Star' },
-  { value: 'none',   label: 'Standard player' },
-];
-
-
-/** État initial vide — à utiliser dans useState */
 export const INITIAL_FORM_STATE = {
-  physical_state:      '',
-  size:                '',
-  flocking_origin:     'none',
-  flocking_detail:     '',
-  flocking_player_id:  '',
-  condition_origin:    '',
-  patches:             [],
-  patch_other_text:    '',
-  signed:              false,
-  signed_type:         '',
-  signed_other_text:   '',
-  signed_player_id:    '',
-  player_profile:      'none',
-  signed_proof_level:  'none',
-  is_rare:             false,
-  rare_reason:         '',
-  notes:               '',
+  physical_state:           '',
+  size:                     '',
+  flocking_origin:          'none',
+  flocking_detail:          '',
+  flocking_player_id:       '',
+  condition_origin:         '',
+  patches:                  [],
+  patch_other_text:         '',
+  signed:                   false,
+  signed_type:              '',
+  signed_other_text:        '',
+  signed_player_id:         '',
+  signed_personal_message:  false,
+  signed_proof_level:       'none',
+  is_rare:                  false,
+  rare_reason:              '',
+  notes:                    '',
 };
 
-
-/**
- * Reconstruit un INITIAL_FORM_STATE à partir d'un item de collection existant.
- * Gère la rétro-compatibilité (champs anciens).
- */
 export function formFromItem(item) {
-  // Reconstruire le tableau patches depuis les anciens champs si nécessaire
   let patches = [];
   if (Array.isArray(item.patches) && item.patches.length > 0) {
     patches = item.patches;
@@ -91,90 +64,59 @@ export function formFromItem(item) {
     patches = ['competition'];
   }
 
-
   return {
-    physical_state:      item.physical_state     || item.condition      || '',
-    size:                item.size               || '',
-    flocking_origin:     item.flocking_origin    || 'none',
-    flocking_detail:     item.flocking_detail    || item.printing       || '',
-    flocking_player_id:  item.flocking_player_id || '',
-    condition_origin:    item.condition_origin   || '',
+    physical_state:          item.physical_state || item.condition || '',
+    size:                    item.size || '',
+    flocking_origin:         item.flocking_origin || 'none',
+    flocking_detail:         item.flocking_detail || item.printing || '',
+    flocking_player_id:      item.flocking_player_id || '',
+    condition_origin:        item.condition_origin || '',
     patches,
-    patch_other_text:    item.patch_other_text   || '',
-    signed:              item.signed             || false,
-    signed_type:         item.signed_type        || '',
-    signed_other_text:   item.signed_other_text  || item.signed_by      || '',
-    signed_player_id:    item.signed_by_player_id || '',
-    player_profile:      item.player_profile     || 'none',
-    // Rétro-compat : si signed_proof_level existe on le reprend,
-    // sinon on tente de déduire depuis l'ancien champ booléen signed_proof
-    signed_proof_level:  item.signed_proof_level
-                           ? item.signed_proof_level
-                           : item.signed_proof ? 'light' : 'none',
-    is_rare:             item.is_rare            || false,
-    rare_reason:         item.rare_reason        || '',
-    notes:               item.notes              || '',
+    patch_other_text:        item.patch_other_text || '',
+    signed:                  item.signed || false,
+    signed_type:             item.signed_type || '',
+    signed_other_text:       item.signed_other_text || item.signed_by || '',
+    signed_player_id:        item.signed_by_player_id || '',
+    signed_personal_message: item.signed_personal_message || false,
+    signed_proof_level:      item.signed_proof_level
+                              ? item.signed_proof_level
+                              : item.signed_proof ? 'light' : 'none',
+    is_rare:                 item.is_rare || false,
+    rare_reason:             item.rare_reason || '',
+    notes:                   item.notes || '',
   };
 }
 
-
-/**
- * Prépare le payload API depuis le form.
- * estimation doit être calculé côté appelant (calculateEstimation).
- *
- * IMPORTANT – types attendus par Pydantic (CollectionAdd / CollectionUpdate) :
- *   signed_proof       : str  "none" | "light" | "strong"  (PAS un booléen)
- *   signed_proof_level : str  (idem)
- *   patch              : bool  (PAS un tableau)
- *   patches            : champ non reconnu par le backend → stocké dans notes ou ignoré
- */
 export function formToPayload(form, estimation) {
-  // signed_proof_level déjà une string dans le form ('none'|'light'|'strong')
   const proofLevel = form.signed_proof_level || 'none';
-
-  // patch : bool — true si au moins un patch coché
   const hasPatch = Array.isArray(form.patches) && form.patches.length > 0;
 
   return {
-    physical_state:      form.physical_state                    || undefined,
-    size:                form.size                              || undefined,
-    flocking_origin:     form.flocking_origin !== 'none'
-                           ? form.flocking_origin : undefined,
-    flocking_detail:     form.flocking_origin === 'Official'
-                           ? (form.flocking_detail || undefined) : undefined,
-    flocking_player_id:  form.flocking_origin === 'Official'
-                           ? (form.flocking_player_id || undefined) : undefined,
-    condition_origin:    form.condition_origin                  || undefined,
-    // patch → booléen attendu par le backend
-    patch:               hasPatch || undefined,
-    signed:              form.signed,
-    signed_type:         form.signed ? (form.signed_type || undefined) : undefined,
-    signed_other_detail: form.signed && form.signed_type === 'other'
-                           ? (form.signed_other_text || undefined) : undefined,
-    flocking_player_profile:
-                         form.signed && form.signed_type === 'player_flocked'
-                           ? (form.player_profile || 'none') : undefined,
-    signed_by_player_id: form.signed && form.signed_type === 'other'
-                           ? (form.signed_player_id || undefined) : undefined,
-    // signed_proof → STRING attendue par Pydantic (pas un booléen !)
-    signed_proof:        form.signed ? proofLevel : 'none',
-    signed_proof_level:  form.signed ? proofLevel : undefined,
-    is_rare:             form.is_rare                           || undefined,
-    rare_reason:         form.is_rare && form.rare_reason
-                           ? form.rare_reason : undefined,
-    notes:               form.notes                            || undefined,
-    estimated_price:     estimation?.estimatedPrice,
+    physical_state: form.physical_state || undefined,
+    size: form.size || undefined,
+    flocking_origin: form.flocking_origin !== 'none' ? form.flocking_origin : undefined,
+    flocking_detail: form.flocking_origin === 'Official' ? (form.flocking_detail || undefined) : undefined,
+    flocking_player_id: form.flocking_origin === 'Official' ? (form.flocking_player_id || undefined) : undefined,
+    condition_origin: form.condition_origin || undefined,
+    patch: hasPatch || undefined,
+    signed: form.signed,
+    signed_type: form.signed ? (form.signed_type || undefined) : undefined,
+    signed_other_detail: form.signed && form.signed_type === 'other' ? (form.signed_other_text || undefined) : undefined,
+    signed_by_player_id: form.signed && form.signed_type === 'other' ? (form.signed_player_id || undefined) : undefined,
+    signed_personal_message: form.signed ? !!form.signed_personal_message : undefined,
+    signed_proof: form.signed ? proofLevel : 'none',
+    signed_proof_level: form.signed ? proofLevel : undefined,
+    is_rare: form.is_rare || undefined,
+    rare_reason: form.is_rare && form.rare_reason ? form.rare_reason : undefined,
+    notes: form.notes || undefined,
+    estimated_price: estimation?.estimatedPrice,
   };
 }
 
-
-// ─── Styles helpers ──────────────────────────────────────────────────────────
 const fieldLabel = 'text-[10px] uppercase tracking-wider text-muted-foreground';
-const fs         = { fontFamily: 'Barlow Condensed' };
-const inputCls   = 'bg-card border-border rounded-none';
+const fs = { fontFamily: 'Barlow Condensed' };
+const inputCls = 'bg-card border-border rounded-none';
 
-
-// ─── Composant principal ─────────────────────────────────────────────────────
 export default function CollectionItemForm({
   form,
   onChange,
@@ -186,7 +128,6 @@ export default function CollectionItemForm({
 }) {
   const set = (field, value) => onChange(field, value);
 
-
   const togglePatch = (val) => {
     const next = form.patches.includes(val)
       ? form.patches.filter(p => p !== val)
@@ -194,29 +135,19 @@ export default function CollectionItemForm({
     set('patches', next);
   };
 
-
-  // Logique d'affichage conditionnel
   const showFlockingPlayer = form.flocking_origin === 'Official';
-  const showSignedOther    = form.signed && form.signed_type === 'other';
-  const showPlayerProfile  = form.signed && form.signed_type === 'player_flocked';
-  // Si flocage perso → ne pas afficher le champ joueur (uniquement pour officiel)
-  const isPersonalized     = form.flocking_origin === 'Personalized';
-
+  const showSignedOther = form.signed && form.signed_type === 'other';
+  const isPersonalized = form.flocking_origin === 'Personalized';
 
   return (
     <div className="space-y-4">
-
-
-      {/* ══ TOGGLE BASIC / ADVANCED ══ */}
       {onModeChange && (
         <div className="flex items-center gap-2 border border-border p-1" style={fs}>
           <button
             type="button"
             onClick={() => onModeChange('basic')}
             className={`flex items-center gap-1.5 flex-1 justify-center text-[11px] uppercase tracking-wider py-1.5 transition-colors ${
-              mode === 'basic'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+              mode === 'basic' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Zap className="w-3 h-3" />
@@ -226,9 +157,7 @@ export default function CollectionItemForm({
             type="button"
             onClick={() => onModeChange('advanced')}
             className={`flex items-center gap-1.5 flex-1 justify-center text-[11px] uppercase tracking-wider py-1.5 transition-colors ${
-              mode === 'advanced'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+              mode === 'advanced' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <SlidersHorizontal className="w-3 h-3" />
@@ -237,15 +166,10 @@ export default function CollectionItemForm({
         </div>
       )}
 
-
-      {/* ══ BASIC — Physical State + Flocking ══ */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className={fieldLabel} style={fs}>Physical State</Label>
-          <Select
-            value={form.physical_state || 'none'}
-            onValueChange={v => set('physical_state', v === 'none' ? '' : v)}
-          >
+          <Select value={form.physical_state || 'none'} onValueChange={v => set('physical_state', v === 'none' ? '' : v)}>
             <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
             <SelectContent className="bg-card border-border">
               <SelectItem value="none">—</SelectItem>
@@ -254,14 +178,12 @@ export default function CollectionItemForm({
           </Select>
         </div>
 
-
         <div className="space-y-1">
           <Label className={fieldLabel} style={fs}>Flocking</Label>
           <Select
             value={form.flocking_origin}
             onValueChange={v => {
               set('flocking_origin', v);
-              // Reset champs joueur si on quitte Official
               if (v !== 'Official') {
                 set('flocking_detail', '');
                 set('flocking_player_id', '');
@@ -276,8 +198,6 @@ export default function CollectionItemForm({
         </div>
       </div>
 
-
-      {/* Joueur flocqué — uniquement si Official (jamais si Personalized) */}
       {showFlockingPlayer && !isPersonalized && (
         <div className="space-y-1">
           <Label className={fieldLabel} style={fs}>Flocked Player</Label>
@@ -295,14 +215,9 @@ export default function CollectionItemForm({
         </div>
       )}
 
-
-      {/* Size */}
       <div className="space-y-1">
         <Label className={fieldLabel} style={fs}>Size</Label>
-        <Select
-          value={form.size || 'none'}
-          onValueChange={v => set('size', v === 'none' ? '' : v)}
-        >
+        <Select value={form.size || 'none'} onValueChange={v => set('size', v === 'none' ? '' : v)}>
           <SelectTrigger className={inputCls}><SelectValue placeholder="Select" /></SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="none">—</SelectItem>
@@ -311,8 +226,6 @@ export default function CollectionItemForm({
         </Select>
       </div>
 
-
-      {/* ══ ADVANCED ONLY ══ */}
       {mode === 'advanced' && (
         <>
           <div className="flex items-center gap-2">
@@ -321,14 +234,9 @@ export default function CollectionItemForm({
             <div className="h-px flex-1 bg-border" />
           </div>
 
-
-          {/* Origin (Condition) — pleine largeur */}
           <div className="space-y-1">
             <Label className={fieldLabel} style={fs}>Origin (Condition)</Label>
-            <Select
-              value={form.condition_origin || 'none'}
-              onValueChange={v => set('condition_origin', v === 'none' ? '' : v)}
-            >
+            <Select value={form.condition_origin || 'none'} onValueChange={v => set('condition_origin', v === 'none' ? '' : v)}>
               <SelectTrigger className={inputCls}><SelectValue placeholder="—" /></SelectTrigger>
               <SelectContent className="bg-card border-border">
                 <SelectItem value="none">—</SelectItem>
@@ -337,8 +245,6 @@ export default function CollectionItemForm({
             </Select>
           </div>
 
-
-          {/* Patches */}
           <div className="space-y-1">
             <Label className={fieldLabel} style={fs}>Patches</Label>
             <div className="flex flex-col gap-1.5">
@@ -365,8 +271,6 @@ export default function CollectionItemForm({
             )}
           </div>
 
-
-          {/* ── Signature ── */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Switch
@@ -375,9 +279,9 @@ export default function CollectionItemForm({
                   set('signed', v);
                   if (!v) {
                     set('signed_type', '');
-                    set('player_profile', 'none');
                     set('signed_other_text', '');
                     set('signed_player_id', '');
+                    set('signed_personal_message', false);
                     set('signed_proof_level', 'none');
                   }
                 }}
@@ -385,18 +289,14 @@ export default function CollectionItemForm({
               <Label className="text-[11px] uppercase tracking-wider cursor-pointer" style={fs}>Signed</Label>
             </div>
 
-
             {form.signed && (
               <div className="space-y-3 pl-2 border-l-2 border-primary/30 ml-1">
-
-                {/* Type de signature */}
                 <div className="space-y-1">
-                  <Label className={fieldLabel} style={fs}>Signed by</Label>
+                  <Label className={fieldLabel} style={fs}>Signed type</Label>
                   <Select
                     value={form.signed_type || 'none'}
                     onValueChange={v => {
                       set('signed_type', v === 'none' ? '' : v);
-                      set('player_profile', 'none');
                       set('signed_other_text', '');
                       set('signed_player_id', '');
                     }}
@@ -411,25 +311,6 @@ export default function CollectionItemForm({
                   </Select>
                 </div>
 
-                {/* Signed by flocked player → profil joueur */}
-                {showPlayerProfile && (
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fs}>Player Profile</Label>
-                    <Select
-                      value={form.player_profile}
-                      onValueChange={v => set('player_profile', v)}
-                    >
-                      <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {PLAYER_PROFILES.map(p => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Signed by other → autocomplete joueur + précision */}
                 {showSignedOther && (
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fs}>Signed by (specify)</Label>
@@ -447,13 +328,20 @@ export default function CollectionItemForm({
                   </div>
                 )}
 
-                {/* Preuve / certificat */}
+                <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!form.signed_personal_message}
+                    onChange={e => set('signed_personal_message', e.target.checked)}
+                    className="accent-primary w-3.5 h-3.5"
+                  />
+                  <span style={fs} className="uppercase tracking-wide text-[11px]">Personal message</span>
+                  <span className="text-muted-foreground text-[10px]">-0.20</span>
+                </label>
+
                 <div className="space-y-1">
                   <Label className={fieldLabel} style={fs}>Proof / Certificate</Label>
-                  <Select
-                    value={form.signed_proof_level}
-                    onValueChange={v => set('signed_proof_level', v)}
-                  >
+                  <Select value={form.signed_proof_level} onValueChange={v => set('signed_proof_level', v)}>
                     <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       {PROOF_LEVELS.map(p => (
@@ -466,8 +354,6 @@ export default function CollectionItemForm({
             )}
           </div>
 
-
-          {/* ── Rare Jersey ── */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Switch
@@ -488,8 +374,6 @@ export default function CollectionItemForm({
         </>
       )}
 
-
-      {/* Notes (Basic + Advanced) */}
       <div className="space-y-1">
         <Label className={fieldLabel} style={fs}>
           Notes
@@ -505,8 +389,6 @@ export default function CollectionItemForm({
         />
       </div>
 
-
-      {/* Estimation live */}
       {showEstimation && (
         <EstimationBreakdown
           mode={mode}
@@ -520,7 +402,7 @@ export default function CollectionItemForm({
           signed={form.signed}
           signedType={form.signed_type}
           signedOtherText={form.signed_other_text}
-          playerProfile={form.player_profile}
+          signedPersonalMessage={!!form.signed_personal_message}
           signedProofLevel={form.signed_proof_level}
           isRare={form.is_rare}
           rareReason={form.rare_reason}

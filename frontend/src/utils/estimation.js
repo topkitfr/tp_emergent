@@ -48,6 +48,8 @@ export const SIGNED_TYPE_COEFF = {
   'player_flocked': 0.80,   // Signé par le joueur flocqué
   'team': 1.00,             // Signé par l'équipe entière
   'other': 0.40,            // Autre(s) joueur(s)
+  'handsigned': 0.60,       // Signature manuscrite (joueur non flocqué)
+  'printed_sign': 0.15,     // Signature imprimée (marketing)
 };
 
 // Signature — profil joueur (uniquement si signed_type = player_flocked)
@@ -70,6 +72,9 @@ export const SIGNED_PROOF_COEFF = {
   'strong': 0.40, // Photo/vidéo + COA crédible
 };
 
+// Message personnel — dévalorise la signature pure
+export const SIGNED_PERSONAL_MESSAGE_COEFF = -0.20;
+
 // Rareté
 export const RARITY_COEFF = 0.40;
 
@@ -91,10 +96,11 @@ export const AGE_MAX = 1.0;
  * @param {string[]} params.patches           — advanced only, array of PATCH_OPTIONS.value
  * @param {string}   params.patchOtherText    — advanced only, si 'other' coché
  * @param {boolean} params.signed             — advanced only
- * @param {'player_flocked'|'team'|'other'|''} params.signedType   — advanced only
+ * @param {'player_flocked'|'team'|'other'|'handsigned'|'printed_sign'|''} params.signedType
  * @param {string}  params.signedOtherText    — advanced only, si type = 'other'
  * @param {'legend'|'star'|'none'} params.playerProfile            — si signed_type = player_flocked
  * @param {'none'|'light'|'strong'} params.signedProofLevel
+ * @param {boolean} params.signedPersonalMessage — message perso → dévalorise
  * @param {boolean} params.isRare             — advanced only
  * @param {string}  params.rareReason         — advanced only, text
  * @param {string}  params.otherInfo          — advanced only, text libre
@@ -114,6 +120,7 @@ export function calculateEstimation({
   signedOtherText = '',
   playerProfile = 'none',
   signedProofLevel = 'none',
+  signedPersonalMessage = false,
   // legacy support
   signedProof = false,
   hasPatch = false,       // legacy compat
@@ -178,6 +185,8 @@ export function calculateEstimation({
       const signedLabel = {
         player_flocked: 'Signed by flocked player',
         team: 'Signed by the team',
+        handsigned: 'Hand signed',
+        printed_sign: 'Printed sign (marketing)',
         other: `Signed: ${signedOtherText || 'other'}`,
       }[signedType] || 'Signed';
       breakdown.push({ label: signedLabel, coeff: signedC });
@@ -200,17 +209,28 @@ export function calculateEstimation({
         }
       }
 
-      // Proof level
-      const proofLevel = signedProofLevel !== 'none'
-        ? signedProofLevel
-        : signedProof ? 'light' : 'none';
-      const proofC = SIGNED_PROOF_COEFF[proofLevel] ?? 0;
-      if (proofC > 0) {
-        coeffSum += proofC;
-        const proofLabel = proofLevel === 'strong'
-          ? 'Proof: solid (photo/video + COA)'
-          : 'Proof: light certificate';
-        breakdown.push({ label: proofLabel, coeff: proofC });
+      // Message personnel — dévalorise la signature
+      if (signedPersonalMessage) {
+        coeffSum += SIGNED_PERSONAL_MESSAGE_COEFF;
+        breakdown.push({
+          label: 'Personal message (devalues pure signature)',
+          coeff: SIGNED_PERSONAL_MESSAGE_COEFF,
+        });
+      }
+
+      // Proof level — pas pertinent pour printed_sign
+      if (signedType !== 'printed_sign') {
+        const proofLevel = signedProofLevel !== 'none'
+          ? signedProofLevel
+          : signedProof ? 'light' : 'none';
+        const proofC = SIGNED_PROOF_COEFF[proofLevel] ?? 0;
+        if (proofC > 0) {
+          coeffSum += proofC;
+          const proofLabel = proofLevel === 'strong'
+            ? 'Proof: solid (photo/video + COA)'
+            : 'Proof: light certificate';
+          breakdown.push({ label: proofLabel, coeff: proofC });
+        }
       }
     } else if (signed && !signedType) {
       // Legacy fallback: signed = true but no type (old items)
