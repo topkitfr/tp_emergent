@@ -18,13 +18,20 @@ import EntityEditDialog from '@/components/EntityEditDialog';
 import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { useAuth } from '@/contexts/AuthContext';
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 const SCORE_TIER = (s) => {
   if (s >= 800) return { label: 'Légende', color: '#f59e0b' };
-  if (s >= 500) return { label: 'Elite',   color: '#a855f7' };
+  if (s >= 500) return { label: 'Elite', color: '#a855f7' };
   if (s >= 200) return { label: 'Confirmé', color: '#3b82f6' };
-  if (s >= 50)  return { label: 'Pro',      color: '#22c55e' };
-  return              { label: 'Émergent',  color: '#6b7280' };
+  if (s >= 50) return { label: 'Pro', color: '#22c55e' };
+  return { label: 'Émergent', color: '#6b7280' };
+};
+
+const NOTE_TIER = (n) => {
+  if (n >= 90) return { label: 'Mythique', color: '#f59e0b' };
+  if (n >= 80) return { label: 'Iconique', color: '#a855f7' };
+  if (n >= 70) return { label: 'Elite', color: '#3b82f6' };
+  if (n >= 55) return { label: 'Solide', color: '#22c55e' };
+  return { label: 'À développer', color: '#6b7280' };
 };
 
 const PLACE_META = (place) => {
@@ -35,14 +42,66 @@ const PLACE_META = (place) => {
   return { icon: '🎖️', label: place, order: 4 };
 };
 
-const formatTransfer = (amount) => {
-  if (!amount || amount === 0) return null;
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M€`;
-  if (amount >= 1_000) return `${Math.round(amount / 1_000)}K€`;
-  return `${amount}€`;
-};
+function ScoreBreakdown({ scoring }) {
+  const note = scoring?.note ?? null;
+  const breakdown = scoring?.note_breakdown || null;
 
-// ── SVG Area Chart (career timeline) ────────────────────────────────────────────
+  if (note === null || !breakdown) return null;
+
+  const tier = NOTE_TIER(note);
+  const rows = [
+    { key: 'palmares', label: 'Palmarès collectif', value: breakdown.palmares ?? 0, max: 40, hint: `${Math.round(breakdown.score_palmares_brut ?? 0)} pts bruts` },
+    { key: 'awards', label: 'Awards individuels', value: breakdown.awards ?? 0, max: 20, hint: `${Math.round(breakdown.score_awards_brut ?? 0)} pts bruts` },
+    { key: 'aura', label: 'Aura', value: breakdown.aura ?? 0, max: 25, hint: 'Vote communauté' },
+    { key: 'topkit', label: 'Présence TopKit', value: breakdown.topkit ?? 0, max: 15, hint: `${breakdown.topkit_kits_count ?? 0} maillot${(breakdown.topkit_kits_count ?? 0) > 1 ? 's' : ''}` },
+  ];
+
+  return (
+    <div className="border border-border bg-card p-4 sm:p-5">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>
+            NOTE GLOBALE
+          </p>
+          <div className="flex items-end gap-2">
+            <span className="text-4xl sm:text-5xl font-semibold tracking-tight leading-none">{note.toFixed(1)}</span>
+            <span className="text-sm text-muted-foreground pb-1">/ 100</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 border" style={{ borderColor: tier.color, color: tier.color, fontFamily: 'Barlow Condensed' }}>
+            {tier.label}
+          </span>
+        </div>
+      </div>
+
+      <div className="w-full h-2 bg-muted overflow-hidden mb-5">
+        <div className="h-full" style={{ width: `${Math.max(0, Math.min(note, 100))}%`, backgroundColor: tier.color }} />
+      </div>
+
+      <div className="space-y-3">
+        {rows.map((row) => {
+          const pct = row.max > 0 ? (row.value / row.max) * 100 : 0;
+          return (
+            <div key={row.key}>
+              <div className="flex items-center justify-between gap-3 mb-1">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{row.label}</p>
+                  <p className="text-[11px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{row.hint}</p>
+                </div>
+                <span className="text-xs font-mono shrink-0">{row.value.toFixed(1)} / {row.max}</span>
+              </div>
+              <div className="w-full h-2 bg-muted overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${Math.max(0, Math.min(pct, 100))}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CareerAreaChart({ points }) {
   const [tooltip, setTooltip] = useState(null);
   const svgRef = useRef(null);
@@ -58,16 +117,13 @@ function CareerAreaChart({ points }) {
 
   if (!points || points.length === 0) return null;
 
-  // Assign a cumulative "prestige" value per point for the Y axis.
-  // Loan = small step, Free = medium step, fee = proportional.
   const maxFee = Math.max(...points.map(p => p.amount || 0), 1);
   const yValues = points.map((p) => {
-    if (p.amount === null) return 0.15;        // Loan — petit bump
-    if (p.amount === 0)   return 0.3;          // Free — bump moyen
-    return 0.3 + (p.amount / maxFee) * 0.7;   // Fee — 0.3 → 1.0
+    if (p.amount === null) return 0.15;
+    if (p.amount === 0) return 0.3;
+    return 0.3 + (p.amount / maxFee) * 0.7;
   });
 
-  // Make cumulative so the line always goes up
   const cumY = [];
   let acc = 0;
   for (const v of yValues) {
@@ -82,12 +138,11 @@ function CareerAreaChart({ points }) {
     y: padT + chartH * (1 - cumY[i]),
   }));
 
-  // Smooth cubic bezier path
-  const linePath = coords.reduce((acc, pt, i) => {
+  const linePath = coords.reduce((accPath, pt, i) => {
     if (i === 0) return `M ${pt.x} ${pt.y}`;
     const prev = coords[i - 1];
     const cpx = (prev.x + pt.x) / 2;
-    return `${acc} C ${cpx} ${prev.y}, ${cpx} ${pt.y}, ${pt.x} ${pt.y}`;
+    return `${accPath} C ${cpx} ${prev.y}, ${cpx} ${pt.y}, ${pt.x} ${pt.y}`;
   }, '');
 
   const last = coords[coords.length - 1];
@@ -105,15 +160,12 @@ function CareerAreaChart({ points }) {
       >
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stopColor="hsl(174,65%,38%)" stopOpacity="0.35" />
+            <stop offset="0%" stopColor="hsl(174,65%,38%)" stopOpacity="0.35" />
             <stop offset="100%" stopColor="hsl(174,65%,38%)" stopOpacity="0.03" />
           </linearGradient>
         </defs>
 
-        {/* Area fill */}
         <path d={areaPath} fill="url(#areaGrad)" />
-
-        {/* Line */}
         <path
           d={linePath}
           fill="none"
@@ -123,7 +175,6 @@ function CareerAreaChart({ points }) {
           strokeLinejoin="round"
         />
 
-        {/* Points + logos */}
         {coords.map((pt, i) => {
           const p = points[i];
           const logoSize = 28;
@@ -134,14 +185,13 @@ function CareerAreaChart({ points }) {
           return (
             <g
               key={i}
-              onMouseEnter={(e) => {
+              onMouseEnter={() => {
                 const svgRect = svgRef.current?.getBoundingClientRect();
                 if (!svgRect) return;
                 setTooltip({ i, x: pt.x, y: pt.y, p });
               }}
               style={{ cursor: 'pointer' }}
             >
-              {/* Logo club destination */}
               {p.to_logo && (
                 <image
                   href={p.to_logo}
@@ -153,7 +203,6 @@ function CareerAreaChart({ points }) {
                 />
               )}
 
-              {/* Dot */}
               <circle
                 cx={pt.x}
                 cy={pt.y}
@@ -163,7 +212,6 @@ function CareerAreaChart({ points }) {
                 strokeWidth="2"
               />
 
-              {/* Season label */}
               <text
                 x={pt.x}
                 y={H - 2}
@@ -179,22 +227,19 @@ function CareerAreaChart({ points }) {
         })}
       </svg>
 
-      {/* Tooltip HTML (positionné par ratio SVG → conteneur) */}
       {tooltip && (() => {
         const svgRect = svgRef.current?.getBoundingClientRect();
         const scaleX = svgRect ? svgRect.width / W : 1;
         const scaleY = svgRect ? svgRect.height / H : 1;
         const leftPx = tooltip.x * scaleX;
-        const topPx  = tooltip.y * scaleY - 12;
+        const topPx = tooltip.y * scaleY - 12;
         return (
           <div
             className="pointer-events-none absolute z-10 border border-border bg-card px-3 py-2 text-xs shadow-lg"
             style={{
               left: leftPx,
               top: topPx,
-              transform: leftPx > (svgRect?.width || 400) * 0.65
-                ? 'translate(-100%, -100%)'
-                : 'translate(8px, -100%)',
+              transform: leftPx > (svgRect?.width || 400) * 0.65 ? 'translate(-100%, -100%)' : 'translate(8px, -100%)',
               fontFamily: 'DM Sans, sans-serif',
               minWidth: 160,
             }}
@@ -216,7 +261,6 @@ function CareerAreaChart({ points }) {
   );
 }
 
-// ── SECTION 2 : Career (timeline list + area chart) ────────────────────────────
 function CareerTransferSection({ entries, chartPoints, loading, chartLoading, hasApiId }) {
   const formatTransferLocal = (amount) => {
     if (!amount || amount === 0) return null;
@@ -245,7 +289,6 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
 
   return (
     <div className="space-y-6">
-      {/* Area chart */}
       {chartLoading ? (
         <div className="h-48 bg-muted animate-pulse rounded" />
       ) : chartPoints && chartPoints.length > 0 ? (
@@ -254,7 +297,6 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
         </div>
       ) : null}
 
-      {/* Timeline list */}
       {entries.length > 0 && (
         <div className="relative">
           <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
@@ -275,9 +317,7 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
                     <div className="min-w-0">
                       <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{entry.club}</p>
                       <p className="text-xs text-muted-foreground mt-0.5" style={{ fontFamily: 'DM Sans' }}>
-                        {entry.year_start && entry.year_end
-                          ? `${entry.year_start} – ${entry.year_end}`
-                          : entry.year_start || entry.date_start || '—'}
+                        {entry.year_start && entry.year_end ? `${entry.year_start} – ${entry.year_end}` : entry.year_start || entry.date_start || '—'}
                         {entry.from_club && <span className="ml-2 opacity-50">← {entry.from_club}</span>}
                       </p>
                     </div>
@@ -297,7 +337,9 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
                   {entry.topkit_kits?.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {entry.topkit_kits.map(kit => (
-                        <Link key={kit.kit_id} to={`/kit/${kit.kit_id}`}
+                        <Link
+                          key={kit.kit_id}
+                          to={`/kit/${kit.kit_id}`}
                           className="flex items-center gap-1.5 px-2 py-1 border border-border hover:border-primary/40 transition-colors bg-background text-xs"
                           style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
                         >
@@ -319,7 +361,6 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
   );
 }
 
-// ── SECTION 3 : Trophées + Awards perso ─────────────────────────────────────────────
 function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, enrichError, onEnrich, scoringLoading }) {
   const allTrophies = scoring?.trophies || player.honours || [];
 
@@ -389,6 +430,8 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
         </div>
       ) : (
         <div className="space-y-6">
+          <ScoreBreakdown scoring={scoring} />
+
           {hasTrophies && (
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -452,28 +495,27 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
   );
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
 export default function PlayerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const [player, setPlayer]         = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [showEdit, setShowEdit]     = useState(false);
-  const [following, setFollowing]   = useState(false);
+  const [player, setPlayer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showEdit, setShowEdit] = useState(false);
+  const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [aura, setAura]             = useState(null);
+  const [aura, setAura] = useState(null);
 
-  const [scoring, setScoring]               = useState(null);
+  const [scoring, setScoring] = useState(null);
   const [scoringLoading, setScoringLoading] = useState(false);
-  const [enrichLoading, setEnrichLoading]   = useState(false);
-  const [enrichError, setEnrichError]       = useState(null);
+  const [enrichLoading, setEnrichLoading] = useState(false);
+  const [enrichError, setEnrichError] = useState(null);
 
-  const [career, setCareer]               = useState(null);
+  const [career, setCareer] = useState(null);
   const [careerLoading, setCareerLoading] = useState(false);
 
-  const [chartPoints, setChartPoints]       = useState(null);
-  const [chartLoading, setChartLoading]     = useState(false);
+  const [chartPoints, setChartPoints] = useState(null);
+  const [chartLoading, setChartLoading] = useState(false);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -532,8 +574,11 @@ export default function PlayerDetail() {
         await followEntity({ target_type: 'player', target_id: player.player_id });
         setFollowing(true);
       }
-    } catch (e) { console.error(e); }
-    finally { setFollowLoading(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFollowLoading(false);
+    }
   };
 
   const handleAuraVote = async (score) => {
@@ -542,7 +587,9 @@ export default function PlayerDetail() {
       const res = await votePlayerAura(player.player_id, score);
       setAura(res.data);
       setPlayer(p => ({ ...p, aura_level: res.data.aura_level }));
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleEnrich = async () => {
@@ -562,14 +609,16 @@ export default function PlayerDetail() {
   };
 
   if (loading) return <EntityDetailSkeleton />;
-  if (!player) return (
-    <div className="px-4 lg:px-8 py-16 text-center">
-      <p className="text-muted-foreground">Player not found</p>
-    </div>
-  );
+  if (!player) {
+    return (
+      <div className="px-4 lg:px-8 py-16 text-center">
+        <p className="text-muted-foreground">Player not found</p>
+      </div>
+    );
+  }
 
   const isPending = player.status === 'pending' || player.status === 'for_review';
-  const canEdit   = !!authUser;
+  const canEdit = !!authUser;
 
   const versions = player.versions || [];
   const kitsSeen = new Set();
@@ -591,8 +640,6 @@ export default function PlayerDetail() {
 
   return (
     <div className="animate-fade-in-up" data-testid="player-detail-page">
-
-      {/* SECTION 1 — IDENTITÉ */}
       <div className="border-b border-border px-4 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
           <Link to="/players" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
@@ -601,10 +648,11 @@ export default function PlayerDetail() {
 
           <div className="flex flex-col sm:flex-row items-start gap-6">
             <div className="shrink-0 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border w-24 h-24">
-              {player.photo_url
-                ? <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-24 h-24 object-cover rounded-full" />
-                : <User className="w-10 h-10 text-muted-foreground" />
-              }
+              {player.photo_url ? (
+                <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-24 h-24 object-cover rounded-full" />
+              ) : (
+                <User className="w-10 h-10 text-muted-foreground" />
+              )}
             </div>
 
             <div className="flex-1 min-w-0">
@@ -665,9 +713,14 @@ export default function PlayerDetail() {
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>AURA</span>
                 <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map(level => (
-                    <button key={level} type="button" onClick={() => handleAuraVote(level)} disabled={!authUser}
-                      className={`p-0.5 transition-transform hover:scale-110 focus:outline-none ${!authUser ? 'cursor-default' : 'cursor-pointer'}`}>
+                  {[1, 2, 3, 4, 5].map(level => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => handleAuraVote(level)}
+                      disabled={!authUser}
+                      className={`p-0.5 transition-transform hover:scale-110 focus:outline-none ${!authUser ? 'cursor-default' : 'cursor-pointer'}`}
+                    >
                       <svg className={`w-5 h-5 ${level <= (aura?.aura_level || player?.aura_level || 1) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30 fill-transparent'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                       </svg>
@@ -675,10 +728,16 @@ export default function PlayerDetail() {
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                  {aura
-                    ? <><span className="font-mono text-foreground">{aura.aura_avg?.toFixed(1) || '—'}</span><span className="ml-1 text-xs">/ 5</span><span className="ml-2 text-xs">({aura.aura_votes} vote{aura.aura_votes !== 1 ? 's' : ''})</span>{aura.your_vote && <span className="ml-2 text-xs text-primary">· ton vote : {aura.your_vote}★</span>}</>
-                    : <span className="text-xs">Aucun vote</span>
-                  }
+                  {aura ? (
+                    <>
+                      <span className="font-mono text-foreground">{aura.aura_avg?.toFixed(1) || '—'}</span>
+                      <span className="ml-1 text-xs">/ 5</span>
+                      <span className="ml-2 text-xs">({aura.aura_votes} vote{aura.aura_votes !== 1 ? 's' : ''})</span>
+                      {aura.your_vote && <span className="ml-2 text-xs text-primary">· ton vote : {aura.your_vote}★</span>}
+                    </>
+                  ) : (
+                    <span className="text-xs">Aucun vote</span>
+                  )}
                 </span>
               </div>
             </div>
@@ -686,7 +745,6 @@ export default function PlayerDetail() {
         </div>
       </div>
 
-      {/* SECTION 2 — CARRIÈRE & TRANSFERTS */}
       <div className="border-b border-border px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-5" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -702,7 +760,6 @@ export default function PlayerDetail() {
         </div>
       </div>
 
-      {/* SECTION 3 — PALMARÈS */}
       <div className="border-b border-border px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-5" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -721,7 +778,6 @@ export default function PlayerDetail() {
         </div>
       </div>
 
-      {/* SECTION 4 — CAREER IN SHIRTS */}
       <div className="px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-5">
@@ -746,10 +802,11 @@ export default function PlayerDetail() {
               {visibleKits.map(kit => (
                 <Link to={`/kit/${kit.kit_id}`} key={kit.kit_id} className="border border-border bg-card hover:border-primary/40 transition-colors duration-200 group">
                   <div className="aspect-[3/4] overflow-hidden bg-muted">
-                    {kit.front_photo
-                      ? <img src={proxyImageUrl(kit.front_photo)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                      : <div className="w-full h-full flex items-center justify-center"><Shirt className="w-8 h-8 text-muted-foreground opacity-30" /></div>
-                    }
+                    {kit.front_photo ? (
+                      <img src={proxyImageUrl(kit.front_photo)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Shirt className="w-8 h-8 text-muted-foreground opacity-30" /></div>
+                    )}
                   </div>
                   <div className="p-2">
                     <p className="text-xs font-medium truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{kit.club}</p>
@@ -776,16 +833,16 @@ export default function PlayerDetail() {
           mode="edit"
           entityId={player.player_id}
           initialData={{
-            full_name:          player.full_name,
-            nationality:        player.nationality,
-            birth_date:         player.birth_date || '',
-            birth_year:         player.birth_year,
-            bio:                player.bio || '',
-            positions:          player.positions?.join(', ') || '',
-            preferred_number:   player.preferred_number,
-            photo_url:          player.photo_url,
-            apifootball_id:     player.apifootball_id || '',
-            individual_awards:  player.individual_awards || [],
+            full_name: player.full_name,
+            nationality: player.nationality,
+            birth_date: player.birth_date || '',
+            birth_year: player.birth_year,
+            bio: player.bio || '',
+            positions: player.positions?.join(', ') || '',
+            preferred_number: player.preferred_number,
+            photo_url: player.photo_url,
+            apifootball_id: player.apifootball_id || '',
+            individual_awards: player.individual_awards || [],
           }}
           onSuccess={loadData}
         />
