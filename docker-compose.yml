@@ -65,16 +65,6 @@ services:
     volumes:
       - gitea_data:/data
 
-  # ── pgAdmin ───────────────────────────────────────────────────────────────────
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    restart: always
-    expose:
-      - "80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@topkit.app"
-      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
-
   # ── Certificat Let's Encrypt ─────────────────────────────────────────────────
   certbot:
     image: certbot/certbot

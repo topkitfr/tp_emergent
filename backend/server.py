@@ -74,9 +74,6 @@ CORS_ORIGINS = os.environ.get(
         "http://127.0.0.1:3000",
         "https://topkit.app",
         "https://www.topkit.app",
-        "https://api.topkit.app",
-        "https://tp-emergent.onrender.com",
-        "https://tp-emergent-1.onrender.com",
     ])
 ).split(",")
 
@@ -158,7 +155,7 @@ async def rate_limit_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=429,
             content={"detail": "Too many requests. Please slow down."},
-            headers={"Retry-After": str(window), **_cors_headers_for(request)},
+            headers={"Retry-After": str(window)},
         )
     _rate_limit_store[key].append(now)
     return await call_next(request)
@@ -169,18 +166,10 @@ async def security_headers_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
     except Exception as exc:
-        origin = request.headers.get("origin", "")
-        cors_headers = {}
-        if origin in CORS_ORIGINS:
-            cors_headers = {
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Credentials": "true",
-            }
         logger.error(f"Unhandled exception on {request.url.path}: {exc}")
         return JSONResponse(
             status_code=500,
             content={"detail": "Internal server error"},
-            headers=cors_headers,
         )
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -212,7 +201,7 @@ app.include_router(admin_router)
 app.include_router(admin_panel_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
-app.include_router(beta_router, prefix="/api/beta", tags=["beta"])
+app.include_router(beta_router)
 app.include_router(players_scoring_router)
 app.include_router(leagues_api_router)          # ← recherche leagues DB-first
 app.include_router(teams_api_router)            # ← recherche clubs DB-first
