@@ -86,18 +86,10 @@ async def _match_kits(club: str, year_start: str | None, year_end: str | None, l
     return matched, total
 
 
-async def _count_all_player_kits(career: list) -> int:
-    """Compte le nombre total de maillots TopKit liés à la carrière d'un joueur."""
-    total = 0
-    for entry in career:
-        _, count = await _match_kits(
-            entry.get("club", ""),
-            entry.get("year_start"),
-            entry.get("year_end"),
-            limit=None,
-        )
-        total += count
-    return total
+async def _count_all_player_kits(player_id: str) -> int:
+    """Compte le nombre d'items TopKit floqués au nom du joueur."""
+    count = await db["collections"].count_documents({"flocking_player_id": player_id})
+    return count
 
 
 # ── routes STATIQUES (doivent être déclarées AVANT /{player_id}) ─────────────
@@ -140,13 +132,35 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     individual_awards = player.get("individual_awards", [])
     score_palmares = compute_score_palmares(honours_raw)
 
-    # Calcul du nombre de maillots TopKit via la carrière stockée
-    career_raw = player.get("career", [])
-    topkit_kits_count = await _count_all_player_kits(career_raw)
+    # Récupère et persiste la carrière depuis API-Football
+    try:
+        transfers = await lookup_career(body.apifootball_id)
+        sorted_transfers = sorted(transfers, key=lambda x: x["date"] or "")
+        career_clean = []
+        for i, t in enumerate(sorted_transfers):
+            date_end = sorted_transfers[i + 1]["date"] if i + 1 < len(sorted_transfers) else None
+            career_clean.append({
+                "club": t["club"],
+                "team_logo": t["team_logo"],
+                "from_club": t["from_club"],
+                "date_start": t["date"],
+                "date_end": date_end,
+                "year_start": _extract_year(t["date"]),
+                "year_end": _extract_year(date_end),
+                "transfer_type": t.get("transfer_type", ""),
+            })
+        career_clean.reverse()
+    except Exception:
+        career_clean = player.get("career", [])
 
+    # Calcul du nombre de maillots TopKit via la carrière fraîche
+    topkit_kits_count = await _count_all_player_kits(body.player_id)
+
+    # Lire aura_avg depuis la DB (ne jamais écraser avec body.aura)
+    aura_db = player.get("aura", 0.0)
     note, note_breakdown = compute_note(
         score_palmares=score_palmares,
-        aura=body.aura,
+        aura=aura_db,
         individual_awards=individual_awards,
         topkit_kits_count=topkit_kits_count,
     )
@@ -157,8 +171,9 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
         {"$set": {
             "apifootball_id": body.apifootball_id,
             "honours": honours_clean,
+            "career": career_clean,
             "score_palmares": score_palmares,
-            "aura": body.aura,
+
             "note": note,
             "note_breakdown": note_breakdown,
             "updated_at": now,
@@ -171,7 +186,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
         apifootball_id=body.apifootball_id,
         honours_count=len(honours_clean),
         score_palmares=score_palmares,
-        aura=body.aura,
+        aura=aura_db,
         note=note,
         note_breakdown=note_breakdown,
         updated_at=now,
@@ -242,18 +257,8 @@ async def get_player_full(player_id: str):
         except Exception:
             pass
 
-    all_topkit_kits = []
-    for entry in career:
-        kits, _ = await _match_kits(
-            entry["club"],
-            entry.get("year_start"),
-            entry.get("year_end"),
-            limit=None,
-        )
-        all_topkit_kits.extend(kits)
-
-    topkit_kits_total = len(all_topkit_kits)
-    topkit_kits_preview = all_topkit_kits[:KITS_PREVIEW_LIMIT]
+    topkit_kits_total = await _count_all_player_kits(player_id)
+    topkit_kits_preview = []
 
     individual_awards = player.get("individual_awards", [])
 
@@ -272,6 +277,7 @@ async def get_player_full(player_id: str):
     aura = player.get("aura", 0.0)
 
     # Recalcul de la note avec toutes les données fraîches (maillots issus de la carrière live)
+    # Lire aura_avg depuis la DB (ne jamais écraser avec body.aura)
     note, note_breakdown = compute_note(
         score_palmares=score_palmares,
         aura=aura,
@@ -366,8 +372,9 @@ async def update_player_aura(player_id: str, aura: float = Query(..., ge=0, le=1
 
     # Compte les maillots TopKit via la carrière stockée en DB
     career_raw = player.get("career", [])
-    topkit_kits_count = await _count_all_player_kits(career_raw)
+    topkit_kits_count = await _count_all_player_kits(player_id)
 
+    # Lire aura_avg depuis la DB (ne jamais écraser avec body.aura)
     note, note_breakdown = compute_note(
         score_palmares=score_palmares,
         aura=aura,
