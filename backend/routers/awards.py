@@ -28,6 +28,25 @@ def _clean_awards(awards: list) -> list:
     return [a for a in awards if a.get("award_id")]
 
 
+async def _get_player_aura_and_kits(player: dict) -> tuple[float, int]:
+    """Retourne (aura_sur_100, topkit_kits_count) pour un joueur.
+
+    - aura : aura_avg (0-10) * 10 → 0-100. Fallback sur champ 'aura' si absent.
+    - topkit_kits_count : compté en temps réel depuis la collection kits.
+    """
+    aura_avg = player.get("aura_avg")
+    if aura_avg is not None:
+        aura = float(aura_avg) * 10.0
+    else:
+        # fallback : ancien champ 'aura' déjà sur 100
+        aura = float(player.get("aura") or 0.0)
+
+    player_id = player["player_id"]
+    topkit_kits_count = await db["kits"].count_documents({"player_ids": player_id})
+
+    return aura, topkit_kits_count
+
+
 # ── Référentiel awards ────────────────────────────────────────────────────────
 
 @router.get("", response_model=list[AwardOut])
@@ -107,20 +126,15 @@ async def add_player_award(player_id: str, body: dict):
         "count": int(body.get("count", 1)),
     }
 
-    # Filtre les anciens documents malformés puis ajoute/remplace l'entrée
     existing_awards = _clean_awards(player.get("individual_awards", []))
     updated_awards = [a for a in existing_awards
                       if not (a.get("award_id") == entry["award_id"] and a.get("year") == entry["year"])]
     updated_awards.append(entry)
 
-    # Recalcul score — compute_note retourne (note, breakdown)
     honours = player.get("honours", [])
     score_palmares = compute_score_palmares(honours)
-    aura = player.get("aura", 0.0)
-    topkit_kits_count = player.get("topkit_kits_count", 0)
-    note, note_breakdown = compute_note(
-        score_palmares, aura, updated_awards, topkit_kits_count
-    )
+    aura, topkit_kits_count = await _get_player_aura_and_kits(player)
+    note, note_breakdown = compute_note(score_palmares, aura, updated_awards, topkit_kits_count)
     now = datetime.now(timezone.utc).isoformat()
 
     await db["players"].update_one(
@@ -130,6 +144,7 @@ async def add_player_award(player_id: str, body: dict):
             "score_palmares": score_palmares,
             "note": note,
             "note_breakdown": note_breakdown,
+            "topkit_kits_count": topkit_kits_count,
             "updated_at": now,
         }}
     )
@@ -157,14 +172,10 @@ async def remove_player_award(player_id: str, award_id: str, year: str = ""):
     else:
         updated_awards = [a for a in existing_awards if a.get("award_id") != award_id]
 
-    # Recalcul score — compute_note retourne (note, breakdown)
     honours = player.get("honours", [])
     score_palmares = compute_score_palmares(honours)
-    aura = player.get("aura", 0.0)
-    topkit_kits_count = player.get("topkit_kits_count", 0)
-    note, note_breakdown = compute_note(
-        score_palmares, aura, updated_awards, topkit_kits_count
-    )
+    aura, topkit_kits_count = await _get_player_aura_and_kits(player)
+    note, note_breakdown = compute_note(score_palmares, aura, updated_awards, topkit_kits_count)
     now = datetime.now(timezone.utc).isoformat()
 
     await db["players"].update_one(
@@ -174,6 +185,7 @@ async def remove_player_award(player_id: str, award_id: str, year: str = ""):
             "score_palmares": score_palmares,
             "note": note,
             "note_breakdown": note_breakdown,
+            "topkit_kits_count": topkit_kits_count,
             "updated_at": now,
         }}
     )
