@@ -55,7 +55,7 @@ async def update_award(award_id: str, body: dict):
     award = await db["awards"].find_one({"award_id": award_id})
     if not award:
         raise HTTPException(status_code=404, detail="Award introuvable")
-    
+
     allowed = {"name", "category", "scoring_weight", "logo_url", "description"}
     update = {k: v for k, v in body.items() if k in allowed}
     update["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -106,10 +106,14 @@ async def add_player_award(player_id: str, body: dict):
                       if not (a["award_id"] == entry["award_id"] and a.get("year") == entry["year"])]
     updated_awards.append(entry)
 
-    # Recalcul score
+    # Recalcul score — compute_note retourne (note, breakdown)
     honours = player.get("honours", [])
-    score_palmares = compute_score_palmares(honours, updated_awards)
-    note = compute_note(score_palmares, player.get("aura", 0.0))
+    score_palmares = compute_score_palmares(honours)
+    aura = player.get("aura", 0.0)
+    topkit_kits_count = player.get("topkit_kits_count", 0)
+    note, note_breakdown = compute_note(
+        score_palmares, aura, updated_awards, topkit_kits_count
+    )
     now = datetime.now(timezone.utc).isoformat()
 
     await db["players"].update_one(
@@ -118,6 +122,7 @@ async def add_player_award(player_id: str, body: dict):
             "individual_awards": updated_awards,
             "score_palmares": score_palmares,
             "note": note,
+            "note_breakdown": note_breakdown,
             "updated_at": now,
         }}
     )
@@ -127,6 +132,7 @@ async def add_player_award(player_id: str, body: dict):
         "individual_awards": updated_awards,
         "score_palmares": score_palmares,
         "note": note,
+        "note_breakdown": note_breakdown,
     }
 
 
@@ -144,9 +150,14 @@ async def remove_player_award(player_id: str, award_id: str, year: str = ""):
     else:
         updated_awards = [a for a in existing_awards if a["award_id"] != award_id]
 
+    # Recalcul score — compute_note retourne (note, breakdown)
     honours = player.get("honours", [])
-    score_palmares = compute_score_palmares(honours, updated_awards)
-    note = compute_note(score_palmares, player.get("aura", 0.0))
+    score_palmares = compute_score_palmares(honours)
+    aura = player.get("aura", 0.0)
+    topkit_kits_count = player.get("topkit_kits_count", 0)
+    note, note_breakdown = compute_note(
+        score_palmares, aura, updated_awards, topkit_kits_count
+    )
     now = datetime.now(timezone.utc).isoformat()
 
     await db["players"].update_one(
@@ -155,6 +166,7 @@ async def remove_player_award(player_id: str, award_id: str, year: str = ""):
             "individual_awards": updated_awards,
             "score_palmares": score_palmares,
             "note": note,
+            "note_breakdown": note_breakdown,
             "updated_at": now,
         }}
     )
@@ -164,4 +176,5 @@ async def remove_player_award(player_id: str, award_id: str, year: str = ""):
         "individual_awards": updated_awards,
         "score_palmares": score_palmares,
         "note": note,
+        "note_breakdown": note_breakdown,
     }
