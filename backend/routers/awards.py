@@ -21,6 +21,13 @@ from ..services.thesportsdb import compute_score_palmares, compute_note
 router = APIRouter(prefix="/api/awards", tags=["awards"])
 
 
+# ── Helpers ────────────────────────────────────────────────────────────
+
+def _clean_awards(awards: list) -> list:
+    """Filtre les entrées malformées (sans award_id) dans individual_awards."""
+    return [a for a in awards if a.get("award_id")]
+
+
 # ── Référentiel awards ────────────────────────────────────────────────────────
 
 @router.get("", response_model=list[AwardOut])
@@ -100,10 +107,10 @@ async def add_player_award(player_id: str, body: dict):
         "count": int(body.get("count", 1)),
     }
 
-    # Ajoute ou remplace l'entrée pour ce award_id + year
-    existing_awards = player.get("individual_awards", [])
+    # Filtre les anciens documents malformés puis ajoute/remplace l'entrée
+    existing_awards = _clean_awards(player.get("individual_awards", []))
     updated_awards = [a for a in existing_awards
-                      if not (a["award_id"] == entry["award_id"] and a.get("year") == entry["year"])]
+                      if not (a.get("award_id") == entry["award_id"] and a.get("year") == entry["year"])]
     updated_awards.append(entry)
 
     # Recalcul score — compute_note retourne (note, breakdown)
@@ -143,12 +150,12 @@ async def remove_player_award(player_id: str, award_id: str, year: str = ""):
     if not player:
         raise HTTPException(status_code=404, detail="Joueur introuvable")
 
-    existing_awards = player.get("individual_awards", [])
+    existing_awards = _clean_awards(player.get("individual_awards", []))
     if year:
         updated_awards = [a for a in existing_awards
-                          if not (a["award_id"] == award_id and a.get("year") == year)]
+                          if not (a.get("award_id") == award_id and a.get("year") == year)]
     else:
-        updated_awards = [a for a in existing_awards if a["award_id"] != award_id]
+        updated_awards = [a for a in existing_awards if a.get("award_id") != award_id]
 
     # Recalcul score — compute_note retourne (note, breakdown)
     honours = player.get("honours", [])
