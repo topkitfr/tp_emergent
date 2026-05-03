@@ -32,17 +32,22 @@ async def _get_player_aura_and_kits(player: dict) -> tuple[float, int]:
     """Retourne (aura_sur_100, topkit_kits_count) pour un joueur.
 
     - aura : aura_avg (0-10) * 10 → 0-100. Fallback sur champ 'aura' si absent.
-    - topkit_kits_count : compté en temps réel depuis la collection kits.
+    - topkit_kits_count : nb de collection items où le joueur est flocqué ou signataire.
+      Champs concernés : flocking_player_id, signed_by_player_id.
     """
     aura_avg = player.get("aura_avg")
     if aura_avg is not None:
         aura = float(aura_avg) * 10.0
     else:
-        # fallback : ancien champ 'aura' déjà sur 100
         aura = float(player.get("aura") or 0.0)
 
-    player_id = player["player_id"]
-    topkit_kits_count = await db["kits"].count_documents({"player_ids": player_id})
+    pid = player["player_id"]
+    topkit_kits_count = await db["collections"].count_documents({
+        "$or": [
+            {"flocking_player_id": pid},
+            {"signed_by_player_id": pid},
+        ]
+    })
 
     return aura, topkit_kits_count
 
