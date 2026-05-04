@@ -10,6 +10,7 @@ import { createSubmission } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import ApiFootballSearch from '@/components/ApiFootballSearch';
 import IndividualAwardsField from '@/components/IndividualAwardsField';
+import CareerField from '@/components/CareerField';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 
@@ -127,6 +128,8 @@ const ENTITY_CONFIGS = {
       { key: 'preferred_foot',      label: 'Preferred Foot',           type: 'select', options: FOOT_OPTIONS },
       { key: 'preferred_number',    label: 'Preferred Number',         type: 'number' },
       { key: 'positions',           label: 'Positions',                type: 'positions', span: 2 },
+      { key: '_career_divider',     label: 'Carrière & Transferts',    type: 'divider', span: 2 },
+      { key: 'career',              label: 'Carrière',                 type: 'career', span: 2 },
       { key: 'individual_awards',   label: 'Distinctions individuelles', type: 'individual_awards', span: 2 },
       { key: 'bio',                 label: 'Bio',                      type: 'textarea', span: 2 },
     ],
@@ -183,6 +186,7 @@ export default function EntityEditDialog({
       preferred_foot:    player.preferred_foot   || prev.preferred_foot   || '',
       preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
       individual_awards: prev.individual_awards  || [],
+      career:            prev.career             || [],
       positions:         normalizedPositions.length > 0 ? normalizedPositions : (prev.positions || []),
       apifootball_id:    player.apifootball_id   ?? prev.apifootball_id,
     }));
@@ -262,10 +266,9 @@ export default function EntityEditDialog({
       delete payload._stadium_divider;
       delete payload._stadiumimg_divider;
       delete payload._flag_preview;
+      delete payload._career_divider;
 
       // ── En mode edit : ne soumettre les champs image QUE si l'user en a uploadé une nouvelle
-      // Si la valeur image = celle d'initialData → l'user n'a rien changé → on supprime du payload
-      // pour éviter d'écraser la DB avec l'ancienne URL
       if (mode === 'edit') {
         for (const imgField of IMAGE_FIELDS) {
           if (imgField in payload && payload[imgField] === (initialData[imgField] || '')) {
@@ -394,6 +397,15 @@ export default function EntityEditDialog({
               style={labelStyle}>{pos}</button>
           ))}
         </div>
+      );
+    }
+
+    if (f.type === 'career') {
+      return (
+        <CareerField
+          value={form.career || []}
+          onChange={val => handleChange('career', val)}
+        />
       );
     }
 
