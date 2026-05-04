@@ -133,25 +133,29 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
     score_palmares = compute_score_palmares(honours_raw)
 
     # Récupère et persiste la carrière depuis API-Football
+    # Ne pas écraser la carrière DB si l'API retourne vide
+    career_clean = player.get("career", [])  # fallback sur la carrière existante
     try:
         transfers = await lookup_career(body.apifootball_id)
-        sorted_transfers = sorted(transfers, key=lambda x: x["date"] or "")
-        career_clean = []
-        for i, t in enumerate(sorted_transfers):
-            date_end = sorted_transfers[i + 1]["date"] if i + 1 < len(sorted_transfers) else None
-            career_clean.append({
-                "club": t["club"],
-                "team_logo": t["team_logo"],
-                "from_club": t["from_club"],
-                "date_start": t["date"],
-                "date_end": date_end,
-                "year_start": _extract_year(t["date"]),
-                "year_end": _extract_year(date_end),
-                "transfer_type": t.get("transfer_type", ""),
-            })
-        career_clean.reverse()
+        if transfers:  # seulement si l'API retourne des données
+            sorted_transfers = sorted(transfers, key=lambda x: x["date"] or "")
+            career_from_api = []
+            for i, t in enumerate(sorted_transfers):
+                date_end = sorted_transfers[i + 1]["date"] if i + 1 < len(sorted_transfers) else None
+                career_from_api.append({
+                    "club": t["club"],
+                    "team_logo": t["team_logo"],
+                    "from_club": t["from_club"],
+                    "date_start": t["date"],
+                    "date_end": date_end,
+                    "year_start": _extract_year(t["date"]),
+                    "year_end": _extract_year(date_end),
+                    "transfer_type": t.get("transfer_type", ""),
+                })
+            career_from_api.reverse()
+            career_clean = career_from_api
     except Exception:
-        career_clean = player.get("career", [])
+        pass  # garde la carrière DB existante
 
     # Calcul du nombre de maillots TopKit via la carrière fraîche
     topkit_kits_count = await _count_all_player_kits(body.player_id)
@@ -173,7 +177,6 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
             "honours": honours_clean,
             "career": career_clean,
             "score_palmares": score_palmares,
-
             "note": note,
             "note_breakdown": note_breakdown,
             "updated_at": now,
@@ -402,11 +405,8 @@ async def update_player_aura(player_id: str, aura: float = Query(..., ge=0, le=1
     honours = player.get("honours", [])
     score_palmares = compute_score_palmares(honours)
 
-    # Compte les maillots TopKit via la carrière stockée en DB
-    career_raw = player.get("career", [])
     topkit_kits_count = await _count_all_player_kits(player_id)
 
-    # Lire aura_avg depuis la DB (ne jamais écraser avec body.aura)
     note, note_breakdown = compute_note(
         score_palmares=score_palmares,
         aura=aura,
