@@ -199,7 +199,7 @@ async def enrich_player_scoring(body: PlayerScoringEnrichRequest):
 async def get_player_full(player_id: str):
     """Fiche complète d'un joueur :
       - identité (DB + API-Football si apifootball_id)
-      - carrière clubs + montant transfert
+      - carrière clubs (API-Football si dispo, sinon DB)
       - maillots Topkit (5 max + total)
       - trophées individuels
       - palmarès collectif (Winner / 2nd Place)
@@ -235,27 +235,37 @@ async def get_player_full(player_id: str):
         "apifootball_id": apifootball_id or "",
     }
 
+    # Carrière : API-Football en priorité, sinon fallback sur la DB (entrées manuelles)
     career = []
     if apifootball_id:
         try:
             transfers = await lookup_career(apifootball_id)
-            sorted_transfers = sorted(transfers, key=lambda x: x["date"] or "")
-            for i, t in enumerate(sorted_transfers):
-                date_end = sorted_transfers[i + 1]["date"] if i + 1 < len(sorted_transfers) else None
-                career.append({
-                    "club": t["club"],
-                    "team_logo": t["team_logo"],
-                    "from_club": t["from_club"],
-                    "from_club_logo": t.get("from_club_logo", ""),
-                    "date_start": t["date"],
-                    "date_end": date_end,
-                    "year_start": _extract_year(t["date"]),
-                    "year_end": _extract_year(date_end),
-                    "transfer_type": t.get("transfer_type", ""),
-                })
-            career.reverse()
+            if transfers:
+                sorted_transfers = sorted(transfers, key=lambda x: x["date"] or "")
+                for i, t in enumerate(sorted_transfers):
+                    date_end = sorted_transfers[i + 1]["date"] if i + 1 < len(sorted_transfers) else None
+                    career.append({
+                        "club": t["club"],
+                        "team_logo": t["team_logo"],
+                        "from_club": t["from_club"],
+                        "from_club_logo": t.get("from_club_logo", ""),
+                        "date_start": t["date"],
+                        "date_end": date_end,
+                        "year_start": _extract_year(t["date"]),
+                        "year_end": _extract_year(date_end),
+                        "transfer_type": t.get("transfer_type", ""),
+                        "source": "api",
+                    })
+                career.reverse()
         except Exception:
             pass
+
+    # Fallback DB si l'API n'a rien retourné (pas d'apifootball_id ou API vide)
+    if not career:
+        career = [
+            {**entry, "source": "manual"}
+            for entry in player.get("career", [])
+        ]
 
     topkit_kits_total = await _count_all_player_kits(player_id)
     topkit_kits_preview = []
@@ -276,8 +286,6 @@ async def get_player_full(player_id: str):
     score_palmares = player.get("score_palmares", 0.0)
     aura = player.get("aura", 0.0)
 
-    # Recalcul de la note avec toutes les données fraîches (maillots issus de la carrière live)
-    # Lire aura_avg depuis la DB (ne jamais écraser avec body.aura)
     note, note_breakdown = compute_note(
         score_palmares=score_palmares,
         aura=aura,
@@ -303,19 +311,42 @@ async def get_player_full(player_id: str):
 
 @router.get("/{player_id}/career")
 async def get_player_career(player_id: str):
-    """Retourne la carrière clubs d'un joueur avec les maillots Topkit liés."""
+    """Retourne la carrière clubs d'un joueur avec les maillots Topkit liés.
+    Fallback sur la carrière DB si pas d'apifootball_id ou API vide.
+    """
     player = await db["players"].find_one({"player_id": player_id})
     if not player:
         raise HTTPException(status_code=404, detail="Joueur introuvable")
 
     apifootball_id = player.get("apifootball_id") or player.get("tsdb_id")
-    if not apifootball_id:
-        return {"career": [], "has_apifootball_id": False}
 
-    try:
-        transfers = await lookup_career(apifootball_id)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API-Football error: {str(e)}")
+    # Tente l'API si on a un ID
+    transfers = []
+    if apifootball_id:
+        try:
+            transfers = await lookup_career(apifootball_id)
+        except Exception:
+            transfers = []
+
+    # Fallback DB si l'API est vide
+    if not transfers:
+        db_career = player.get("career", [])
+        if not db_career:
+            return {"player_id": player_id, "has_apifootball_id": bool(apifootball_id), "career": [], "source": "none"}
+
+        career = []
+        for entry in db_career:
+            year_start = entry.get("year_start") or _extract_year(entry.get("date_start", ""))
+            year_end = entry.get("year_end") or _extract_year(entry.get("date_end", ""))
+            club = entry.get("club", "")
+            kits, total = await _match_kits(club, year_start, year_end)
+            career.append({
+                **entry,
+                "topkit_kits": kits,
+                "topkit_kits_total": total,
+                "source": "manual",
+            })
+        return {"player_id": player_id, "has_apifootball_id": bool(apifootball_id), "career": career, "source": "manual"}
 
     sorted_transfers = sorted(transfers, key=lambda x: x["date"] or "")
     career = []
@@ -336,9 +367,10 @@ async def get_player_career(player_id: str):
             "transfer_type": t.get("transfer_type", ""),
             "topkit_kits": kits,
             "topkit_kits_total": total,
+            "source": "api",
         })
     career.reverse()
-    return {"player_id": player_id, "has_apifootball_id": True, "career": career}
+    return {"player_id": player_id, "has_apifootball_id": True, "career": career, "source": "api"}
 
 
 @router.get("/{player_id}", response_model=PlayerScoringOut)
