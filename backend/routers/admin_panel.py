@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 from ..database import db
 from ..auth import get_current_user
+from ..utils import safe_regex
 
 router = APIRouter(prefix="/api/admin", tags=["admin-panel"])
 
@@ -73,10 +74,11 @@ async def list_users(
 
     query: dict = {}
     if search:
+        s = safe_regex(search)
         query["$or"] = [
-            {"name":     {"$regex": search, "$options": "i"}},
-            {"email":    {"$regex": search, "$options": "i"}},
-            {"username": {"$regex": search, "$options": "i"}},
+            {"name":     {"$regex": s, "$options": "i"}},
+            {"email":    {"$regex": s, "$options": "i"}},
+            {"username": {"$regex": s, "$options": "i"}},
         ]
     if role:
         query["role"] = role

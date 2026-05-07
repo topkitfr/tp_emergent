@@ -1,0 +1,29 @@
+# Virtual envs (jamais dans l'image)
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Données seed locales — ne pas embarquer dans l'image
+# (les scripts d'import lisent CSV_PATH en argument, cf. import_kits.py)
+*.csv
+*.xlsx
+*.xls
+
+# Scripts de migration / one-shot — pas nécessaires en runtime
+scripts/
+
+# Tests (ne tournent pas dans le conteneur prod)
+tests/
+
+# IDE & system
+.vscode/
+.idea/
+.DS_Store
+
+# Git / config dev
+.git/
+.gitignore
+.env
+.env.*

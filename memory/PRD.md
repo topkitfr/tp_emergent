@@ -1,199 +1,232 @@
-# Topkit - Football Jersey Database PRD
+# Topkit — Product Requirements & Architecture
 
-## Problem Statement
-Create a web application for cataloging football jerseys, similar to Discogs.com but focused on football jerseys. Extended with structured entity system for Teams, Leagues, Brands, and Players with moderation workflows.
+> _Document vivant. Mis à jour le 7 mai 2026 après audit de reprise._
+> _Source de vérité pour l'architecture cible. Chaque déviation par rapport à ce document doit être motivée et le doc mis à jour._
 
-## Architecture
-- **Frontend**: React + Tailwind CSS + Shadcn/UI
-- **Backend**: FastAPI (Python) - Modular router architecture
-- **Database**: MongoDB
-- **Auth**: Emergent-managed Google OAuth
-- **Media**: Freebox NAS `/TP_media/` via receiver FastAPI (port 8001) + Cloudflare Tunnel
-  - Images servies via `/api/images/{path}` (proxy Cloudflare → NAS)
-  - Toute image (API ou upload manuel) passe par la Freebox avant d'être stockée en base
+## 1. Problème
 
-## Backend Structure (Refactored Feb 18, 2026)
+Web app de catalogage et de gestion de collections de maillots de foot — modèle Discogs adapté au foot. Système d'entités structurées (Teams, Leagues, Brands, Sponsors, Players) alimenté par les contributeurs avec workflow de modération communautaire.
+
+Deux faces :
+
+1. **Tracker de collection personnel** — chaque user déclare ses maillots (master_kit → version → collection_item) avec flocage, signature, état, estimation auto-calculée.
+2. **Base de données collaborative** — entités partagées modérées via votes et contrôles modérateurs.
+
+## 2. Architecture
+
+### 2.1 Stack
+- **Frontend** : React 19 + react-router-dom 7 + Tailwind + shadcn/ui (Radix), build CRA (react-scripts 5).
+- **Backend** : FastAPI 0.110 + Motor 3.3 (Mongo async), Python 3.11. Lancement `uvicorn backend.server:app`.
+- **DB** : MongoDB Atlas (URL via `MONGO_URL`).
+- **Auth** : sessions cookie httpOnly samesite=none, hash bcrypt via passlib, stockées dans `db.user_sessions`.
+  > _Note (07/05/2026) : auth Google OAuth Emergent du PRD initial a été remplacée par bcrypt+email lors du passage en self-hosted._
+- **Médias** : Freebox NAS `/mnt/Freebox-1/TP_media/` via micro-service receiver (FastAPI port 8001), authentifié par header `x-secret`. Servis publiquement via vhost `media.topkit.app` (alias nginx direct, pas de backend en prod).
+- **Reverse proxy** : nginx, vhosts `topkit.app` (front), `api.topkit.app` (backend), `media.topkit.app` (NAS), `git.topkit.app` (gitea).
+
+### 2.2 Backend — structure cible
+
 ```
 /app/backend/
-├── server.py          # Slim entry point (~75 lines): app, middleware, router includes, startup/shutdown
-├── database.py        # MongoDB client + db instance
-├── models.py          # All Pydantic models
-├── utils.py           # slugify, estimation logic, constants (MODERATOR_EMAILS, thresholds)
-├── auth.py            # get_current_user helper + EMERGENT_AUTH_URL
-└── routers/
-    ├── auth.py        # /api/auth/* - Session, me, logout
-    ├── kits.py        # /api/master-kits/*, /api/versions/*
-    ├── collections.py # /api/collections/* + stats
-    ├── estimation.py  # /api/estimate
-    ├── reviews.py     # /api/reviews/*
-    ├── submissions.py # /api/submissions/*, /api/reports/* (moderation + removal requests)
-    ├── wishlist.py    # /api/wishlist/*
-    ├── entities.py    # /api/teams/*, /api/leagues/*, /api/brands/*, /api/players/*, /api/autocomplete
-    ├── uploads.py     # /api/upload/*, /api/upload/from-url, /api/image-proxy
-    └── admin.py       # /api/stats, /api/users/*, /api/seed, /api/import-excel, migrations
+├── server.py          # Entry point slim : app, middlewares, includes, startup
+├── database.py        # Client + db Motor
+├── models.py          # Modèles Pydantic
+├── utils.py           # slugify, normalize_season, calculate_estimation, constants
+├── auth.py            # get_current_user (session cookie)
+├── middleware.py      # maintenance_middleware
+├── email_service.py   # Resend
+├── image_mirror.py    # Mirror entité → receiver Freebox
+└── routers/           # 1 fichier ≈ 1 domaine, prefix /api/...
+    ├── auth.py             # login/register/me/logout/forgot/reset
+    ├── kits.py             # master-kits/* + versions/* (à scinder, voir §6)
+    ├── collections.py      # collections + stats
+    ├── estimation.py       # POST /estimate
+    ├── reviews.py          # reviews
+    ├── submissions.py      # submissions + votes + applications
+    ├── reports.py          # reports (error / removal)
+    ├── wishlist.py         # wishlist
+    ├── entities.py         # teams/leagues/brands/players/sponsors CRUD (à fusionner avec *_api, §6)
+    ├── users.py            # profil, follows, aura
+    ├── user_lists.py       # listes personnelles
+    ├── notifications.py    # notifications utilisateur
+    ├── beta.py             # beta gate
+    ├── uploads.py          # /upload, /upload/from-url, download_and_store
+    ├── proxy.py            # /api/images proxy
+    ├── admin.py            # CSV imports, migrations, maintenance
+    ├── admin_panel.py      # endpoints admin UI
+    ├── awards.py           # CRUD awards individuels
+    ├── players_scoring.py  # /scoring/players/* (note /100, palmarès, career)
+    ├── players_chart.py    # career chart transferts
+    ├── apifootball_search.py
+    ├── leagues_api.py      # DB-first + API-Football (à fusionner, §6)
+    ├── teams_api.py        # idem
+    └── players_api.py      # idem
 ```
 
-## Media Storage — Architecture (ajout 08/04/2026)
+> _Note (07/05/2026) : 26 routers actuellement, 10 dans le PRD initial. La Phase 15 (API-Football) a ajouté 4 routers `*_api.py` qui doublonnent partiellement `entities.py` — refacto prévue §6._
 
-### Flux unifié
+### 2.3 Architecture média
+
 ```
 Source (API-Football ou upload user)
         │
         ▼
   Backend FastAPI
   download_and_store() / _forward_to_receiver()
+        │  (httpx + x-secret header)
+        ▼
+  Receiver FastAPI (Freebox VM, port 8001)
         │
         ▼
-  Freebox NAS /TP_media/{entity}/{type}/{id}.png
+  /TP_media/{entity}/{type}/{id}.{ext}
         │
         ▼
   MongoDB : logo_url = "/api/images/leagues/logos/39.png"
         │
         ▼
-  Frontend : <img src="/api/images/leagues/logos/39.png">
+  Frontend : <img src="https://media.topkit.app/leagues/logos/39.png">
+            (ou fallback /api/images/... via nginx alias)
 ```
 
-### Structure dossiers Freebox
+**Structure `/TP_media/`** :
 ```
-/TP_media/
-├── brands/logos/
-├── kits/masters/
-├── kits/versions/
-├── leagues/logos/       ← logos ligues
-├── players/photos/      ← photos joueurs
-├── sponsors/logos/
-├── teams/clubs/         ← logos clubs
-├── teams/nations/       ← drapeaux/logos nations
-└── users/photos/
+brands/logos/         kits/masters/        kits/versions/
+leagues/logos/        players/photos/      sponsors/logos/
+teams/clubs/          teams/nations/       users/photos/
 ```
 
-### FOLDER_MAP (uploads.py)
-| Clé | Dossier Freebox |
-|---|---|
-| `master_kit` | `kits/masters` |
-| `version` | `kits/versions` |
-| `profile` | `users/photos` |
-| `brand` | `brands/logos` |
-| `team` | `teams/clubs` |
-| `nation` | `teams/nations` |
-| `league` | `leagues/logos` |
-| `sponsor` | `sponsors/logos` |
-| `player` | `players/photos` |
+**`FOLDER_KEYS` (uploads.py)** : `master_kit`, `version`, `profile`, `brand`, `team`, `nation`, `league`, `sponsor`, `player`, `stadium`. Le mapping clé → chemin réel est fait côté receiver.
 
-### Route seed (POST /api/upload/from-url)
-Utilisée par tous les scripts de seed API-Football :
-```python
-await client.post("/api/upload/from-url", params={
-    "image_url": "https://media.api-sports.io/football/leagues/39.png",
-    "folder": "league",
-    "entity_id": "39"
-})
-# → { "url": "/api/images/leagues/logos/39.png" }
-```
+**Route seed** : `POST /api/upload/from-url?image_url=…&folder=…&entity_id=…` — point d'entrée unique pour tous les scripts de seed.
 
-## Core Data Model
+## 3. Modèle de données
 
-### Master Kit -> Version -> Item hierarchy
-- **Master Kit**: club, season, league, type, brand, design, sponsor, gender, front_photo + team_id, league_id, brand_id (FK)
-- **Version**: kit_id, competition, model, sku_code, ean_code, front/back_photo, main_player_id (FK)
-- **Item (Collection)**: version_id, flocking, condition, size, purchase_cost, signed, estimated_price
+### Hiérarchie maillot
+- **Master Kit** : club, season, league, kit_type, brand, design, sponsor, gender, front_photo, color, entity_type (club/national), confederation_id + FK team_id, league_id, brand_id, sponsor_id.
+- **Version** : kit_id, competition, model, sku_code, ean_code, front_photo, back_photo, main_player_id, competition_id.
+- **Collection Item** : version_id, category, flocking_*, condition_origin, physical_state, size, signed_*, patch, is_rare, purchase_cost, estimated_price.
 
-### Entities
-- **Teams**: name, slug, country, city, founded, primary/secondary_color, crest_url, aka
-- **Leagues**: name, slug, country_or_region, level, organizer, logo_url
-- **Brands**: name, slug, country, founded, logo_url
-- **Players**: full_name, slug, nationality, birth_year, positions, preferred_number, photo_url
+### Entités
+- **Teams** : name, slug, country, city, founded, primary/secondary_color, crest_url, aka, apifootball_team_id, is_national, stadium_name, stadium_capacity, stadium_surface, stadium_image_url.
+- **Leagues** : name, slug, country_or_region, level, organizer, logo_url, apifootball_league_id, scoring_weight, entity_type, scope, region, country_*, gender, level_type, seasons[].
+- **Brands** : name, slug, country, founded, logo_url.
+- **Players** : full_name, slug, nationality, birth_date, birth_year, positions, preferred_number, photo_url, bio, aura_level, apifootball_id, firstname, lastname, height, weight, honours[], individual_awards[], score_palmares, aura, note, gender, level, position_detail, jersey_number, current_team_id.
+- **Awards** : award_id, name, category, scoring_weight, logo_url, description.
 
-### Submissions System
-- Types: master_kit, version, team, league, brand, player
-- Modes: create, edit (for entity submissions)
-- Approval: 5 community votes or 1 moderator vote
+### Submissions
+- Types : `master_kit`, `version`, `team`, `league`, `brand`, `player`, `sponsor`.
+- Modes : `create`, `edit`, `removal`.
+- Approbation : 5 votes communautaires (`APPROVAL_THRESHOLD=5`) ou 1 vote modérateur (`MODERATOR_APPROVAL_THRESHOLD=1`).
+- Quotas par user/24h : 10 master_kit, 20 versions, 15 entités (team/league/brand/player/sponsor).
 
-### Reports System
-- report_type: "error" (corrections) or "removal" (deletion request)
-- On approval: error reports apply corrections; removal reports delete the target (and associated versions for master_kits)
+### Reports
+- `report_type` : `error` (corrections) ou `removal` (suppression).
+- À l'approbation : error → patche la cible ; removal → supprime la cible (et les versions associées si master_kit).
 
-## User Roles
-- **user**: Vote on submissions (1 vote)
-- **moderator** (topkitfr@gmail.com): Single upvote = instant approval
-- **admin**: Full access
+### Estimation
+- Formule : `prix_base × (1 + Σ coeffs)`.
+- Sources : `backend/utils.py` (`calculate_estimation`) + duplication front `frontend/src/utils/estimation.js`. **Doivent rester strictement alignées** — bug récurrent quand un coeff est ajouté d'un seul côté.
+- Coefficients : compétition, état physique, origine, flocage, signature (par type), preuve, message personnel, profil joueur (Option A — déduit auto de la note /100), patch, rareté, ancienneté.
 
-## Completed Phases
+### Scoring joueur
+- `note /100 = palmarès × 0.4 + awards × 0.3 + aura × 0.2 + topkit_kits × 0.1`
+- `aura` votée par les users (1-10 → ramené /10, multiplié par 10 pour la note communautaire).
+- `topkit_kits` comptés depuis collections via `flocking_player_id` ou `signed_by_player_id`.
 
-### Phase 1-10: Foundation through Default Versions (COMPLETE)
-- Full CRUD, OAuth, Browse/Search, Reviews, Wishlist, Estimation system
-- Schema cleanup, moderator roles, default versions
+## 4. Rôles
 
-### Phase 11: Structured Entity System (Feb 18, 2026) - COMPLETE
-- Entity CRUD APIs (Teams, Leagues, Brands, Players)
-- Entity autocomplete + migration from existing kits
-- Entity pages with kits grids and filters
-- Navbar Database dropdown, Topkit branding
+- **user** : 1 vote sur submissions/reports.
+- **moderator** : 1 vote = approbation immédiate. Liste configurable via `MODERATOR_EMAILS` (defaut `topkitfr@gmail.com,dev@topkit.fr,steinmetzolivier@gmail.com`).
+- **admin** : full access (`ADMIN_EMAILS` env vide par défaut).
 
-### Phase 12: Entity Moderation + Logos (Feb 18, 2026) - COMPLETE
-- Extended submissions to accept entity types (team/league/brand/player)
-- Entity submissions support mode=create and mode=edit with entity_id
-- Approval logic: create mode creates entity doc; edit mode patches entity doc
-- EntityAutocomplete now creates submissions instead of direct entities
-- EntityEditDialog reusable component with full entity fields + ImageUpload
-- Suggest Edit button on all entity detail pages
-- Contributions page shows entity submissions with type badges
-- Logo/crest/photo upload support via ImageUpload in EntityEditDialog
+## 5. Phases — historique
 
-### Phase 13: Backend Refactoring (Feb 18, 2026) - COMPLETE
-- Refactored 1907-line server.py monolith into modular FastAPI router architecture
-- Created shared modules: database.py, models.py, utils.py, auth.py
-- Created 10 dedicated routers under /routers/
-- All 35 API tests passed (100%), all frontend pages verified
-- Zero breaking changes
+### Phases 1-12 — Fondations (terminées)
+CRUD complet, OAuth (puis remplacée), browse/search, reviews, wishlist, estimation v1, défaut versions, entités structurées + autocomplete + migration, modération entités (Phase 12).
 
-### Bug Fix: Estimation & Collection Stats (Feb 18, 2026) - COMPLETE
-- Fixed field name mismatch: stats endpoints read `value_estimate` but items stored estimation in `estimated_price`
-- Synced all 3 estimation fields (estimated_price, value_estimate, price_estimate) on create/update
-- Updated stats, category-stats, and version-estimates endpoints to read `estimated_price` with fallback
-- Backfilled existing collection documents
-- My Collection now correctly shows Low/Avg/High Est values
+### Phase 13 — Refacto backend (Feb 18, 2026)
+Décomposition `server.py` 1907 l → router architecture modulaire. **Ré-évaluation 07/05/2026** : `server.py` actuel = 272 l (rate-limit + middleware + 22 includes), au-dessus de la cible "slim entry point" mais reste lisible.
 
-### Phase 14: UI/UX Improvements (Feb 19, 2026) - COMPLETE
-- **A. Report Error Fixes**: Added Select dropdowns for Competition/Model (Version page) and Gender (Kit page). Added "Request Removal" button on both pages for community-voted deletion requests.
-- **B. Homepage Cleanup**: Made logo homothetic, removed duplicate Browse/Go to App buttons, kept only "Explore Catalog" and "Sign in with Google" for logged-out, nothing extra for logged-in.
-- **C. Header/Menu Reorganization**: Removed My Collection and Wishlist from header navbar (kept in user dropdown), removed Contributions from dropdown (kept in header navbar).
-- **D. Profile Enhancements**: Replaced URL input with ImageUpload component for profile photos, added username-based profile URLs (/profile/:username), public profile view support.
+### Phase 14 — UI/UX (Feb 19, 2026 — terminée)
+Select dropdowns Competition/Model/Gender, Request Removal, Homepage cleanup, header reorg, ImageUpload profil, profils par username.
 
-### Phase 15: API-Football Integration + Media Freebox (08/04/2026) - EN COURS
+### Phase 15 — API-Football + Média Freebox (en cours, 08/04/2026)
 
-#### Sprint 1 — Seed des référentiels (PARTIEL)
-- [x] `seed_leagues_apifootball.py` exécuté : 27 ligues cibles, **15 insérées + 12 mises à jour**, 0 erreurs
-  - Couverture : top 5 européens, coupes UEFA, CONMEBOL, CONCACAF, CAF, AFC, FIFA
-  - `logo_url` = URLs externes API-Football (à migrer vers Freebox — voir ci-dessous)
-- [ ] `seed_teams_apifootball.py` — à faire
-- [ ] `seed_players_apifootball.py` — à faire
+**Sprint 1 — Seeds (PARTIEL)**
+- [x] `seed_leagues_apifootball.py` exécuté (15 inserts + 12 updates / 27 ligues cibles).
+- [x] `seed_confederations.py` exécuté.
+- [ ] `seed_teams_apifootball.py` — à écrire.
+- [ ] `seed_players_apifootball.py` — à écrire.
 
-#### Architecture média centralisée (COMMIT `11d49bea`) - DONE
-- `uploads.py` mis à jour :
-  - `FOLDER_MAP` aligné sur structure réelle `/TP_media/` Freebox
-  - Nouvelle fonction `download_and_store()` — télécharge URL externe + forward receiver Freebox
-  - Nouvelle route `POST /api/upload/from-url` — point d'entrée pour tous les seeds auto
+**Architecture média centralisée — DONE**
+- `download_and_store()` + route `POST /api/upload/from-url` opérationnelles.
+- Receiver Freebox + `/api/images/...` proxy + vhost `media.topkit.app` en prod.
 
-#### Prochaine étape immédiate
-- [ ] Mettre à jour `seed_leagues_apifootball.py` : après chaque INSERT/UPDATE, appeler `/api/upload/from-url` et persister le chemin Freebox dans `logo_url`
-- [ ] Même logique pour `seed_teams` et `seed_players`
+**Sprint 2 — Recherche enrichie (PARTIEL)**
+- [x] Routers `apifootball_search`, `players_api`, `teams_api`, `leagues_api` + cache mémoire 24h.
+- [x] Career chart joueur (`players_chart.py` + SVG area chart front).
+- [x] Score /100 joueur + breakdown.
+- [ ] Migration `logo_url` externes API-Football → Freebox pour les ligues seedées.
+- [ ] Enrichissement batch des joueurs existants sans `flocking_player_id`.
 
-## Prioritized Backlog
+## 6. Dette technique connue (07/05/2026)
+
+Reportée d'un audit complet du repo. Ces points doivent être adressés avant nouvelles features lourdes.
+
+### 6.1 Sécurité — Vague 1 (en cours)
+- [ ] Routes `POST /api/{teams,leagues,brands,players}` non-pending sans auth → exiger rôle modérateur (ou supprimer si redondantes).
+- [ ] `POST /api/teams-api/upsert` (et homologues) sans auth ni Pydantic → ajouter `get_current_user` + modèle.
+- [ ] `DEV_LOGIN=true` court-circuite l'auth → garde `RuntimeError` si `IS_PRODUCTION` au boot.
+- [ ] Régex utilisateur injectées dans Mongo (`$regex`) → helper `safe_regex(s)` avec `re.escape()`.
+- [ ] `RECEIVER_SECRET` defaut `"changeme"` → refuser ce fallback au boot.
+- [ ] `Db_topkit-Data.csv` versionné et embarqué dans l'image Docker → sortir du repo + `.dockerignore`.
+- [ ] `MODERATOR_EMAILS` defaut hardcode des emails personnels dans le code public → lire uniquement depuis env, defaut vide.
+
+### 6.2 Architecture
+- Doublons `entities.py` ↔ `*_api.py` (teams, leagues, players) → fusionner en un router par domaine avec sous-route `/search` DB-first.
+- `kits.py` (989 l) → split `master_kits.py` / `versions.py` / `reviews.py` / `kits_by_entity.py`.
+- `entities.py` (856 l) → un router par type ou module générique config-driven.
+- Estimation dupliquée Python ↔ JS → exposer `POST /api/estimate` et supprimer la version JS.
+- Rate-limit en mémoire process (jamais purgé) → Redis ou drop d'entrées trop vieilles.
+- Caches `players_api`/`teams_api` en mémoire process → Redis (mêmes raisons).
+- Indexes recréés à chaque startup (drop + create) → `create_index` idempotent ou migration dédiée.
+- `Contributions.js` (1228 l, déjà corrompu une fois) → split en sous-composants.
+
+### 6.3 Qualité
+- Tests = 0. Cible : pytest sur auth + submissions + estimation + scoring + kits (~30-50 tests golden path).
+- Pas de CI. Cible : GitHub Actions lint + pytest sur PR + `npm run build` côté front.
+- Pre-commit hook local (py_compile + eslint) — éviterait la moitié des `fix:` du dernier mois.
+- `pandas==3.0.0` dans `requirements.txt` (version inexistante) → fix pin.
+- `print(...)` debug épars → utiliser `logging`.
+- README vide.
+- `design_guidelines.json` parle encore de "KitLog" (ancien nom).
+
+## 7. Backlog produit
 
 ### P1
-- CSV/XLSX bulk import endpoints for Teams, Leagues, Brands, Players
-- Finaliser Phase 15 : migration logo_url → Freebox pour toutes les entités
+- Finir Phase 15 (seeds teams + players + migration `logo_url` Freebox).
+- Bulk import CSV/XLSX pour Teams, Leagues, Brands, Players (admin only).
+- Vague 1 sécurité (cf. §6.1).
+- Pytest minimal + CI (cf. §6.3).
 
 ### P2
-- Notification system (wishlist updates, contribution status)
+- Notifications utilisateur sur approbation/refus de ses submissions.
+- Admin panel : suppression physique sur approval d'un removal.
+- Affichage note /100 sur PlayerDetail (`note_breakdown` déjà committé, intégration React à finir).
+- Career chart visible sur PlayerDetail (vérifier intégration finale).
+- Enrichissement batch joueurs existants.
 
 ### P3
-- Community page (content TBD)
-- Discussion forums
-- Public profile pages / collection sharing
-- Collection analytics dashboards
-- Export collection data (CSV/PDF)
+- Page joueur complète : carrière, stats, maillots portés, section aura.
+- Page league dédiée (modèle enrichi déjà committé).
+- Discussion forums / community page.
+- Profils publics, partage de collection.
+- Dashboards analytics collection.
+- Export collection CSV/PDF.
+- Backup automatique MongoDB Atlas.
+- Logs centralisés + monitoring 5xx.
 
-### Refactoring
-- Break down `frontend/src/pages/Contributions.js` into smaller sub-components
+### Refactoring (cf. §6.2)
+- Fusion `entities.py` ↔ `*_api.py`.
+- Split `kits.py`, `entities.py`, `Contributions.js`.
+- Centralisation estimation Python.
+- Migration rate-limit + caches vers Redis.

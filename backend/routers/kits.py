@@ -7,6 +7,7 @@ import re
 from ..database import db, client
 from ..models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
 from ..auth import get_current_user
+from ..utils import safe_regex
 from .notifications import create_notification
 
 router = APIRouter(prefix="/api", tags=["kits"])
@@ -136,11 +137,11 @@ async def list_master_kits(
 ):
     query = {}
     if club:
-        query["club"] = {"$regex": club, "$options": "i"}
+        query["club"] = {"$regex": safe_regex(club), "$options": "i"}
     if season:
-        query["season"] = {"$regex": season, "$options": "i"}
+        query["season"] = {"$regex": safe_regex(season), "$options": "i"}
     if brand:
-        query["brand"] = {"$regex": brand, "$options": "i"}
+        query["brand"] = {"$regex": safe_regex(brand), "$options": "i"}
     if kit_type:
         query["kit_type"] = kit_type
     if design:
@@ -152,12 +153,13 @@ async def list_master_kits(
     if entity_type:
         query["entity_type"] = entity_type
     if search:
+        s = safe_regex(search)
         query["$or"] = [
-            {"club": {"$regex": search, "$options": "i"}},
-            {"brand": {"$regex": search, "$options": "i"}},
-            {"season": {"$regex": search, "$options": "i"}},
-            {"design": {"$regex": search, "$options": "i"}},
-            {"sponsor": {"$regex": search, "$options": "i"}},
+            {"club": {"$regex": s, "$options": "i"}},
+            {"brand": {"$regex": s, "$options": "i"}},
+            {"season": {"$regex": s, "$options": "i"}},
+            {"design": {"$regex": s, "$options": "i"}},
+            {"sponsor": {"$regex": s, "$options": "i"}},
         ]
 
     # ── Filtre Club / National via teams.is_national ──────────────────────────
@@ -501,20 +503,21 @@ async def list_versions(
     if club or brand or kit_type or season or league or search:
         kit_query = {}
         if club:
-            kit_query["club"] = {"$regex": club, "$options": "i"}
+            kit_query["club"] = {"$regex": safe_regex(club), "$options": "i"}
         if brand:
-            kit_query["brand"] = {"$regex": brand, "$options": "i"}
+            kit_query["brand"] = {"$regex": safe_regex(brand), "$options": "i"}
         if kit_type:
             kit_query["kit_type"] = kit_type
         if season:
-            kit_query["season"] = {"$regex": season, "$options": "i"}
+            kit_query["season"] = {"$regex": safe_regex(season), "$options": "i"}
         if league:
             kit_query["league"] = league
         if search:
+            s = safe_regex(search)
             kit_query["$or"] = [
-                {"club": {"$regex": search, "$options": "i"}},
-                {"brand": {"$regex": search, "$options": "i"}},
-                {"season": {"$regex": search, "$options": "i"}},
+                {"club": {"$regex": s, "$options": "i"}},
+                {"brand": {"$regex": s, "$options": "i"}},
+                {"season": {"$regex": s, "$options": "i"}},
             ]
 
         matching_kits = await db.master_kits.find(
@@ -966,7 +969,7 @@ async def get_sponsor_kits(slug: str, skip: int = 0, limit: int = 50):
     if sponsor_id:
         query = {"sponsor_id": sponsor_id}
     elif name:
-        query = {"sponsor": {"$regex": f"^{name}$", "$options": "i"}}
+        query = {"sponsor": {"$regex": f"^{safe_regex(name)}$", "$options": "i"}}
     else:
         return {"results": [], "total": 0, "skip": skip, "limit": limit}
 

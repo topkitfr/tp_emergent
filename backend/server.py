@@ -8,6 +8,16 @@ import logging
 import time
 from collections import defaultdict
 
+# ─── Garde-fous configuration (avant toute initialisation) ──────────────────────
+_ENV = os.environ.get("ENVIRONMENT", "production").lower()
+_IS_PROD = _ENV == "production"
+_RECEIVER_SECRET = os.environ.get("RECEIVER_SECRET", "")
+if _IS_PROD and _RECEIVER_SECRET in ("", "changeme"):
+    raise RuntimeError(
+        "RECEIVER_SECRET non configuré (vide ou == 'changeme') en production. "
+        "Définissez une valeur secrète robuste dans .env.backend."
+    )
+
 from .database import db, client
 
 from .routers.beta import router as beta_router

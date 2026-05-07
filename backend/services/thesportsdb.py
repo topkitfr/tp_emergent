@@ -11,6 +11,7 @@ Doc : https://api-sports.io/documentation/football/v3
 """
 
 import httpx
+import re
 from typing import List
 import os
 
@@ -324,7 +325,7 @@ async def search_players_db_first(name: str, db) -> dict:
     name_norm = norm(name)
 
     cursor = db["players"].find(
-        {"full_name": {"$regex": name, "$options": "i"}},
+        {"full_name": {"$regex": re.escape(name.strip()), "$options": "i"}},
         {"player_id": 1, "full_name": 1, "nationality": 1,
          "birth_date": 1, "photo_url": 1, "apifootball_id": 1, "note": 1}
     ).limit(10)
@@ -395,7 +396,7 @@ async def search_players_by_name(name: str) -> List[dict]:
 async def search_leagues_db_first(name: str, db) -> dict:
     """Recherche une compétition : DB en premier, API-Football en fallback."""
     cursor = db["leagues"].find(
-        {"name": {"$regex": name, "$options": "i"}},
+        {"name": {"$regex": re.escape(name.strip()), "$options": "i"}},
         {"league_id": 1, "name": 1, "country_or_region": 1, "country_name": 1,
          "scope": 1, "region": 1, "organizer": 1, "entity_type": 1,
          "logo_url": 1, "apifootball_league_id": 1, "apifootball_logo": 1, "scoring_weight": 1}
@@ -448,7 +449,7 @@ async def search_leagues_by_name(name: str) -> List[dict]:
 async def search_teams_db_first(name: str, db) -> dict:
     """Recherche un club : DB en premier, API-Football en fallback."""
     cursor = db["teams"].find(
-        {"name": {"$regex": name, "$options": "i"}},
+        {"name": {"$regex": re.escape(name.strip()), "$options": "i"}},
         {"team_id": 1, "name": 1, "country": 1, "founded": 1,
          "is_national": 1, "crest_url": 1, "city": 1,
          "stadium_name": 1, "stadium_capacity": 1,

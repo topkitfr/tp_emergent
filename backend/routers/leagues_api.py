@@ -9,7 +9,7 @@ from bson import ObjectId
 import re
 
 from ..database import db
-from ..auth import get_current_user
+from ..auth import get_current_user, get_moderator_user
 
 router = APIRouter(prefix="/api/leagues", tags=["leagues"])
 
@@ -41,7 +41,7 @@ async def search_leagues(
 @router.post("/import-from-apifootball")
 async def import_league_from_apifootball(
     payload: dict,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_moderator_user),
 ):
     """
     Importe (ou retrouve) une league depuis API-Football dans la DB Topkit.

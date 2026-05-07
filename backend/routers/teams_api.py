@@ -5,16 +5,33 @@ Routes :
   POST /api/teams-api/upsert           → upsert depuis API-Football en DB
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime, timezone
 import uuid
 import unicodedata
 import re
 
 from ..database import db
+from ..auth import get_moderator_user
 from ..services.thesportsdb import search_teams_db_first
 
 router = APIRouter(prefix="/api/teams-api", tags=["teams-api"])
+
+
+class TeamUpsertBody(BaseModel):
+    apifootball_team_id: Optional[int] = None
+    name: str
+    country: Optional[str] = ""
+    founded: Optional[int] = None
+    is_national: Optional[bool] = None
+    logo: Optional[str] = ""
+    city: Optional[str] = None
+    stadium_name: Optional[str] = None
+    stadium_capacity: Optional[int] = None
+    stadium_surface: Optional[str] = None
+    stadium_image_url: Optional[str] = None
 
 
 def _slugify(s: str) -> str:
@@ -35,27 +52,14 @@ async def search_teams(name: str = Query(..., min_length=2)):
     return results
 
 
-@router.post("/upsert")
-async def upsert_team(body: dict):
+@router.post("/upsert", dependencies=[Depends(get_moderator_user)])
+async def upsert_team(body: TeamUpsertBody):
     """Crée ou met à jour un club depuis les données API-Football.
 
-    Body:
-      {
-        apifootball_team_id: int,
-        name: str,
-        country: str,
-        founded: int | None,
-        is_national: bool,
-        logo: str,
-        city: str | None,
-        stadium_name: str | None,
-        stadium_capacity: int | None,
-        stadium_surface: str | None,
-        stadium_image_url: str | None
-      }
+    Réservé aux modérateurs/admins.
     """
-    apifootball_id = body.get("apifootball_team_id")
-    name = body.get("name", "").strip()
+    apifootball_id = body.apifootball_team_id
+    name = body.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="name requis")
 
@@ -72,21 +76,21 @@ async def upsert_team(body: dict):
     update_fields = {
         "name": name,
         "slug": slug,
-        "country": body.get("country", ""),
-        "crest_url": body.get("logo", ""),
-        "city": body.get("city") or "",
-        "stadium_name": body.get("stadium_name") or "",
-        "stadium_capacity": body.get("stadium_capacity"),
-        "stadium_surface": body.get("stadium_surface") or "",
-        "stadium_image_url": body.get("stadium_image_url") or "",
+        "country": body.country or "",
+        "crest_url": body.logo or "",
+        "city": body.city or "",
+        "stadium_name": body.stadium_name or "",
+        "stadium_capacity": body.stadium_capacity,
+        "stadium_surface": body.stadium_surface or "",
+        "stadium_image_url": body.stadium_image_url or "",
         "updated_at": now,
     }
     if apifootball_id is not None:
         update_fields["apifootball_team_id"] = apifootball_id
-    if body.get("founded") is not None:
-        update_fields["founded"] = body["founded"]
-    if body.get("is_national") is not None:
-        update_fields["is_national"] = bool(body["is_national"])
+    if body.founded is not None:
+        update_fields["founded"] = body.founded
+    if body.is_national is not None:
+        update_fields["is_national"] = bool(body.is_national)
 
     if existing:
         await db["teams"].update_one(

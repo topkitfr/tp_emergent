@@ -44,6 +44,18 @@ QUOTA_PER_TYPE: dict[str, int] = {
 }
 
 
+# ─── Mongo regex safety ───────────────────────────────────────────────────────
+def safe_regex(value: str) -> str:
+    """
+    Échappe les métacaractères regex pour usage dans `{"$regex": ...}` Mongo.
+    Empêche un user d'envoyer un pattern coûteux (ReDoS) ou de fuiter via metachar.
+    Trim aussi les espaces extrêmes pour la cohérence des recherches.
+    """
+    if not value:
+        return ""
+    return re.escape(value.strip())
+
+
 # ─── Slug ─────────────────────────────────────────────────────────────────────
 def slugify(text: str) -> str:
     text = text.lower().strip()

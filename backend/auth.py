@@ -4,7 +4,16 @@ from .database import db, client
 from .utils import MODERATOR_EMAILS, ADMIN_EMAILS
 import os
 
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "production").lower() == "production"
 IS_DEV_LOGIN = os.getenv("DEV_LOGIN", "false").lower() == "true"
+
+# Garde-fou : DEV_LOGIN ne doit jamais être actif en production.
+# Levé au démarrage (import du module) — si c'est le cas, le conteneur ne boot pas.
+if IS_DEV_LOGIN and IS_PRODUCTION:
+    raise RuntimeError(
+        "DEV_LOGIN=true est interdit quand ENVIRONMENT=production. "
+        "Désactivez DEV_LOGIN ou positionnez ENVIRONMENT=development."
+    )
 
 
 async def get_current_user(request: Request) -> dict:
@@ -62,3 +71,19 @@ async def get_current_user(request: Request) -> dict:
 
     user_doc.pop("password_hash", None)
     return user_doc
+
+
+def require_moderator(user: dict) -> dict:
+    """Lève 403 si l'utilisateur n'a pas le rôle moderator ou admin."""
+    if user.get("role") not in ("moderator", "admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Action réservée aux modérateurs.",
+        )
+    return user
+
+
+async def get_moderator_user(request: Request) -> dict:
+    """Dépendance FastAPI : exige une session valide ET un rôle moderator/admin."""
+    user = await get_current_user(request)
+    return require_moderator(user)

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"/c/Users/Olivi/Desktop/tp_emergent-main.zip\" 2>&1)",
+      "Bash(mkdir -p /tmp/tp_zip_inspect)",
+      "Bash(unzip -o \"/c/Users/Olivi/Desktop/tp_emergent-main.zip\" -d /tmp/tp_zip_inspect)",
+      "Bash(git rm *)"
+    ]
+  }
+}

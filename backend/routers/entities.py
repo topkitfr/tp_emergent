@@ -1,5 +1,5 @@
 # backend/routers/entities.py
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Depends
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
@@ -10,8 +10,8 @@ from ..models import (
     BrandCreate, BrandOut,
     PlayerCreate, PlayerOut,
 )
-from ..auth import get_current_user
-from ..utils import slugify
+from ..auth import get_current_user, get_moderator_user
+from ..utils import slugify, safe_regex
 from ..image_mirror import mirror_entity_images
 
 router = APIRouter(prefix="/api", tags=["entities"])
@@ -48,12 +48,13 @@ async def list_teams(
 ):
     query = {}
     if search:
+        s = safe_regex(search)
         query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"aka":  {"$regex": search, "$options": "i"}},
+            {"name": {"$regex": s, "$options": "i"}},
+            {"aka":  {"$regex": s, "$options": "i"}},
         ]
     if country:
-        query["country"] = {"$regex": country, "$options": "i"}
+        query["country"] = {"$regex": safe_regex(country), "$options": "i"}
     total = await db.teams.count_documents(query)
     teams = await db.teams.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for t in teams:
@@ -76,7 +77,7 @@ async def get_team(team_id: str):
 
 
 @router.post("/teams", response_model=TeamOut)
-async def create_team(team: TeamCreate):
+async def create_team(team: TeamCreate, _user: dict = Depends(get_moderator_user)):
     slug = slugify(team.name)
     if await db.teams.find_one({"slug": slug}, {"_id": 0}):
         raise HTTPException(status_code=400, detail="Team already exists")
@@ -145,7 +146,7 @@ async def create_team_pending(
 
 
 @router.put("/teams/{team_id}", response_model=TeamOut)
-async def update_team(team_id: str, team: TeamCreate):
+async def update_team(team_id: str, team: TeamCreate, _user: dict = Depends(get_moderator_user)):
     await _assert_not_locked("teams", "team_id", team_id)
     existing = await db.teams.find_one({"team_id": team_id}, {"_id": 0})
     if not existing:
@@ -175,9 +176,9 @@ async def list_leagues(
 ):
     query = {"status": {"$ne": "rejected"}}
     if search:
-        query["name"] = {"$regex": search, "$options": "i"}
+        query["name"] = {"$regex": safe_regex(search), "$options": "i"}
     if country_or_region:
-        query["country_or_region"] = {"$regex": country_or_region, "$options": "i"}
+        query["country_or_region"] = {"$regex": safe_regex(country_or_region), "$options": "i"}
     if level:
         query["level"] = level
     if entity_type:
@@ -203,7 +204,7 @@ async def get_league(league_id: str):
 
 
 @router.post("/leagues", response_model=LeagueOut)
-async def create_league(league: LeagueCreate):
+async def create_league(league: LeagueCreate, _user: dict = Depends(get_moderator_user)):
     slug = slugify(league.name)
     if await db.leagues.find_one({"slug": slug}, {"_id": 0}):
         raise HTTPException(status_code=400, detail="League already exists")
@@ -272,7 +273,7 @@ async def create_league_pending(
 
 
 @router.put("/leagues/{league_id}", response_model=LeagueOut)
-async def update_league(league_id: str, league: LeagueCreate):
+async def update_league(league_id: str, league: LeagueCreate, _user: dict = Depends(get_moderator_user)):
     await _assert_not_locked("leagues", "league_id", league_id)
     existing = await db.leagues.find_one({"league_id": league_id}, {"_id": 0})
     if not existing:
@@ -300,9 +301,9 @@ async def list_brands(
 ):
     query = {"status": {"$ne": "rejected"}}
     if search:
-        query["name"] = {"$regex": search, "$options": "i"}
+        query["name"] = {"$regex": safe_regex(search), "$options": "i"}
     if country:
-        query["country"] = {"$regex": country, "$options": "i"}
+        query["country"] = {"$regex": safe_regex(country), "$options": "i"}
     total = await db.brands.count_documents(query)
     brands = await db.brands.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for b in brands:
@@ -324,7 +325,7 @@ async def get_brand(brand_id: str):
 
 
 @router.post("/brands", response_model=BrandOut)
-async def create_brand(brand: BrandCreate):
+async def create_brand(brand: BrandCreate, _user: dict = Depends(get_moderator_user)):
     slug = slugify(brand.name)
     if await db.brands.find_one({"slug": slug}, {"_id": 0}):
         raise HTTPException(status_code=400, detail="Brand already exists")
@@ -391,7 +392,7 @@ async def create_brand_pending(
     return result
 
 
-@router.put("/brands/{brand_id}", response_model=BrandOut)
+@router.put("/brands/{brand_id}", response_model=BrandOut, dependencies=[Depends(get_moderator_user)])
 async def update_brand(brand_id: str, brand: BrandCreate):
     await _assert_not_locked("brands", "brand_id", brand_id)
     existing = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
@@ -418,9 +419,9 @@ async def list_sponsors(
 ):
     query: dict = {"status": {"$ne": "rejected"}}
     if search:
-        query["name"] = {"$regex": search, "$options": "i"}
+        query["name"] = {"$regex": safe_regex(search), "$options": "i"}
     if country:
-        query["country"] = {"$regex": country, "$options": "i"}
+        query["country"] = {"$regex": safe_regex(country), "$options": "i"}
     total = await db.sponsors.count_documents(query)
     sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for s in sponsors:
@@ -429,7 +430,7 @@ async def list_sponsors(
         count_by_id = await db.master_kits.count_documents({"sponsor_id": sid}) if sid else 0
         if count_by_id == 0 and name:
             count_by_name = await db.master_kits.count_documents(
-                {"sponsor": {"$regex": f"^{name}$", "$options": "i"}}
+                {"sponsor": {"$regex": f"^{safe_regex(name)}$", "$options": "i"}}
             )
         else:
             count_by_name = 0
@@ -450,7 +451,7 @@ async def get_sponsor(sponsor_id: str):
     kits = await db.master_kits.find({"sponsor_id": sid}, {"_id": 0}).sort("season", -1).to_list(200) if sid else []
     if not kits and name:
         kits = await db.master_kits.find(
-            {"sponsor": {"$regex": f"^{name}$", "$options": "i"}},
+            {"sponsor": {"$regex": f"^{safe_regex(name)}$", "$options": "i"}},
             {"_id": 0}
         ).sort("season", -1).to_list(200)
     sponsor["kits"]      = kits
@@ -458,7 +459,7 @@ async def get_sponsor(sponsor_id: str):
     return sponsor
 
 
-@router.post("/sponsors")
+@router.post("/sponsors", dependencies=[Depends(get_moderator_user)])
 async def create_sponsor(sponsor: dict):
     slug = slugify(sponsor.get("name", ""))
     if await db.sponsors.find_one({"slug": slug}, {"_id": 0}):
@@ -521,7 +522,7 @@ async def create_sponsor_pending(
     return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
 
 
-@router.put("/sponsors/{sponsor_id}")
+@router.put("/sponsors/{sponsor_id}", dependencies=[Depends(get_moderator_user)])
 async def update_sponsor(sponsor_id: str, sponsor: dict):
     await _assert_not_locked("sponsors", "sponsor_id", sponsor_id)
     existing = await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
@@ -548,9 +549,9 @@ async def list_players(
 ):
     query = {"status": {"$ne": "rejected"}}
     if search:
-        query["full_name"] = {"$regex": search, "$options": "i"}
+        query["full_name"] = {"$regex": safe_regex(search), "$options": "i"}
     if nationality:
-        query["nationality"] = {"$regex": nationality, "$options": "i"}
+        query["nationality"] = {"$regex": safe_regex(nationality), "$options": "i"}
     total = await db.players.count_documents(query)
     players = await db.players.find(query, {"_id": 0}).sort("full_name", 1).skip(skip).limit(limit).to_list(limit)
     for p in players:
@@ -590,7 +591,7 @@ async def get_player(player_id: str):
 
 
 @router.post("/players", response_model=PlayerOut)
-async def create_player(player: PlayerCreate):
+async def create_player(player: PlayerCreate, _user: dict = Depends(get_moderator_user)):
     slug = slugify(player.full_name)
     base_slug, counter = slug, 1
     while await db.players.find_one({"slug": slug}, {"_id": 1}):
@@ -672,7 +673,7 @@ async def create_player_pending(
 
 
 @router.put("/players/{player_id}", response_model=PlayerOut)
-async def update_player(player_id: str, player: PlayerCreate):
+async def update_player(player_id: str, player: PlayerCreate, _user: dict = Depends(get_moderator_user)):
     await _assert_not_locked("players", "player_id", player_id)
     existing = await db.players.find_one({"player_id": player_id}, {"_id": 0})
     if not existing:
@@ -727,7 +728,7 @@ async def get_all_pending(master_kit_submission_id: Optional[str] = Query(defaul
     return results
 
 
-@router.patch("/{entity_type}/{entity_id}/approve")
+@router.patch("/{entity_type}/{entity_id}/approve", dependencies=[Depends(get_moderator_user)])
 async def approve_entity(entity_type: str, entity_id: str):
     config = ENTITY_CONFIG.get(entity_type)
     if not config:
@@ -750,7 +751,7 @@ async def approve_entity(entity_type: str, entity_id: str):
     return {"message": f"{entity_type} approved"}
 
 
-@router.patch("/{entity_type}/{entity_id}/reject")
+@router.patch("/{entity_type}/{entity_id}/reject", dependencies=[Depends(get_moderator_user)])
 async def reject_entity(entity_type: str, entity_id: str):
     config = ENTITY_CONFIG.get(entity_type)
     if not config:
@@ -810,11 +811,12 @@ async def autocomplete(
 
         filter_q: dict = {"status": {"$ne": "rejected"}}
         if search_q:
+            sq = safe_regex(search_q)
             if len(config["search_fields"]) == 1:
-                filter_q[config["search_fields"][0]] = {"$regex": search_q, "$options": "i"}
+                filter_q[config["search_fields"][0]] = {"$regex": sq, "$options": "i"}
             else:
                 filter_q["$or"] = [
-                    {f: {"$regex": search_q, "$options": "i"}}
+                    {f: {"$regex": sq, "$options": "i"}}
                     for f in config["search_fields"]
                 ]
 
