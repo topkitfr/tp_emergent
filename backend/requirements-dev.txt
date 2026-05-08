@@ -1,0 +1,9 @@
+# Dépendances de test — non installées dans l'image de prod.
+# Installe via : pip install -r backend/requirements-dev.txt
+-r requirements.txt
+
+pytest==8.3.4
+pytest-asyncio==0.25.0
+mongomock-motor==0.0.35
+asgi-lifespan==2.1.0
+httpx==0.28.1
