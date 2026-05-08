@@ -71,3 +71,6 @@ backend/*.xls
 
 # Deployment
 .vercel
+
+# Claude Code local config
+.claude/
