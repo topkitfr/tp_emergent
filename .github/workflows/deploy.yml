@@ -112,6 +112,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DOMAIN }}
+          port: 22222
           username: ${{ secrets.NAS_USER }}
           key: ${{ secrets.NAS_SSH_KEY }}
           # Stratégie : pull du dernier main puis rebuild local des services.
