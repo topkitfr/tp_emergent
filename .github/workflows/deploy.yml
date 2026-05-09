@@ -127,10 +127,13 @@ jobs:
 
             docker compose up -d --build --remove-orphans
 
-            # Reload du nginx externe : force la re-résolution DNS des
-            # upstreams (backend / frontend) qui ont pu changer d'IP Docker
-            # après le rebuild. Sans ça → 502 sur les deep links jusqu'à
-            # un restart manuel.
-            docker compose exec -T nginx nginx -s reload
+            # Restart (pas reload) du nginx externe :
+            #   - re-résout les DNS Docker des upstreams backend/frontend
+            #     qui ont changé d'IP après le rebuild → corrige les 502
+            #   - re-mount les bind volumes (le `git reset --hard` change
+            #     l'inode du fichier nginx.conf → un simple reload lirait
+            #     l'ancienne version cachée)
+            # Coût : ~1-2 sec de downtime nginx, acceptable.
+            docker compose restart nginx
 
             docker image prune -f
