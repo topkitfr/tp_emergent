@@ -114,14 +114,16 @@ jobs:
           host: ${{ secrets.DOMAIN }}
           username: ${{ secrets.NAS_USER }}
           key: ${{ secrets.NAS_SSH_KEY }}
+          # Stratégie : pull du dernier main puis rebuild local des services.
+          # Le compose actuel utilise `build:` (pas `image:`), donc un simple
+          # `docker compose pull` ne ferait rien — on rebuild explicitement.
           script: |
-            cd /home/freebox/topkit
+            set -e
+            cd /home/tp_admin/delta
 
-            # Pull les nouvelles images
-            docker compose pull
+            git fetch origin
+            git reset --hard origin/main
 
-            # Redémarre les services mis à jour
-            docker compose up -d --remove-orphans
+            docker compose up -d --build --remove-orphans
 
-            # Nettoie les anciennes images
             docker image prune -f
