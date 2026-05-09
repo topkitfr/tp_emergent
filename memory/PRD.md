@@ -54,15 +54,11 @@ Deux faces :
     ├── admin.py            # CSV imports, migrations, maintenance
     ├── admin_panel.py      # endpoints admin UI
     ├── awards.py           # CRUD awards individuels
-    ├── players_scoring.py  # /scoring/players/* (note /100, palmarès, career)
-    ├── players_chart.py    # career chart transferts
-    ├── apifootball_search.py
-    ├── leagues_api.py      # DB-first + API-Football (à fusionner, §6)
-    ├── teams_api.py        # idem
-    └── players_api.py      # idem
+    ├── players_scoring.py  # /scoring/players/* (note /100, palmarès, career — DB-only depuis Vague 3)
+    └── leagues_api.py      # GET /api/leagues — recherche DB
 ```
 
-> _Note (07/05/2026) : 26 routers actuellement, 10 dans le PRD initial. La Phase 15 (API-Football) a ajouté 4 routers `*_api.py` qui doublonnent partiellement `entities.py` — refacto prévue §6._
+> _Note (09/05/2026) : 22 routers actuellement (10 dans le PRD initial). La Vague 3 (cleanup API-Football) a retiré `apifootball_search.py`, `players_api.py`, `teams_api.py`, `players_chart.py`. Reste l'écart du dédoublonnage entities.py / leagues_api.py à traiter en §6._
 
 ### 2.3 Architecture média
 
@@ -106,10 +102,10 @@ teams/clubs/          teams/nations/       users/photos/
 - **Collection Item** : version_id, category, flocking_*, condition_origin, physical_state, size, signed_*, patch, is_rare, purchase_cost, estimated_price.
 
 ### Entités
-- **Teams** : name, slug, country, city, founded, primary/secondary_color, crest_url, aka, apifootball_team_id, is_national, stadium_name, stadium_capacity, stadium_surface, stadium_image_url.
-- **Leagues** : name, slug, country_or_region, level, organizer, logo_url, apifootball_league_id, scoring_weight, entity_type, scope, region, country_*, gender, level_type, seasons[].
+- **Teams** : name, slug, country, city, founded, primary/secondary_color, crest_url, aka, is_national, stadium_name, stadium_capacity, stadium_surface, stadium_image_url.
+- **Leagues** : name, slug, country_or_region, level, organizer, logo_url, scoring_weight, entity_type, scope, region, country_*, gender, level_type, seasons[].
 - **Brands** : name, slug, country, founded, logo_url.
-- **Players** : full_name, slug, nationality, birth_date, birth_year, positions, preferred_number, photo_url, bio, aura_level, apifootball_id, firstname, lastname, height, weight, honours[], individual_awards[], score_palmares, aura, note, gender, level, position_detail, jersey_number, current_team_id.
+- **Players** : full_name, slug, nationality, birth_date, birth_year, positions, preferred_number, photo_url, bio, aura_level, firstname, lastname, height, weight, honours[], individual_awards[], score_palmares, aura, note, gender, level, position_detail, jersey_number, current_team_id.
 - **Awards** : award_id, name, category, scoring_weight, logo_url, description.
 
 ### Submissions
@@ -149,51 +145,66 @@ Décomposition `server.py` 1907 l → router architecture modulaire. **Ré-éval
 ### Phase 14 — UI/UX (Feb 19, 2026 — terminée)
 Select dropdowns Competition/Model/Gender, Request Removal, Homepage cleanup, header reorg, ImageUpload profil, profils par username.
 
-### Phase 15 — API-Football + Média Freebox (en cours, 08/04/2026)
+### Phase 15 — API-Football + Média Freebox (ABANDONNÉE, Vague 3 — 09/05/2026)
 
-**Sprint 1 — Seeds (PARTIEL)**
-- [x] `seed_leagues_apifootball.py` exécuté (15 inserts + 12 updates / 27 ligues cibles).
-- [x] `seed_confederations.py` exécuté.
-- [ ] `seed_teams_apifootball.py` — à écrire.
-- [ ] `seed_players_apifootball.py` — à écrire.
-
-**Architecture média centralisée — DONE**
+**Architecture média centralisée — DONE et conservée**
 - `download_and_store()` + route `POST /api/upload/from-url` opérationnelles.
 - Receiver Freebox + `/api/images/...` proxy + vhost `media.topkit.app` en prod.
+- Sert maintenant uniquement les uploads manuels (admin / scripts d'import internes).
 
-**Sprint 2 — Recherche enrichie (PARTIEL)**
-- [x] Routers `apifootball_search`, `players_api`, `teams_api`, `leagues_api` + cache mémoire 24h.
-- [x] Career chart joueur (`players_chart.py` + SVG area chart front).
-- [x] Score /100 joueur + breakdown.
-- [ ] Migration `logo_url` externes API-Football → Freebox pour les ligues seedées.
-- [ ] Enrichissement batch des joueurs existants sans `flocking_player_id`.
+**Sprint 1 — Seeds API-Football : ABANDONNÉ**
+- `seed_leagues_apifootball.py` retiré du repo.
+- `seed_teams_apifootball.py` / `seed_players_apifootball.py` ne seront pas écrits.
+
+**Sprint 2 — Recherche enrichie : ABANDONNÉ**
+- Routers `apifootball_search`, `players_api`, `teams_api`, `players_chart` supprimés.
+- `services/thesportsdb.py` (client API + scoring) scindé : la partie scoring est conservée
+  dans `services/scoring.py`, le reste (clients HTTP, normalisation, lookup *trophies/transfers/profile*)
+  est supprimé.
+- `services/normalize_league.py` supprimé.
+- POST `/api/leagues/import-from-apifootball` retiré.
+- `players_scoring.py` simplifié en DB-only (routes `/full`, `/career`, `/{player_id}`,
+  `/{player_id}/aura` conservées ; `/search` et `/enrich` supprimées).
+- Champs `apifootball_id` / `apifootball_team_id` / `apifootball_league_id` /
+  `apifootball_logo` / `source_payload` retirés des modèles Pydantic et purgés en base via
+  `backend/scripts/drop_apifootball_fields.py --apply`.
+- Indexes Mongo `apifootball_team_id_1` et `apifootball_league_id_1` droppés au startup.
+- Front : `ApiFootballSearch.js`, `CompetitionSelector.js` supprimés ;
+  `UnifiedEntitySearch.js` simplifié en DB-only ; `EntityEditDialog`, `AddEntityDialog`,
+  `EntityDetailPage`, `PlayerDetail`, `PlayerCard` nettoyés. Bouton « Enrich »,
+  graphe carrière (transferts) et bandeau « ID API-Football manquant » supprimés.
+
+**Pourquoi l'abandon** : le quota free 100 req/jour étranglait l'usage réel et la couverture
+était incomplète (clubs / nationales mineures, awards individuels). La saisie manuelle via
+les fiches `EntityEditDialog` / `AddEntityDialog` (workflow communautaire submission/vote)
+remplace la couche d'enrichissement automatique. Le scoring `/100` reste calculé en local
+à partir des données saisies (palmarès, awards, aura, kits).
 
 ## 6. Dette technique connue (07/05/2026)
 
 Reportée d'un audit complet du repo. Ces points doivent être adressés avant nouvelles features lourdes.
 
-### 6.1 Sécurité — Vague 1 (en cours)
-- [ ] Routes `POST /api/{teams,leagues,brands,players}` non-pending sans auth → exiger rôle modérateur (ou supprimer si redondantes).
-- [ ] `POST /api/teams-api/upsert` (et homologues) sans auth ni Pydantic → ajouter `get_current_user` + modèle.
-- [ ] `DEV_LOGIN=true` court-circuite l'auth → garde `RuntimeError` si `IS_PRODUCTION` au boot.
-- [ ] Régex utilisateur injectées dans Mongo (`$regex`) → helper `safe_regex(s)` avec `re.escape()`.
-- [ ] `RECEIVER_SECRET` defaut `"changeme"` → refuser ce fallback au boot.
-- [ ] `Db_topkit-Data.csv` versionné et embarqué dans l'image Docker → sortir du repo + `.dockerignore`.
-- [ ] `MODERATOR_EMAILS` defaut hardcode des emails personnels dans le code public → lire uniquement depuis env, defaut vide.
+### 6.1 Sécurité — Vague 1 (LIVE en prod, 07/05/2026)
+- [x] Routes `POST /api/{teams,leagues,brands,players}` non-pending verrouillées modérateur.
+- [x] `DEV_LOGIN=true` court-circuit auth → garde `RuntimeError` si `IS_PRODUCTION` au boot.
+- [x] Régex utilisateur injectées dans Mongo (`$regex`) → helper `safe_regex(s)` avec `re.escape()`.
+- [x] `RECEIVER_SECRET` defaut `"changeme"` → refus au boot en prod.
+- [x] `Db_topkit-Data.csv` sorti du repo + `.dockerignore`.
+- [x] `MODERATOR_EMAILS` lu depuis env uniquement.
+- ~~`POST /api/teams-api/upsert` à durcir~~ → router supprimé en Vague 3.
 
 ### 6.2 Architecture
-- Doublons `entities.py` ↔ `*_api.py` (teams, leagues, players) → fusionner en un router par domaine avec sous-route `/search` DB-first.
+- Doublons `entities.py` ↔ `leagues_api.py` (reste du couple après cleanup Vague 3) → fusionner.
 - `kits.py` (989 l) → split `master_kits.py` / `versions.py` / `reviews.py` / `kits_by_entity.py`.
 - `entities.py` (856 l) → un router par type ou module générique config-driven.
 - Estimation dupliquée Python ↔ JS → exposer `POST /api/estimate` et supprimer la version JS.
 - Rate-limit en mémoire process (jamais purgé) → Redis ou drop d'entrées trop vieilles.
-- Caches `players_api`/`teams_api` en mémoire process → Redis (mêmes raisons).
 - Indexes recréés à chaque startup (drop + create) → `create_index` idempotent ou migration dédiée.
 - `Contributions.js` (1228 l, déjà corrompu une fois) → split en sous-composants.
 
 ### 6.3 Qualité
-- Tests = 0. Cible : pytest sur auth + submissions + estimation + scoring + kits (~30-50 tests golden path).
-- Pas de CI. Cible : GitHub Actions lint + pytest sur PR + `npm run build` côté front.
+- [x] Tests pytest = 63 verts (auth, estimation, security_guards). Étendre à submissions/scoring/kits (Vague 2.5).
+- [x] CI GitHub Actions = LIVE (lint + pytest gate avant build/deploy).
 - Pre-commit hook local (py_compile + eslint) — éviterait la moitié des `fix:` du dernier mois.
 - `pandas==3.0.0` dans `requirements.txt` (version inexistante) → fix pin.
 - `print(...)` debug épars → utiliser `logging`.
@@ -203,10 +214,9 @@ Reportée d'un audit complet du repo. Ces points doivent être adressés avant n
 ## 7. Backlog produit
 
 ### P1
-- Finir Phase 15 (seeds teams + players + migration `logo_url` Freebox).
 - Bulk import CSV/XLSX pour Teams, Leagues, Brands, Players (admin only).
-- Vague 1 sécurité (cf. §6.1).
-- Pytest minimal + CI (cf. §6.3).
+- Refonte saisie manuelle des fiches club / player / league (workflow communautaire renforcé suite cleanup Vague 3).
+- Vague 2.5 : étendre la suite tests (submissions, scoring, kits).
 
 ### P2
 - Notifications utilisateur sur approbation/refus de ses submissions.

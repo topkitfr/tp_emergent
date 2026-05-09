@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, field_validator
-from typing import List, Optional, Union
+from typing import List, Optional
 
 
 class UserOut(BaseModel):
@@ -254,7 +254,6 @@ class TeamCreate(BaseModel):
     secondary_color: Optional[str] = ""
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
-    apifootball_team_id: Optional[int] = None
     is_national: Optional[bool] = False
     stadium_name: Optional[str] = ""
     stadium_capacity: Optional[int] = None
@@ -275,7 +274,6 @@ class TeamOut(BaseModel):
     secondary_color: Optional[str] = ""
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
-    apifootball_team_id: Optional[int] = None
     is_national: Optional[bool] = False
     stadium_name: Optional[str] = ""
     stadium_capacity: Optional[int] = None
@@ -299,8 +297,6 @@ class LeagueCreate(BaseModel):
     level: Optional[str] = "domestic"
     organizer: Optional[str] = ""
     logo_url: Optional[str] = ""
-    apifootball_league_id: Optional[int] = None
-    apifootball_logo: Optional[str] = ""
     scoring_weight: Optional[float] = None
     entity_type: Optional[str] = "league"
     scope: Optional[str] = None
@@ -308,7 +304,6 @@ class LeagueCreate(BaseModel):
     country_name: Optional[str] = None
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
-    source_payload: Optional[dict] = None
     gender: Optional[str] = None
     level_type: Optional[str] = None
     seasons: Optional[List[LeagueSeasonEntry]] = []
@@ -324,8 +319,6 @@ class LeagueOut(BaseModel):
     level: Optional[str] = "domestic"
     organizer: Optional[str] = ""
     logo_url: Optional[str] = ""
-    apifootball_league_id: Optional[int] = None
-    apifootball_logo: Optional[str] = ""
     scoring_weight: Optional[float] = None
     entity_type: Optional[str] = "league"
     scope: Optional[str] = None
@@ -333,7 +326,6 @@ class LeagueOut(BaseModel):
     country_name: Optional[str] = None
     country_code: Optional[str] = None
     country_flag: Optional[str] = None
-    source_payload: Optional[dict] = None
     gender: Optional[str] = None
     level_type: Optional[str] = None
     seasons: Optional[List[dict]] = []
@@ -400,7 +392,6 @@ class PlayerCreate(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
-    apifootball_id: Optional[str] = ""
     firstname: Optional[str] = ""
     lastname: Optional[str] = ""
     birth_place: Optional[str] = ""
@@ -433,7 +424,6 @@ class PlayerOut(BaseModel):
     photo_url: Optional[str] = ""
     bio: Optional[str] = ""
     aura_level: Optional[int] = 1
-    apifootball_id: Optional[str] = ""
     firstname: Optional[str] = ""
     lastname: Optional[str] = ""
     birth_place: Optional[str] = ""
@@ -464,23 +454,10 @@ class PlayerOut(BaseModel):
         return [v]
 
 
-class PlayerScoringEnrichRequest(BaseModel):
-    player_id: str
-    apifootball_id: Optional[Union[str, int]] = None
-    aura: Optional[float] = 0.0
-
-
 class PlayerScoringOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     player_id: str
     full_name: str
-    apifootball_id: Optional[str] = ""
-
-    @field_validator("apifootball_id", mode="before")
-    @classmethod
-    def coerce_apifootball_id(cls, v):
-        return str(v) if v is not None else ""
-
     honours_count: int = 0
     score_palmares: float = 0.0
     aura: float = 0.0

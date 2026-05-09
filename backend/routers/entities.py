@@ -251,7 +251,6 @@ async def create_league_pending(
         "name":       league.name,
         "entity_id":  league_id,
         "logo_url":   doc.get("logo_url"),
-        "apifootball_logo": doc.get("apifootball_logo"),
     }
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id

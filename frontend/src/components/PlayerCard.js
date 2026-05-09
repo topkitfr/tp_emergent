@@ -44,7 +44,6 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
   const nationality = player.nationality ?? player.country ?? '';
   const position    = player.position   ?? player.role    ?? player.poste ?? '';
 
-  // Lecture du score palmares et de la note API-Football
   const scorePalmares = player.score_palmares ?? player.scoring?.score_palmares ?? null;
   const noteAura      = player.note           ?? player.scoring?.note           ?? null;
 
@@ -135,7 +134,7 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
           )}
         </div>
 
-        {/* ── Badge note API-Football (coin haut droit si pas de follow) ──────── */}
+        {/* ── Badge note (coin haut droit si pas de follow) ──────── */}
         {noteAura !== null && !onFollowToggle && (
           <div
             className="absolute top-1 right-1"
@@ -193,7 +192,6 @@ export default function PlayerCard({ player, isFollowed = false, onFollowToggle 
               {[position, nationality].filter(Boolean).join(' · ')}
             </span>
           )}
-          {/* Score palmares API-Football */}
           {scorePalmares !== null && (
             <span
               style={{

@@ -11,7 +11,7 @@ RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 IMAGE_FIELDS: dict[str, list[str]] = {
     "team":    ["crest_url", "stadium_image_url"],
     "nation":  ["crest_url"],
-    "league":  ["logo_url", "apifootball_logo"],
+    "league":  ["logo_url"],
     "player":  ["photo_url"],
     "brand":   ["logo_url"],
     "sponsor": ["logo_url"],

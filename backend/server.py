@@ -38,11 +38,7 @@ from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
 from .routers.players_scoring import router as players_scoring_router
 from .routers.leagues_api import router as leagues_api_router
-from .routers.teams_api import router as teams_api_router
-from .routers.players_api import router as players_api_router
 from .routers.awards import router as awards_router
-from .routers.apifootball_search import router as apifootball_search_router  # Sprint 2 — #21
-from .routers.players_chart import router as players_chart_router            # Career chart
 from .middleware import maintenance_middleware
 
 
@@ -107,7 +103,6 @@ RATE_LIMITS = {
     "/api/submissions":           (30, 60),
     "/api/upload":                (20, 60),
     "/api/reports":               (10, 60),
-    "/api/apifootball/search":    (60, 60),  # Sprint 2 — rate limit search API
 }
 # 500 req/min par IP réelle et par path — suffisant pour usage normal, protège quand même
 DEFAULT_RATE_LIMIT = (500, 60)
@@ -213,12 +208,8 @@ app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 app.include_router(beta_router)
 app.include_router(players_scoring_router)
-app.include_router(leagues_api_router)          # ← recherche leagues DB-first
-app.include_router(teams_api_router)            # ← recherche clubs DB-first
-app.include_router(players_api_router)          # ← recherche joueurs DB-first
+app.include_router(leagues_api_router)          # ← recherche leagues DB
 app.include_router(awards_router)               # ← CRUD awards individuels
-app.include_router(apifootball_search_router)   # ← Sprint 2 : proxy search API-Football (#21)
-app.include_router(players_chart_router)        # ← Career chart transferts
 
 
 @app.on_event("startup")
@@ -229,6 +220,9 @@ async def create_indexes():
         ("brands", "brand_id_1"),
         ("players", "player_id_1"),
         ("players", "slug_1"),
+        # Cleanup Vague 3 — indexes API-Football abandonnés
+        ("teams", "apifootball_team_id_1"),
+        ("leagues", "apifootball_league_id_1"),
     ]:
         try:
             await db[collection].drop_index(index_name)
@@ -239,11 +233,9 @@ async def create_indexes():
     await db.teams.create_index("team_id", unique=True, sparse=True)
     await db.teams.create_index("slug", unique=True)
     await db.teams.create_index("name")
-    await db.teams.create_index("apifootball_team_id", sparse=True)
     await db.leagues.create_index("league_id", unique=True, sparse=True)
     await db.leagues.create_index("slug", unique=True)
     await db.leagues.create_index("name")
-    await db.leagues.create_index("apifootball_league_id", sparse=True)
     await db.brands.create_index("brand_id", unique=True, sparse=True)
     await db.brands.create_index("slug", unique=True)
     await db.brands.create_index("name")

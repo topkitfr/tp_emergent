@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createSubmission } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
-import ApiFootballSearch from '@/components/ApiFootballSearch';
 import IndividualAwardsField from '@/components/IndividualAwardsField';
 import CareerField from '@/components/CareerField';
 import { toast } from 'sonner';
@@ -30,30 +29,12 @@ const LEAGUE_SCOPE_OPTIONS = ['domestic', 'international'];
 // Tous les champs image connus — ne seront envoyés que si l'user a uploadé une nouvelle image
 const IMAGE_FIELDS = new Set(['crest_url', 'logo_url', 'photo_url', 'stadium_image_url']);
 
-const API_POSITION_MAP = {
-  'Goalkeeper': ['GK'],
-  'Defender': ['CB'], 'Centre-Back': ['CB'], 'Left Back': ['LB'], 'Right Back': ['RB'],
-  'Left Wing Back': ['LWB'], 'Right Wing Back': ['RWB'],
-  'Midfielder': ['CM'], 'Central Midfield': ['CM'], 'Defensive Midfield': ['CDM'],
-  'Attacking Midfield': ['CAM'], 'Left Midfield': ['LM'], 'Right Midfield': ['RM'],
-  'Attacker': ['CF'], 'Forward': ['CF'], 'Centre Forward': ['CF'],
-  'Striker': ['ST'], 'Left Winger': ['LW'], 'Right Winger': ['RW'], 'Second Striker': ['SS'],
-};
-
-function normalizePositions(apiPosition) {
-  if (!apiPosition) return [];
-  if (Array.isArray(apiPosition)) return apiPosition.filter(p => POSITIONS.includes(p));
-  return API_POSITION_MAP[apiPosition] || [];
-}
-
 const ENTITY_CONFIGS = {
   team: {
     label: 'Team', nameField: 'name',
     imageField: 'crest_url', imageLabel: 'Crest / Badge',
     folder: 'team',
-    apiSearchType: 'team',
     fields: [
-      { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
       // Identité
       { key: 'name',                label: 'Team Name',     required: true },
       { key: 'country',             label: 'Country' },
@@ -76,9 +57,7 @@ const ENTITY_CONFIGS = {
   league: {
     label: 'League', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
     folder: 'league',
-    apiSearchType: 'league',
     fields: [
-      { key: '_apifootball_search',   label: '', type: 'apifootball_search', span: 2 },
       { key: 'name',                  label: 'League Name',              required: true },
       { key: 'country_or_region',     label: 'Country / Region' },
       { key: 'country_code',          label: 'Country Code' },
@@ -113,9 +92,7 @@ const ENTITY_CONFIGS = {
   player: {
     label: 'Player', nameField: 'full_name', imageField: 'photo_url', imageLabel: 'Photo',
     folder: 'player',
-    apiSearchType: 'player',
     fields: [
-      { key: '_apifootball_search', label: '', type: 'apifootball_search', span: 2 },
       { key: 'full_name',           label: 'Full Name',                required: true, span: 2 },
       { key: 'first_name',          label: 'Prénom' },
       { key: 'last_name',           label: 'Nom de famille' },
@@ -150,13 +127,11 @@ export default function EntityEditDialog({
   const [submitting, setSubmitting] = useState(false);
   const [showRemoval, setShowRemoval] = useState(false);
   const [removalNotes, setRemovalNotes] = useState('');
-  const [apiFillName, setApiFillName] = useState('');
 
   // ── Reset le form à chaque ouverture du dialog ──────────────────────────────
   useEffect(() => {
     if (open) {
       setForm({ ...initialData });
-      setApiFillName('');
       setShowRemoval(false);
       setRemovalNotes('');
     }
@@ -164,81 +139,6 @@ export default function EntityEditDialog({
   }, [open]);
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
-
-  // ── Auto-fill player ───────────────────────────────────────────────────────
-  const handleApiFillPlayer = (player) => {
-    setApiFillName(player.full_name || '');
-    const normalizedPositions = normalizePositions(
-      player.positions?.length ? player.positions : player.position
-    );
-    setForm(prev => ({
-      ...prev,
-      full_name:         player.full_name        || prev.full_name        || '',
-      first_name:        player.first_name       || prev.first_name       || '',
-      last_name:         player.last_name        || prev.last_name        || '',
-      nationality:       player.nationality      || prev.nationality      || '',
-      birth_date:        player.birth_date       || prev.birth_date       || '',
-      birth_place:       player.birth_place      || prev.birth_place      || '',
-      birth_country:     player.birth_country    || prev.birth_country    || '',
-      photo_url:         player.photo_url        || player.photo          || prev.photo_url || '',
-      height:            player.height           ?? prev.height           ?? '',
-      weight:            player.weight           ?? prev.weight           ?? '',
-      preferred_foot:    player.preferred_foot   || prev.preferred_foot   || '',
-      preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
-      individual_awards: prev.individual_awards  || [],
-      career:            prev.career             || [],
-      positions:         normalizedPositions.length > 0 ? normalizedPositions : (prev.positions || []),
-      apifootball_id:    player.apifootball_id   ?? prev.apifootball_id,
-    }));
-  };
-
-  // ── Auto-fill team ──────────────────────────────────────────────────────────
-  const handleApiFillTeam = (team) => {
-    setApiFillName(team.name || '');
-    setForm(prev => ({
-      ...prev,
-      name:                  team.name              || prev.name              || '',
-      country:               team.country           || prev.country           || '',
-      city:                  team.city              || prev.city              || '',
-      founded:               team.founded           ?? prev.founded           ?? '',
-      is_national:           team.is_national       ?? prev.is_national       ?? false,
-      gender:                team.gender            || prev.gender            || '',
-      crest_url:             team.logo              || prev.crest_url         || '',
-      stadium_name:          team.stadium_name      || prev.stadium_name      || '',
-      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity  ?? '',
-      stadium_surface:       team.stadium_surface   || prev.stadium_surface   || '',
-      stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
-      stadium_city:          team.stadium_city      || prev.stadium_city      || '',
-      stadium_country:       team.stadium_country   || prev.stadium_country   || '',
-      apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
-    }));
-  };
-
-  // ── Auto-fill league ─────────────────────────────────────────────────────────
-  const handleApiFillLeague = (league) => {
-    setApiFillName(league.name || '');
-    setForm(prev => ({
-      ...prev,
-      name:                    league.name                || prev.name                || '',
-      country_or_region:       league.country_name        || league.country_or_region || prev.country_or_region || '',
-      country_code:            league.country_code        || prev.country_code        || '',
-      country_flag:            league.country_flag        || prev.country_flag        || '',
-      type:                    league.type                || prev.type                || '',
-      entity_type:             league.entity_type         || prev.entity_type         || '',
-      scope:                   league.scope               || prev.scope               || '',
-      gender:                  league.gender              || prev.gender              || '',
-      organizer:               league.organizer           || prev.organizer           || '',
-      logo_url:                league.apifootball_logo    || league.logo_url          || prev.logo_url || '',
-      apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
-    }));
-  };
-
-  const getApiFillHandler = () => {
-    if (entityType === 'player') return handleApiFillPlayer;
-    if (entityType === 'team')   return handleApiFillTeam;
-    if (entityType === 'league') return handleApiFillLeague;
-    return () => {};
-  };
 
   const handleSubmit = async () => {
     const nameKey = config.nameField;
@@ -262,7 +162,6 @@ export default function EntityEditDialog({
         payload.entity_type = entityType;
       }
       // Nettoyer les pseudo-champs UI
-      delete payload._apifootball_search;
       delete payload._stadium_divider;
       delete payload._stadiumimg_divider;
       delete payload._flag_preview;
@@ -320,18 +219,6 @@ export default function EntityEditDialog({
             {f.label}
           </p>
           <div className="flex-1 border-t border-border" />
-        </div>
-      );
-    }
-
-    if (f.type === 'apifootball_search') {
-      return (
-        <div className="sm:col-span-2 pb-2 border-b border-border">
-          <ApiFootballSearch
-            entityType={config.apiSearchType || entityType}
-            onSelect={getApiFillHandler()}
-            filledName={apiFillName}
-          />
         </div>
       );
     }
@@ -489,7 +376,7 @@ export default function EntityEditDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => {
               // Les pseudo-champs sans label prennent tout leur espace
-              if (f.type === 'divider' || f.type === 'apifootball_search' || f.type === 'flag_preview') {
+              if (f.type === 'divider' || f.type === 'flag_preview') {
                 return <React.Fragment key={f.key}>{renderField(f)}</React.Fragment>;
               }
               return (

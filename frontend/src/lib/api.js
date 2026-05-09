@@ -196,24 +196,5 @@ export const getPlayers = (params) => api.get('/players', { params });
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
-export const enrichPlayerScoring = (data) => api.post('/scoring/players/enrich', data);
-export const searchScoringPlayers = (name) => api.get('/scoring/players/search', { params: { name } });
-
-/**
- * enrichPlayer — d\u00e9clenche l'enrichissement scoring d'un joueur.
- */
-export const enrichPlayer = (playerId, apifootballId, auraAvg) =>
-  api.post('/scoring/players/enrich', {
-    player_id: playerId,
-    ...(apifootballId != null && { apifootball_id: apifootballId }),
-    ...(auraAvg != null && { aura_avg: auraAvg }),
-  });
-
-/**
- * getPlayerTransferChart — points du graphe de carri\u00e8re (transferts).
- * Route backend : GET /api/players-chart/{player_id}/transfers
- */
-export const getPlayerTransferChart = (playerId) =>
-  api.get(`/players-chart/${playerId}/transfers`);
 
 export default api;

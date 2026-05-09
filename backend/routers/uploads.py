@@ -96,8 +96,7 @@ async def download_and_store(
     filename: Optional[str] = None,
 ) -> dict:
     """
-    Télécharge une image depuis une URL externe (API-Football, etc.)
-    et la stocke sur la Freebox via le receiver.
+    Télécharge une image depuis une URL externe et la stocke sur la Freebox via le receiver.
     Retourne { url, relative_path } prêts à persister en base.
 
     Flux : source externe → backend → Freebox NAS → logo_url en base
@@ -126,7 +125,7 @@ async def upload_from_url(
     filename: Optional[str] = None,
 ):
     """
-    Route pour les seeds API-Football et tout import automatique.
+    Route pour les imports automatiques (seeds, scripts).
     Le folder doit être une clé courte (ex: "league", "team", "player") —
     le mapping vers le chemin Freebox est fait côté receiver.
     """

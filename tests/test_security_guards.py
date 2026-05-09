@@ -8,7 +8,6 @@ Couvre :
   - POST /api/{teams,leagues,brands,sponsors,players} : modérateur requis
   - PUT  /api/{teams,leagues,brands,sponsors,players}/{id} : idem
   - PATCH /api/{type}/{id}/approve|reject : idem
-  - POST /api/teams-api/upsert : Pydantic + modérateur
   - safe_regex : un pattern dangereux ne fait pas exploser la recherche
 
 Matrice de réponse attendue :
@@ -114,37 +113,6 @@ class TestApproveReject:
         # Vérif side-effect
         team = await mock_db.teams.find_one({"team_id": "t_z"})
         assert team["status"] == "approved"
-
-
-# ─── /api/teams-api/upsert — auth + Pydantic ────────────────────────────────
-
-class TestTeamsApiUpsert:
-
-    @pytest.mark.asyncio
-    async def test_upsert_anonymous_401(self, client):
-        r = await client.post("/api/teams-api/upsert", json={"name": "Anonym FC"})
-        assert r.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_upsert_user_403(self, client, make_user):
-        _uid, _t, cookies = await make_user(role="user")
-        r = await client.post(
-            "/api/teams-api/upsert",
-            json={"name": "User FC"},
-            cookies=cookies,
-        )
-        assert r.status_code == 403
-
-    @pytest.mark.asyncio
-    async def test_upsert_validates_pydantic(self, client, make_user):
-        """Pydantic refuse `name` manquant (avant Vague 1, dict accepté brut)."""
-        _uid, _t, cookies = await make_user(role="moderator")
-        r = await client.post(
-            "/api/teams-api/upsert",
-            json={"country": "France"},  # name manquant
-            cookies=cookies,
-        )
-        assert r.status_code == 422, r.text
 
 
 # ─── safe_regex — sanity sur un pattern dangereux ───────────────────────────

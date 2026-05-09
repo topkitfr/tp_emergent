@@ -35,30 +35,6 @@ const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = 'bg-card border-border rounded-none';
 
-// ── Mapping position API → codes Topkit ──────────────────────────────────────────
-const API_POSITION_MAP = {
-  'Goalkeeper': ['GK'],
-  'Defender': ['CB'], 'Centre-Back': ['CB'], 'Center Back': ['CB'],
-  'Left Back': ['LB'], 'Right Back': ['RB'],
-  'Left Wing Back': ['LWB'], 'Right Wing Back': ['RWB'],
-  'Midfielder': ['CM'], 'Defensive Midfielder': ['CDM'],
-  'Central Midfielder': ['CM'], 'Attacking Midfielder': ['CAM'],
-  'Left Midfielder': ['LM'], 'Right Midfielder': ['RM'],
-  'Left Winger': ['LW'], 'Right Winger': ['RW'],
-  'Attacker': ['ST'], 'Centre Forward': ['CF'], 'Center Forward': ['CF'],
-  'Striker': ['ST'], 'Forward': ['ST'], 'Second Striker': ['SS'],
-};
-
-function mapApiPosition(apiPosition) {
-  if (!apiPosition) return [];
-  if (API_POSITION_MAP[apiPosition]) return API_POSITION_MAP[apiPosition];
-  const lower = apiPosition.toLowerCase();
-  for (const [key, val] of Object.entries(API_POSITION_MAP)) {
-    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) return val;
-  }
-  return [];
-}
-
 /**
  * AddEntityDialog — modal d'ajout direct d'une entité de référence.
  *
@@ -108,7 +84,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       preferred_foot:    item.preferred_foot || '',
       preferred_number:  item.preferred_number ?? '',
       individual_awards: item.individual_awards || [],
-      apifootball_id:    item.apifootball_id != null ? String(item.apifootball_id) : '',
       positions:         item.positions || [],
     }));
   };
@@ -129,105 +104,35 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
       stadium_city:        item.stadium_city || '',
       stadium_country:     item.stadium_country || '',
       stadium_image_url:   item.stadium_image_url || '',
-      apifootball_team_id: item.apifootball_team_id || '',
     }));
   };
 
   const handleLeagueDbSelect = (item) => {
     setForm(prev => ({
       ...prev,
-      name:                  item.name || '',
-      country_or_region:     item.country_or_region || '',
-      country_code:          item.country_code || '',
-      country_flag:          item.country_flag || '',
-      type:                  item.type || '',
-      entity_type:           item.entity_type || '',
-      scope:                 item.scope || '',
-      gender:                item.gender || '',
-      organizer:             item.organizer || '',
-      logo_url:              item.logo_url || '',
-      apifootball_league_id: item.apifootball_league_id || '',
-    }));
-  };
-
-  // ── Handlers API select ─────────────────────────────────────────────────
-  const handlePlayerApiSelect = (player) => {
-    const mappedPositions = player.positions && player.positions.length > 0
-      ? player.positions
-      : mapApiPosition(player.position || '');
-
-    setForm(prev => ({
-      ...prev,
-      full_name:         player.full_name        || prev.full_name        || '',
-      first_name:        player.first_name       || prev.first_name       || '',
-      last_name:         player.last_name        || prev.last_name        || '',
-      nationality:       player.nationality      || prev.nationality      || '',
-      birth_date:        player.birth_date       || prev.birth_date       || '',
-      birth_place:       player.birth_place      || prev.birth_place      || '',
-      birth_country:     player.birth_country    || prev.birth_country    || '',
-      photo_url:         player.photo_url        || player.photo          || prev.photo_url || '',
-      height:            player.height           ?? prev.height           ?? '',
-      weight:            player.weight           ?? prev.weight           ?? '',
-      preferred_foot:    player.preferred_foot   || prev.preferred_foot   || '',
-      preferred_number:  player.preferred_number ?? prev.preferred_number ?? '',
-      individual_awards: prev.individual_awards  || [],
-      // apifootball_id toujours castée en string (l'API renvoie un int)
-      apifootball_id:    player.apifootball_id != null ? String(player.apifootball_id) : (prev.apifootball_id || ''),
-      positions:         mappedPositions.length > 0 ? mappedPositions : (prev.positions || []),
-    }));
-  };
-
-  const handleTeamApiSelect = (team) => {
-    setForm(prev => ({
-      ...prev,
-      name:                  team.name              || prev.name              || '',
-      country:               team.country           || prev.country           || '',
-      city:                  team.city              || prev.city              || '',
-      founded:               team.founded           ?? prev.founded           ?? '',
-      is_national:           team.is_national       ?? prev.is_national       ?? false,
-      gender:                team.gender            || prev.gender            || '',
-      crest_url:             team.logo              || prev.crest_url         || '',
-      stadium_name:          team.stadium_name      || prev.stadium_name      || '',
-      stadium_capacity:      team.stadium_capacity  ?? prev.stadium_capacity  ?? '',
-      stadium_surface:       team.stadium_surface   || prev.stadium_surface   || '',
-      stadium_image_url:     team.stadium_image_url || prev.stadium_image_url || '',
-      stadium_city:          team.stadium_city      || prev.stadium_city      || '',
-      stadium_country:       team.stadium_country   || prev.stadium_country   || '',
-      apifootball_team_id:   team.apifootball_team_id ?? prev.apifootball_team_id ?? '',
-    }));
-  };
-
-  const handleLeagueApiSelect = (league) => {
-    setForm(prev => ({
-      ...prev,
-      name:                    league.name                || prev.name                || '',
-      country_or_region:       league.country_name        || league.country_or_region || prev.country_or_region || '',
-      country_code:            league.country_code        || prev.country_code        || '',
-      country_flag:            league.country_flag        || prev.country_flag        || '',
-      type:                    league.type                || prev.type                || '',
-      entity_type:             league.entity_type         || prev.entity_type         || '',
-      scope:                   league.scope               || prev.scope               || '',
-      gender:                  league.gender              || prev.gender              || '',
-      organizer:               league.organizer           || prev.organizer           || '',
-      logo_url:                league.apifootball_logo    || league.logo_url          || prev.logo_url || '',
-      apifootball_league_id:   league.apifootball_league_id ?? prev.apifootball_league_id ?? '',
+      name:                item.name || '',
+      country_or_region:   item.country_or_region || '',
+      country_code:        item.country_code || '',
+      country_flag:        item.country_flag || '',
+      type:                item.type || '',
+      entity_type:         item.entity_type || '',
+      scope:               item.scope || '',
+      gender:              item.gender || '',
+      organizer:           item.organizer || '',
+      logo_url:            item.logo_url || '',
     }));
   };
 
   // ── Mapper form → payload backend ─────────────────────────────────────────
   // Normalise les types pour correspondre au modèle Pydantic backend :
-  // - apifootball_id : str (l'API-Football renvoie un int, on force en string)
   // - height / weight : str | null (le backend attend Optional[str])
-  // - preferred_number : int | null (le backend attend Optional[int], "" doit devenir null)
+  // - preferred_number : int | null ("" doit devenir null)
   const buildPlayerPayload = (f) => ({
     ...f,
     firstname:        f.first_name || f.firstname || '',
     lastname:         f.last_name  || f.lastname  || '',
     first_name:       undefined,
     last_name:        undefined,
-    apifootball_id:   f.apifootball_id != null && f.apifootball_id !== ''
-                        ? String(f.apifootball_id)
-                        : null,
     height:           f.height != null && f.height !== ''
                         ? String(f.height)
                         : null,
@@ -308,7 +213,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <UnifiedEntitySearch
                   entityType="player"
                   onSelectDb={handleDbSelect}
-                  onSelectApi={handlePlayerApiSelect}
                   placeholder="Nom du joueur..."
                 />
               </div>
@@ -403,7 +307,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <UnifiedEntitySearch
                   entityType="team"
                   onSelectDb={handleDbSelect}
-                  onSelectApi={handleTeamApiSelect}
                   placeholder="Nom du club..."
                 />
               </div>
@@ -505,7 +408,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <UnifiedEntitySearch
                   entityType="brand"
                   onSelectDb={handleDbSelect}
-                  onSelectApi={() => {}}
                   placeholder="Nom de la marque..."
                 />
               </div>
@@ -538,7 +440,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <UnifiedEntitySearch
                   entityType="league"
                   onSelectDb={handleDbSelect}
-                  onSelectApi={handleLeagueApiSelect}
                   placeholder="Nom de la compétition..."
                 />
               </div>
@@ -626,7 +527,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 <UnifiedEntitySearch
                   entityType="sponsor"
                   onSelectDb={handleDbSelect}
-                  onSelectApi={() => {}}
                   placeholder="Nom du sponsor..."
                 />
               </div>

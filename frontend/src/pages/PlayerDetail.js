@@ -1,9 +1,9 @@
 // frontend/src/pages/PlayerDetail.js
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  User, Globe, Calendar, Shirt, Trophy, RefreshCw,
-  Ruler, Weight, MapPin, ArrowRight, Star, Award,
+  User, Globe, Calendar, Shirt, Trophy,
+  Ruler, Weight, MapPin, ArrowRight, Award,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,7 @@ import { ArrowLeft, Pencil } from 'lucide-react';
 import {
   getPlayer, proxyImageUrl, followEntity, unfollowEntity,
   isFollowing, votePlayerAura, getPlayerAura,
-  getPlayerScoring, getPlayerCareer, enrichPlayer,
-  getPlayerTransferChart,
+  getPlayerScoring, getPlayerCareer,
 } from '@/lib/api';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
@@ -102,166 +101,7 @@ function ScoreBreakdown({ scoring }) {
   );
 }
 
-function CareerAreaChart({ points }) {
-  const [tooltip, setTooltip] = useState(null);
-  const svgRef = useRef(null);
-
-  const W = 960;
-  const H = 180;
-  const padL = 16;
-  const padR = 32;
-  const padT = 48;
-  const padB = 16;
-  const chartW = W - padL - padR;
-  const chartH = H - padT - padB;
-
-  if (!points || points.length === 0) return null;
-
-  const maxFee = Math.max(...points.map(p => p.amount || 0), 1);
-  const yValues = points.map((p) => {
-    if (p.amount === null) return 0.15;
-    if (p.amount === 0) return 0.3;
-    return 0.3 + (p.amount / maxFee) * 0.7;
-  });
-
-  const cumY = [];
-  let acc = 0;
-  for (const v of yValues) {
-    acc = Math.min(1, acc + v * (1 / points.length) * 2.2);
-    cumY.push(acc);
-  }
-
-  const xStep = chartW / Math.max(points.length - 1, 1);
-
-  const coords = points.map((_, i) => ({
-    x: padL + i * xStep,
-    y: padT + chartH * (1 - cumY[i]),
-  }));
-
-  const linePath = coords.reduce((accPath, pt, i) => {
-    if (i === 0) return `M ${pt.x} ${pt.y}`;
-    const prev = coords[i - 1];
-    const cpx = (prev.x + pt.x) / 2;
-    return `${accPath} C ${cpx} ${prev.y}, ${cpx} ${pt.y}, ${pt.x} ${pt.y}`;
-  }, '');
-
-  const last = coords[coords.length - 1];
-  const first = coords[0];
-  const areaPath = `${linePath} L ${last.x} ${H - padB} L ${first.x} ${H - padB} Z`;
-
-  return (
-    <div className="relative w-full" style={{ background: 'transparent' }}>
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        style={{ height: 200, overflow: 'visible' }}
-        onMouseLeave={() => setTooltip(null)}
-      >
-        <defs>
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(174,65%,38%)" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="hsl(174,65%,38%)" stopOpacity="0.03" />
-          </linearGradient>
-        </defs>
-
-        <path d={areaPath} fill="url(#areaGrad)" />
-        <path
-          d={linePath}
-          fill="none"
-          stroke="hsl(174,65%,42%)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {coords.map((pt, i) => {
-          const p = points[i];
-          const logoSize = 28;
-          const logoX = pt.x - logoSize / 2;
-          const logoY = pt.y - logoSize - 10;
-          const isHovered = tooltip?.i === i;
-
-          return (
-            <g
-              key={i}
-              onMouseEnter={() => {
-                const svgRect = svgRef.current?.getBoundingClientRect();
-                if (!svgRect) return;
-                setTooltip({ i, x: pt.x, y: pt.y, p });
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              {p.to_logo && (
-                <image
-                  href={p.to_logo}
-                  x={logoX}
-                  y={logoY}
-                  width={logoSize}
-                  height={logoSize}
-                  style={{ filter: isHovered ? 'brightness(1.2)' : 'none' }}
-                />
-              )}
-
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r={isHovered ? 6 : 4}
-                fill={isHovered ? 'hsl(174,65%,60%)' : 'hsl(174,65%,42%)'}
-                stroke="hsl(220,14%,10%)"
-                strokeWidth="2"
-              />
-
-              <text
-                x={pt.x}
-                y={H - 2}
-                textAnchor="middle"
-                fontSize="9"
-                fill="rgba(160,160,155,0.55)"
-                fontFamily="DM Sans, sans-serif"
-              >
-                {p.season?.slice(0, 4)}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-
-      {tooltip && (() => {
-        const svgRect = svgRef.current?.getBoundingClientRect();
-        const scaleX = svgRect ? svgRect.width / W : 1;
-        const scaleY = svgRect ? svgRect.height / H : 1;
-        const leftPx = tooltip.x * scaleX;
-        const topPx = tooltip.y * scaleY - 12;
-        return (
-          <div
-            className="pointer-events-none absolute z-10 border border-border bg-card px-3 py-2 text-xs shadow-lg"
-            style={{
-              left: leftPx,
-              top: topPx,
-              transform: leftPx > (svgRect?.width || 400) * 0.65 ? 'translate(-100%, -100%)' : 'translate(8px, -100%)',
-              fontFamily: 'DM Sans, sans-serif',
-              minWidth: 160,
-            }}
-          >
-            <p className="font-semibold text-foreground mb-0.5">{tooltip.p.to}</p>
-            <p className="text-muted-foreground">
-              {tooltip.p.season}
-              {tooltip.p.from && <span className="ml-1 opacity-60">← {tooltip.p.from}</span>}
-            </p>
-            {tooltip.p.amount_label && tooltip.p.amount_label !== 'N/A' && (
-              <p className="mt-1 font-mono" style={{ color: 'hsl(174,65%,55%)' }}>
-                {tooltip.p.amount_label}
-              </p>
-            )}
-          </div>
-        );
-      })()}
-    </div>
-  );
-}
-
-function CareerTransferSection({ entries, chartPoints, loading, chartLoading, hasApiId }) {
+function CareerTransferSection({ entries, loading }) {
   const formatTransferLocal = (amount) => {
     if (!amount || amount === 0) return null;
     if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M€`;
@@ -276,27 +116,12 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
       </div>
     );
   }
-  if (!hasApiId) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 border border-dashed border-border text-center gap-2">
-        <p className="text-sm text-muted-foreground">Aucun ID API-Football lié à ce joueur</p>
-      </div>
-    );
-  }
-  if (entries.length === 0 && (!chartPoints || chartPoints.length === 0)) {
+  if (entries.length === 0) {
     return <p className="text-sm text-muted-foreground">Aucune donnée de carrière disponible.</p>;
   }
 
   return (
     <div className="space-y-6">
-      {chartLoading ? (
-        <div className="h-48 bg-muted animate-pulse rounded" />
-      ) : chartPoints && chartPoints.length > 0 ? (
-        <div className="border border-border bg-card px-4 pt-2 pb-1">
-          <CareerAreaChart points={chartPoints} />
-        </div>
-      ) : null}
-
       {entries.length > 0 && (
         <div className="relative">
           <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
@@ -361,7 +186,7 @@ function CareerTransferSection({ entries, chartPoints, loading, chartLoading, ha
   );
 }
 
-function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, enrichError, onEnrich, scoringLoading }) {
+function TrophiesSection({ scoring, player, tier, scorePalmares, scoringLoading }) {
   const allTrophies = scoring?.trophies || player.honours || [];
 
   const titlesByComp = {};
@@ -404,28 +229,18 @@ function TrophiesSection({ scoring, player, tier, scorePalmares, enrichLoading, 
             <span className="text-xs font-mono text-muted-foreground">{scorePalmares.toFixed(0)} pts</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {scoring?.updated_at && (
-            <span className="text-xs text-muted-foreground hidden sm:inline">
-              MàJ {new Date(scoring.updated_at).toLocaleDateString('fr-FR')}
-            </span>
-          )}
-          {player.apifootball_id && (
-            <Button variant="outline" size="sm" onClick={onEnrich} disabled={enrichLoading} className="rounded-none border-border hover:border-primary/50 text-xs gap-1.5">
-              <RefreshCw className={`w-3 h-3 ${enrichLoading ? 'animate-spin' : ''}`} />
-              {enrichLoading ? 'Chargement...' : 'Enrich'}
-            </Button>
-          )}
-        </div>
+        {scoring?.updated_at && (
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            MàJ {new Date(scoring.updated_at).toLocaleDateString('fr-FR')}
+          </span>
+        )}
       </div>
 
-      {enrichError && <p className="text-xs text-destructive mb-3">{enrichError}</p>}
-
-      {scorePalmares === null && !hasTrophies ? (
+      {scorePalmares === null && !hasTrophies && !hasAwards ? (
         <div className="flex flex-col items-center justify-center py-10 border border-dashed border-border text-center gap-3">
           <Trophy className="w-8 h-8 text-muted-foreground opacity-30" />
           <p className="text-sm text-muted-foreground">
-            {player.apifootball_id ? 'Palmarès non encore chargé — cliquez sur Enrich' : 'Aucun ID API-Football lié à ce joueur'}
+            Aucun palmarès renseigné pour ce joueur.
           </p>
         </div>
       ) : (
@@ -508,14 +323,9 @@ export default function PlayerDetail() {
 
   const [scoring, setScoring] = useState(null);
   const [scoringLoading, setScoringLoading] = useState(false);
-  const [enrichLoading, setEnrichLoading] = useState(false);
-  const [enrichError, setEnrichError] = useState(null);
 
   const [career, setCareer] = useState(null);
   const [careerLoading, setCareerLoading] = useState(false);
-
-  const [chartPoints, setChartPoints] = useState(null);
-  const [chartLoading, setChartLoading] = useState(false);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -541,14 +351,6 @@ export default function PlayerDetail() {
       .finally(() => setCareerLoading(false));
   }, []);
 
-  const loadChart = useCallback((pid) => {
-    setChartLoading(true);
-    getPlayerTransferChart(pid)
-      .then(r => setChartPoints(r.data?.points || []))
-      .catch(() => setChartPoints([]))
-      .finally(() => setChartLoading(false));
-  }, []);
-
   useEffect(() => {
     if (!player) return;
     const pid = player.player_id;
@@ -558,8 +360,7 @@ export default function PlayerDetail() {
     getPlayerAura(pid).then(r => setAura(r.data)).catch(() => {});
     loadScoring(pid);
     loadCareer(pid);
-    if (player.apifootball_id) loadChart(pid);
-  }, [player, authUser, loadScoring, loadCareer, loadChart]);
+  }, [player, authUser, loadScoring, loadCareer]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -589,22 +390,6 @@ export default function PlayerDetail() {
       setPlayer(p => ({ ...p, aura_level: res.data.aura_level }));
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const handleEnrich = async () => {
-    if (!player) return;
-    setEnrichLoading(true);
-    setEnrichError(null);
-    try {
-      await enrichPlayer(player.player_id, player.apifootball_id, aura?.aura_avg || 0);
-      loadScoring(player.player_id);
-      loadCareer(player.player_id);
-      loadChart(player.player_id);
-    } catch (e) {
-      setEnrichError(e?.response?.data?.detail || "Erreur lors de l'enrichissement");
-    } finally {
-      setEnrichLoading(false);
     }
   };
 
@@ -752,10 +537,7 @@ export default function PlayerDetail() {
           </h2>
           <CareerTransferSection
             entries={careerEntries}
-            chartPoints={chartPoints}
             loading={careerLoading}
-            chartLoading={chartLoading}
-            hasApiId={career?.has_apifootball_id ?? !!player.apifootball_id}
           />
         </div>
       </div>
@@ -770,9 +552,6 @@ export default function PlayerDetail() {
             player={player}
             tier={tier}
             scorePalmares={scorePalmares}
-            enrichLoading={enrichLoading}
-            enrichError={enrichError}
-            onEnrich={handleEnrich}
             scoringLoading={scoringLoading}
           />
         </div>
@@ -841,7 +620,6 @@ export default function PlayerDetail() {
             positions: player.positions?.join(', ') || '',
             preferred_number: player.preferred_number,
             photo_url: player.photo_url,
-            apifootball_id: player.apifootball_id || '',
             individual_awards: player.individual_awards || [],
           }}
           onSuccess={loadData}

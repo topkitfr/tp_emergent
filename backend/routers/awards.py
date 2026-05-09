@@ -16,7 +16,7 @@ import uuid
 
 from ..database import db
 from ..models import AwardCreate, AwardOut
-from ..services.thesportsdb import compute_score_palmares, compute_note
+from ..services.scoring import compute_score_palmares, compute_note
 
 router = APIRouter(prefix="/api/awards", tags=["awards"])
 
