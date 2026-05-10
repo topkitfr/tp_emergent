@@ -193,6 +193,15 @@ Reportée d'un audit complet du repo. Ces points doivent être adressés avant n
 - [x] `MODERATOR_EMAILS` lu depuis env uniquement.
 - ~~`POST /api/teams-api/upsert` à durcir~~ → router supprimé en Vague 3.
 
+### 6.1bis Sécurité — Vague 4 (LIVE en prod, 10/05/2026)
+- [x] PAT GitHub en clair dans `.git/config` VM → deploy key SSH read-only (PAT révoqué).
+- [x] `.env` / `.env.backend` permissions 644 → 600.
+- [x] `API_FOOTBALL_KEY` morte en `.env.backend` → retirée + clé révoquée chez api-sports.io.
+- [x] `PGADMIN_*` orphelins (vhost retiré en Vague 3) → retirés des deux `.env*`.
+- [x] Service `certbot` du compose orphelin (renew tenu par container ad-hoc qui aurait été tué au prochain `--remove-orphans`) → service compose géré, `restart: unless-stopped`, boucle 12h.
+- [x] Bots scannant `/.env`, `/wp-*`, `/.php`, `/ueditor` → `return 444 + access_log off` dans nginx.
+- Reste à terme : rotation `MONGO_URL`/`SECRET_KEY`/`RECEIVER_SECRET`/`RESEND_API_KEY` (clear text protégés par 600) → Docker secrets ou vault.
+
 ### 6.2 Architecture
 - Doublons `entities.py` ↔ `leagues_api.py` (reste du couple après cleanup Vague 3) → fusionner.
 - `kits.py` (989 l) → split `master_kits.py` / `versions.py` / `reviews.py` / `kits_by_entity.py`.
@@ -205,6 +214,9 @@ Reportée d'un audit complet du repo. Ces points doivent être adressés avant n
 ### 6.3 Qualité
 - [x] Tests pytest = 63 verts (auth, estimation, security_guards). Étendre à submissions/scoring/kits (Vague 2.5).
 - [x] CI GitHub Actions = LIVE (lint + pytest gate avant build/deploy).
+- [x] Backup auto Mongo Atlas — `scripts/mongo-backup.sh` quotidien 03:00, rétention 30j, dumps sur NAS Freebox (`/mnt/Freebox-1/backups/mongo/`). Vague 4.
+- [x] Bug `restart nginx` ne re-mount pas le bind-mount → CD utilise `up -d --force-recreate --no-deps nginx`. Vague 4.
+- [x] Drop collection legacy `kits` (14 330 docs footballkitarchive zombies). Vague 4.
 - Pre-commit hook local (py_compile + eslint) — éviterait la moitié des `fix:` du dernier mois.
 - `pandas==3.0.0` dans `requirements.txt` (version inexistante) → fix pin.
 - `print(...)` debug épars → utiliser `logging`.
