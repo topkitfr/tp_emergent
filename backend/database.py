@@ -9,7 +9,3 @@ if not mongo_url:
 
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
-
-
-def get_kits_collection():
-    return db["kits"]
