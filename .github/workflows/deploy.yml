@@ -127,13 +127,16 @@ jobs:
 
             docker compose up -d --build --remove-orphans
 
-            # Restart (pas reload) du nginx externe :
+            # Recreate le container nginx :
             #   - re-résout les DNS Docker des upstreams backend/frontend
-            #     qui ont changé d'IP après le rebuild → corrige les 502
-            #   - re-mount les bind volumes (le `git reset --hard` change
-            #     l'inode du fichier nginx.conf → un simple reload lirait
-            #     l'ancienne version cachée)
+            #     (les IPs changent au rebuild → corrige les 502).
+            #   - re-mount les bind volumes : le `git reset --hard` change
+            #     l'inode de nginx/nginx.conf. Un simple `restart` garde
+            #     l'ancien bind-mount (validé Vague 4 — la config était
+            #     "rechargée" mais le container voyait toujours l'ancien
+            #     fichier). `up -d --force-recreate` détruit + recrée le
+            #     container → bind frais sur l'inode courant.
             # Coût : ~1-2 sec de downtime nginx, acceptable.
-            docker compose restart nginx
+            docker compose up -d --force-recreate --no-deps nginx
 
             docker image prune -f
