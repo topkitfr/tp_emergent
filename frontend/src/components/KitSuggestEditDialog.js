@@ -94,8 +94,15 @@ export default function KitSuggestEditDialog({
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
+      // Équipes nationales : pas de sponsor maillot, on nettoie ce qui aurait
+      // pu rester en state d'une saisie avant le switch nation.
+      const cleaned = { ...form };
+      if (cleaned.entity_type === 'nation') {
+        cleaned.sponsor = '';
+        cleaned.sponsor_id = '';
+      }
       const payload = {
-        ...form,
+        ...cleaned,
         mode: 'edit',
         entity_id: entityId,
         entity_type: type,
@@ -230,14 +237,18 @@ export default function KitSuggestEditDialog({
 
           {/* Champs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {config.fields.map(f => (
-              <div key={f.key} className={`space-y-1 ${f.type === 'toggle' ? 'sm:col-span-2' : ''}`}>
-                <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
-                  {f.label}
-                </Label>
-                {renderField(f)}
-              </div>
-            ))}
+            {config.fields.map(f => {
+              // Sponsoring maillot interdit FIFA pour les équipes nationales
+              if (f.key === 'sponsor' && form.entity_type === 'nation') return null;
+              return (
+                <div key={f.key} className={`space-y-1 ${f.type === 'toggle' ? 'sm:col-span-2' : ''}`}>
+                  <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
+                    {f.label}
+                  </Label>
+                  {renderField(f)}
+                </div>
+              );
+            })}
           </div>
 
           {/* Photo(s) */}

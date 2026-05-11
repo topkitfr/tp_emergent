@@ -540,6 +540,10 @@ export default function Contributions() {
 
   const [club, setClub]           = useState('');
   const [teamId, setTeamId]       = useState('');
+  // is_national de la team sélectionnée — pilote l'affichage du champ
+  // Sponsor (sponsoring maillot interdit FIFA pour les équipes nationales).
+  // Reset à null si on retape à la main (pas d'item DB sélectionné).
+  const [teamIsNational, setTeamIsNational] = useState(false);
   const [season, setSeason]       = useState('');
   const [kitType, setKitType]     = useState('');
   const [brand, setBrand]         = useState('');
@@ -653,7 +657,12 @@ export default function Contributions() {
     }
     setSubmitting(true);
     try {
-      const data = { club, team_id: teamId, season, kit_type: kitType, brand, brand_id: brandId, league, league_id: leagueId, sponsor, sponsor_id: sponsorId, design, gender, front_photo: frontPhoto };
+      // Équipes nationales : pas de sponsor maillot (règle FIFA), on n'envoie
+      // ni le nom ni l'id pour éviter de polluer la submission avec des restes
+      // de saisie d'une team précédente.
+      const effSponsor   = teamIsNational ? '' : sponsor;
+      const effSponsorId = teamIsNational ? '' : sponsorId;
+      const data = { club, team_id: teamId, season, kit_type: kitType, brand, brand_id: brandId, league, league_id: leagueId, sponsor: effSponsor, sponsor_id: effSponsorId, design, gender, front_photo: frontPhoto };
       const submissionRes = await createSubmission({ submission_type: 'master_kit', data });
       const masterKitSubmissionId = submissionRes?.data?.submission_id;
       if (masterKitSubmissionId) {
@@ -661,7 +670,7 @@ export default function Contributions() {
         if (!teamId    && club.trim())    pendingJobs.push(createTeamPending(   { name: club.trim()    }, masterKitSubmissionId));
         if (!brandId   && brand.trim())   pendingJobs.push(createBrandPending(  { name: brand.trim()   }, masterKitSubmissionId));
         if (!leagueId  && league.trim())  pendingJobs.push(createLeaguePending( { name: league.trim()  }, masterKitSubmissionId));
-        if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: sponsor.trim() }, masterKitSubmissionId));
+        if (!effSponsorId && effSponsor.trim()) pendingJobs.push(createSponsorPending({ name: effSponsor.trim() }, masterKitSubmissionId));
         await Promise.allSettled(pendingJobs);
       }
       toast.success('Master kit submitted for community review!');
@@ -695,7 +704,7 @@ export default function Contributions() {
 
   const closeAddForm = () => {
     setShowAddForm(false); setAddStep(1); setSubType('master_kit');
-    setClub(''); setTeamId(''); setSponsorId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
+    setClub(''); setTeamId(''); setTeamIsNational(false); setSponsorId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
     setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setLeagueId(''); setGender('');
     setSelectedKit(''); setSelectedKitLabel(''); setCompetition(''); setModel('');
     setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
@@ -815,8 +824,8 @@ export default function Contributions() {
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team *</Label>
                     <EntityAutocomplete entityType="team" value={club}
-                      onChange={(val) => { setClub(val); setTeamId(''); }}
-                      onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
+                      onChange={(val) => { setClub(val); setTeamId(''); setTeamIsNational(false); }}
+                      onSelect={(item) => { setClub(item.label); setTeamId(item.id); setTeamIsNational(!!item.is_national); }}
                       placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" testId="add-club" />
                   </div>
                   <div className="space-y-2">
@@ -848,13 +857,15 @@ export default function Contributions() {
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
                     <Input value={design} onChange={(e) => setDesign(e.target.value)} placeholder="e.g., Single stripe" className="bg-card border-border rounded-none" />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
-                    <EntityAutocomplete entityType="sponsor" value={sponsor}
-                      onChange={(val) => { setSponsor(val); setSponsorId(''); }}
-                      onSelect={(item) => { setSponsor(item.label); setSponsorId(item.id); }}
-                      placeholder="e.g., Qatar Airways" className="bg-card border-border rounded-none" testId="add-sponsor" />
-                  </div>
+                  {!teamIsNational && (
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
+                      <EntityAutocomplete entityType="sponsor" value={sponsor}
+                        onChange={(val) => { setSponsor(val); setSponsorId(''); }}
+                        onSelect={(item) => { setSponsor(item.label); setSponsorId(item.id); }}
+                        placeholder="e.g., Qatar Airways" className="bg-card border-border rounded-none" testId="add-sponsor" />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
                     <Select value={gender} onValueChange={setGender}>

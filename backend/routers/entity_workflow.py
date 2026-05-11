@@ -151,16 +151,22 @@ async def autocomplete(
         docs = await db[config["collection"]].find(filter_q, {"_id": 0}).limit(20).to_list(20)
         logo_fields = LOGO_FIELDS.get(type, [])
 
-        return [
-            {
+        results = []
+        for d in docs:
+            item = {
                 "id":       d.get(config["id_field"], ""),
                 "label":    d.get(config["label_field"], ""),
                 "extra":    d.get(config["extra_field"], ""),
                 "status":   d.get("status", "approved"),
                 "logo_url": next((d[f] for f in logo_fields if d.get(f)), None),
             }
-            for d in docs
-        ]
+            # Pour les teams, on expose is_national pour que le front puisse
+            # adapter le form master_kit (ex : masquer le sponsor sur les
+            # équipes nationales — sponsoring maillot interdit FIFA).
+            if type == "team":
+                item["is_national"] = bool(d.get("is_national", False))
+            results.append(item)
+        return results
 
     # Mode 2 : recherche valeurs distinctes d'un champ
     if field:
