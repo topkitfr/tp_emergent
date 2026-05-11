@@ -29,6 +29,7 @@ from .routers.reviews import router as reviews_router
 from .routers.submissions import router as submissions_router
 from .routers.wishlist import router as wishlist_router
 from .routers.entities import router as entities_router
+from .routers.entity_workflow import router as entity_workflow_router
 from .routers.uploads import router as uploads_router
 from .routers.admin import router as admin_router
 from .routers.admin_panel import router as admin_panel_router
@@ -201,6 +202,7 @@ app.include_router(reviews_router)
 app.include_router(submissions_router)
 app.include_router(wishlist_router)
 app.include_router(entities_router)
+app.include_router(entity_workflow_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(admin_panel_router)
