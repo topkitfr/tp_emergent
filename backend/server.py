@@ -28,7 +28,11 @@ from .routers.estimation import router as estimation_router
 from .routers.reviews import router as reviews_router
 from .routers.submissions import router as submissions_router
 from .routers.wishlist import router as wishlist_router
-from .routers.entities import router as entities_router
+from .routers.teams import router as teams_router
+from .routers.leagues import router as leagues_router
+from .routers.brands import router as brands_router
+from .routers.sponsors import router as sponsors_router
+from .routers.players import router as players_router
 from .routers.entity_workflow import router as entity_workflow_router
 from .routers.uploads import router as uploads_router
 from .routers.admin import router as admin_router
@@ -201,7 +205,11 @@ app.include_router(estimation_router)
 app.include_router(reviews_router)
 app.include_router(submissions_router)
 app.include_router(wishlist_router)
-app.include_router(entities_router)
+app.include_router(teams_router)
+app.include_router(leagues_router)
+app.include_router(brands_router)
+app.include_router(sponsors_router)
+app.include_router(players_router)
 app.include_router(entity_workflow_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
