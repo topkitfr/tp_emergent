@@ -203,9 +203,9 @@ Reportée d'un audit complet du repo. Ces points doivent être adressés avant n
 - Reste à terme : rotation `MONGO_URL`/`SECRET_KEY`/`RECEIVER_SECRET`/`RESEND_API_KEY` (clear text protégés par 600) → Docker secrets ou vault.
 
 ### 6.2 Architecture
-- Doublons `entities.py` ↔ `leagues_api.py` (reste du couple après cleanup Vague 3) → fusionner.
+- [x] `entities.py` (857 l) splité en 5 routers per-type (`teams.py`, `leagues.py`, `brands.py`, `sponsors.py`, `players.py`) + `entity_workflow.py` (pending/approve/reject/autocomplete) + `_entity_helpers.py` (helpers partagés). 11/05/2026 — commits `c231997a` + `cfd2e4de`. Filet 29 tests dans `tests/test_entities_crud.py` (commit `de9d99ab`).
+- Doublon `routers/leagues.py` ↔ `routers/leagues_api.py` (résidu pré-split) : tous deux exposent `GET /api/leagues`. Conservé par ordre d'include (`leagues_router` gagne). Reco : drop `leagues_api.py`.
 - `kits.py` (989 l) → split `master_kits.py` / `versions.py` / `reviews.py` / `kits_by_entity.py`.
-- `entities.py` (856 l) → un router par type ou module générique config-driven.
 - Estimation dupliquée Python ↔ JS → exposer `POST /api/estimate` et supprimer la version JS.
 - Rate-limit en mémoire process (jamais purgé) → Redis ou drop d'entrées trop vieilles.
 - Indexes recréés à chaque startup (drop + create) → `create_index` idempotent ou migration dédiée.
