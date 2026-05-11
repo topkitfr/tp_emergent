@@ -1,148 +1,65 @@
 // frontend/src/components/EntityEditDialog.js
+// Dialog d'édition (mode='edit') ou de demande de suppression
+// (mode='removal') d'une entité de référence existante. Crée une
+// submission dans db.submissions ; l'entité d'origine reste affichée
+// inchangée jusqu'à l'approbation communautaire.
+//
+// Fine coquille autour de <EntityForm /> qui porte tout le rendu du
+// formulaire. Ici on gère uniquement : titre, validation du nom, appel
+// API, bloc "Request Removal".
+//
+// Note : ce dialog n'est invoqué que depuis les pages détail (Edit/
+// Request Removal). Le `mode='create'` reste possible côté API mais
+// n'est appelé nulle part — voir AddEntityDialog pour la création.
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createSubmission } from '@/lib/api';
-import ImageUpload from '@/components/ImageUpload';
-import IndividualAwardsField from '@/components/IndividualAwardsField';
-import CareerField from '@/components/CareerField';
-import PositionsToggle from '@/components/entity-form/PositionsToggle';
-import TeamTypeToggle from '@/components/entity-form/TeamTypeToggle';
-import FlagPreview from '@/components/entity-form/FlagPreview';
-import {
-  LEAGUE_LEVELS,
-  FOOT_OPTIONS,
-  SURFACE_OPTIONS,
-  GENDER_OPTIONS,
-  LEAGUE_TYPE_OPTIONS,
-  LEAGUE_ENTITY_TYPE_OPTIONS,
-  LEAGUE_SCOPE_OPTIONS,
-  IMAGE_FIELDS,
-} from '@/lib/entityFields';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
+import { createSubmission, parseApiError } from '@/lib/api';
+import EntityForm from '@/components/entity-form/EntityForm';
+import { ENTITY_FIELD_CONFIGS, buildEntityPayload } from '@/lib/entityFields';
 
 const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
-const inputClass = 'bg-card border-border rounded-none';
-
-const AURA_LEVELS = [1, 2, 3, 4, 5];
-
-const ENTITY_CONFIGS = {
-  team: {
-    label: 'Team', nameField: 'name',
-    imageField: 'crest_url', imageLabel: 'Crest / Badge',
-    folder: 'team',
-    fields: [
-      // Identité
-      { key: 'name',                label: 'Team Name',     required: true },
-      { key: 'country',             label: 'Country' },
-      { key: 'city',                label: 'City' },
-      { key: 'founded',             label: 'Founded (year)', type: 'number' },
-      { key: 'is_national',         label: 'Type',           type: 'team_type' },
-      { key: 'gender',              label: 'Genre',          type: 'select', options: GENDER_OPTIONS },
-      // Stade
-      { key: '_stadium_divider',    label: 'Stadium', type: 'divider', span: 2 },
-      { key: 'stadium_name',        label: 'Stadium Name',   span: 2 },
-      { key: 'stadium_capacity',    label: 'Capacity',       type: 'number' },
-      { key: 'stadium_surface',     label: 'Surface',        type: 'select', options: SURFACE_OPTIONS },
-      { key: 'stadium_city',        label: 'Ville du stade' },
-      { key: 'stadium_country',     label: 'Pays du stade' },
-      // Image stade
-      { key: '_stadiumimg_divider', label: 'Stadium Image', type: 'divider', span: 2 },
-      { key: 'stadium_image_url',   label: 'Stadium Image', type: 'image', folder: 'team', span: 2 },
-    ],
-  },
-  league: {
-    label: 'League', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
-    folder: 'league',
-    fields: [
-      { key: 'name',                  label: 'League Name',              required: true },
-      { key: 'country_or_region',     label: 'Country / Region' },
-      { key: 'country_code',          label: 'Country Code' },
-      { key: 'type',                  label: 'Type',                     type: 'select', options: LEAGUE_TYPE_OPTIONS },
-      { key: 'entity_type',           label: 'Entity Type',              type: 'select', options: LEAGUE_ENTITY_TYPE_OPTIONS },
-      { key: 'scope',                 label: 'Scope',                    type: 'select', options: LEAGUE_SCOPE_OPTIONS },
-      { key: 'level',                 label: 'Level',                    type: 'select', options: LEAGUE_LEVELS },
-      { key: 'gender',                label: 'Genre',                    type: 'select', options: GENDER_OPTIONS },
-      { key: 'organizer',             label: 'Organizer' },
-      // Flag preview (read-only pill si rempli via API)
-      { key: '_flag_preview',         label: '', type: 'flag_preview', span: 2 },
-    ],
-  },
-  sponsor: {
-    label: 'Sponsor', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
-    folder: 'sponsor',
-    fields: [
-      { key: 'name',    label: 'Sponsor Name', required: true },
-      { key: 'country', label: 'Country' },
-      { key: 'website', label: 'Website' },
-    ],
-  },
-  brand: {
-    label: 'Brand', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
-    folder: 'brand',
-    fields: [
-      { key: 'name',    label: 'Brand Name',    required: true },
-      { key: 'country', label: 'Country' },
-      { key: 'founded', label: 'Founded (year)', type: 'number' },
-    ],
-  },
-  player: {
-    label: 'Player', nameField: 'full_name', imageField: 'photo_url', imageLabel: 'Photo',
-    folder: 'player',
-    fields: [
-      { key: 'full_name',           label: 'Full Name',                required: true, span: 2 },
-      { key: 'first_name',          label: 'Prénom' },
-      { key: 'last_name',           label: 'Nom de famille' },
-      { key: 'nationality',         label: 'Nationality' },
-      { key: 'birth_date',          label: 'Date of Birth (DD/MM/YYYY)' },
-      { key: 'birth_place',         label: 'Lieu de naissance' },
-      { key: 'birth_country',       label: 'Pays de naissance' },
-      { key: 'height',              label: 'Height (cm)',              type: 'number' },
-      { key: 'weight',              label: 'Weight (kg)',              type: 'number' },
-      { key: 'preferred_foot',      label: 'Preferred Foot',           type: 'select', options: FOOT_OPTIONS },
-      { key: 'preferred_number',    label: 'Preferred Number',         type: 'number' },
-      { key: 'positions',           label: 'Positions',                type: 'positions', span: 2 },
-      { key: '_career_divider',     label: 'Carrière & Transferts',    type: 'divider', span: 2 },
-      { key: 'career',              label: 'Carrière',                 type: 'career', span: 2 },
-      { key: 'individual_awards',   label: 'Distinctions individuelles', type: 'individual_awards', span: 2 },
-      { key: 'bio',                 label: 'Bio',                      type: 'textarea', span: 2 },
-    ],
-  },
-};
 
 export default function EntityEditDialog({
   open,
   onOpenChange,
   entityType,
-  mode = 'create',
+  mode = 'edit',
   initialData = {},
   entityId = null,
   onSuccess,
 }) {
-  const config = ENTITY_CONFIGS[entityType];
+  const config = ENTITY_FIELD_CONFIGS[entityType];
   const [form, setForm] = useState(() => ({ ...initialData }));
   const [submitting, setSubmitting] = useState(false);
   const [showRemoval, setShowRemoval] = useState(false);
   const [removalNotes, setRemovalNotes] = useState('');
 
-  // ── Reset le form à chaque ouverture du dialog ──────────────────────────────
+  // Reset à chaque ouverture du dialog
   useEffect(() => {
     if (open) {
       setForm({ ...initialData });
       setShowRemoval(false);
       setRemovalNotes('');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  // Préremplissage depuis la barre de recherche anti-doublon (utile pour
+  // repérer une collision de renommage en édition).
+  const handleDbSelect = (item) => {
+    toast.warning(
+      `« ${item.name || item.full_name || item.label} » existe déjà en base. Vérifie la collision avant de soumettre.`,
+      { duration: 5000 }
+    );
+  };
 
   const handleSubmit = async () => {
+    if (!config) return;
     const nameKey = config.nameField;
     if (!form[nameKey]?.trim()) {
       toast.error(`${config.label} name is required`);
@@ -150,34 +67,12 @@ export default function EntityEditDialog({
     }
     setSubmitting(true);
     try {
-      const payload = { ...form, mode };
-      if (payload.positions && typeof payload.positions === 'string') {
-        payload.positions = payload.positions.split(',').map(p => p.trim()).filter(Boolean);
-      }
-      for (const f of config.fields) {
-        if (f.type === 'number' && payload[f.key]) {
-          payload[f.key] = parseInt(payload[f.key], 10) || null;
-        }
-      }
+      const payload = buildEntityPayload(entityType, form, initialData, mode);
+      payload.mode = mode;
       if (mode === 'edit' && entityId) {
-        payload.entity_id = entityId;
+        payload.entity_id   = entityId;
         payload.entity_type = entityType;
       }
-      // Nettoyer les pseudo-champs UI
-      delete payload._stadium_divider;
-      delete payload._stadiumimg_divider;
-      delete payload._flag_preview;
-      delete payload._career_divider;
-
-      // ── En mode edit : ne soumettre les champs image QUE si l'user en a uploadé une nouvelle
-      if (mode === 'edit') {
-        for (const imgField of IMAGE_FIELDS) {
-          if (imgField in payload && payload[imgField] === (initialData[imgField] || '')) {
-            delete payload[imgField];
-          }
-        }
-      }
-
       await createSubmission({ submission_type: entityType, data: payload });
       toast.success(
         mode === 'create'
@@ -187,7 +82,7 @@ export default function EntityEditDialog({
       onOpenChange(false);
       if (onSuccess) onSuccess(form[nameKey]);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Submission failed');
+      toast.error(parseApiError(err, 'Submission failed'));
     } finally {
       setSubmitting(false);
     }
@@ -207,132 +102,10 @@ export default function EntityEditDialog({
       setRemovalNotes('');
       onOpenChange(false);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Submission failed');
+      toast.error(parseApiError(err, 'Submission failed'));
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const renderField = (f) => {
-    if (f.type === 'divider') {
-      return (
-        <div className="sm:col-span-2 flex items-center gap-2 pt-1">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap" style={labelStyle}>
-            {f.label}
-          </p>
-          <div className="flex-1 border-t border-border" />
-        </div>
-      );
-    }
-
-    if (f.type === 'flag_preview') {
-      if (!form.country_flag) return null;
-      return (
-        <div className="sm:col-span-2">
-          <FlagPreview flagUrl={form.country_flag} code={form.country_code} />
-        </div>
-      );
-    }
-
-    if (f.type === 'image') {
-      return (
-        <ImageUpload
-          value={form[f.key] || ''}
-          onChange={v => handleChange(f.key, v)}
-          folder={f.folder || 'general'}
-          testId={`entity-edit-${f.key}`}
-        />
-      );
-    }
-
-    if (f.type === 'team_type') {
-      return (
-        <TeamTypeToggle
-          value={form.is_national}
-          onChange={val => handleChange('is_national', val)}
-        />
-      );
-    }
-
-    if (f.type === 'positions') {
-      return (
-        <PositionsToggle
-          value={form.positions}
-          onChange={val => handleChange('positions', val)}
-        />
-      );
-    }
-
-    if (f.type === 'career') {
-      return (
-        <CareerField
-          value={form.career || []}
-          onChange={val => handleChange('career', val)}
-        />
-      );
-    }
-
-    if (f.type === 'individual_awards') {
-      return (
-        <IndividualAwardsField
-          value={form.individual_awards || []}
-          onChange={val => handleChange('individual_awards', val)}
-        />
-      );
-    }
-
-    if (f.type === 'aura') {
-      return (
-        <div className="flex gap-1">
-          {AURA_LEVELS.map(level => (
-            <button key={level} type="button" onClick={() => handleChange('aura_level', level)}
-              className={`px-2 py-1 text-xs border rounded-none transition-colors ${
-                form.aura_level === level
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:border-primary/50'
-              }`}
-              style={labelStyle}>{'★'.repeat(level)}</button>
-          ))}
-        </div>
-      );
-    }
-
-    if (f.type === 'select') {
-      return (
-        <Select value={form[f.key] || ''} onValueChange={v => handleChange(f.key, v)}>
-          <SelectTrigger className="bg-card border-border rounded-none h-9" data-testid={`entity-edit-${f.key}`}>
-            <SelectValue placeholder="Select..." />
-          </SelectTrigger>
-          <SelectContent>
-            {f.options.map(o => (
-              <SelectItem key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-    }
-
-    if (f.type === 'textarea') {
-      return (
-        <Textarea
-          value={form[f.key] ?? ''}
-          onChange={e => handleChange(f.key, e.target.value)}
-          className="bg-card border-border rounded-none min-h-[80px] text-sm"
-          placeholder="..."
-          data-testid={`entity-edit-${f.key}`}
-        />
-      );
-    }
-
-    return (
-      <Input
-        type={f.type === 'number' ? 'number' : 'text'}
-        value={form[f.key] ?? ''}
-        onChange={e => handleChange(f.key, e.target.value)}
-        className="bg-card border-border rounded-none"
-        data-testid={`entity-edit-${f.key}`}
-      />
-    );
   };
 
   if (!config) return null;
@@ -349,39 +122,13 @@ export default function EntityEditDialog({
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {config.fields.map(f => {
-              // Les pseudo-champs sans label prennent tout leur espace
-              if (f.type === 'divider' || f.type === 'flag_preview') {
-                return <React.Fragment key={f.key}>{renderField(f)}</React.Fragment>;
-              }
-              return (
-                <div
-                  key={f.key}
-                  className={`space-y-1 ${
-                    f.key === config.nameField || f.span === 2 ? 'sm:col-span-2' : ''
-                  }`}
-                >
-                  <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
-                    {f.label} {f.required && '*'}
-                  </Label>
-                  {renderField(f)}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
-              {config.imageLabel}
-            </Label>
-            <ImageUpload
-              value={form[config.imageField] || ''}
-              onChange={v => handleChange(config.imageField, v)}
-              folder={config.folder}
-              testId={`entity-edit-${config.imageField}`}
-            />
-          </div>
+          <EntityForm
+            entityType={entityType}
+            value={form}
+            onChange={setForm}
+            onDbSelect={handleDbSelect}
+            mode={mode}
+          />
 
           <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
             {mode === 'create'
@@ -411,7 +158,9 @@ export default function EntityEditDialog({
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-[10px] uppercase tracking-wider text-destructive" style={labelStyle}>REQUEST REMOVAL</p>
+                  <Label className="text-[10px] uppercase tracking-wider text-destructive" style={labelStyle}>
+                    REQUEST REMOVAL
+                  </Label>
                   <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                     The community will vote on this removal request.
                   </p>
