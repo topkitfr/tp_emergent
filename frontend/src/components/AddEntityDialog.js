@@ -21,15 +21,18 @@ import {
 import ImageUpload from '@/components/ImageUpload';
 import UnifiedEntitySearch from '@/components/UnifiedEntitySearch';
 import IndividualAwardsField from '@/components/IndividualAwardsField';
-
-const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
-const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
-const SURFACE_OPTIONS = ['Grass', 'Artificial Turf', 'Hybrid'];
-const GENDER_OPTIONS = ['male', 'female'];
-const FOOT_OPTIONS = ['right', 'left', 'both'];
-const LEAGUE_TYPE_OPTIONS = ['League', 'Cup'];
-const LEAGUE_ENTITY_TYPE_OPTIONS = ['league', 'cup', 'confederation'];
-const LEAGUE_SCOPE_OPTIONS = ['domestic', 'international'];
+import PositionsToggle from '@/components/entity-form/PositionsToggle';
+import TeamTypeToggle from '@/components/entity-form/TeamTypeToggle';
+import FlagPreview from '@/components/entity-form/FlagPreview';
+import {
+  LEAGUE_LEVELS,
+  SURFACE_OPTIONS,
+  GENDER_OPTIONS,
+  FOOT_OPTIONS,
+  LEAGUE_TYPE_OPTIONS,
+  LEAGUE_ENTITY_TYPE_OPTIONS,
+  LEAGUE_SCOPE_OPTIONS,
+} from '@/lib/entityFields';
 
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
@@ -186,11 +189,6 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
     sponsor: 'Add a new Sponsor',
   };
 
-  const togglePosition = (pos) => {
-    const current = form.positions || [];
-    set('positions', current.includes(pos) ? current.filter(p => p !== pos) : [...current, pos]);
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg bg-background border-border rounded-none p-0 gap-0">
@@ -268,17 +266,10 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Positions</Label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {POSITIONS.map(pos => (
-                      <button key={pos} type="button" onClick={() => togglePosition(pos)}
-                        className={`px-2 py-0.5 text-[11px] border rounded-none transition-colors ${
-                          (form.positions || []).includes(pos)
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
-                        }`}
-                        style={fieldStyle}>{pos}</button>
-                    ))}
-                  </div>
+                  <PositionsToggle
+                    value={form.positions || []}
+                    onChange={val => set('positions', val)}
+                  />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Distinctions individuelles</Label>
@@ -338,26 +329,10 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Type</Label>
-                  <div className="flex gap-2">
-                    {[
-                      { label: '🏟️ Club',     value: false },
-                      { label: '🚩 Nationale', value: true  },
-                    ].map(opt => (
-                      <button
-                        key={String(opt.value)}
-                        type="button"
-                        onClick={() => set('is_national', opt.value)}
-                        className={`px-3 py-1.5 text-xs border rounded-none transition-colors ${
-                          form.is_national === opt.value
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
-                        }`}
-                        style={fieldStyle}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
+                  <TeamTypeToggle
+                    value={form.is_national}
+                    onChange={val => set('is_national', val)}
+                  />
                 </div>
                 <div className="col-span-2 flex items-center gap-2 pt-1">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap" style={fieldStyle}>Stadium</p>
@@ -376,7 +351,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <Select value={form.stadium_surface || ''} onValueChange={v => set('stadium_surface', v)}>
                     <SelectTrigger className={`${inputClass} h-9`}><SelectValue placeholder="Surface" /></SelectTrigger>
                     <SelectContent>
-                      {['Grass', 'Artificial Turf', 'Hybrid'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      {SURFACE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -510,9 +485,8 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                   <ImageUpload value={form.logo_url || ''} onChange={url => set('logo_url', url)} folder="league" />
                 </div>
                 {form.country_flag && (
-                  <div className="col-span-2 flex items-center gap-2">
-                    <img src={form.country_flag} alt="flag" className="h-4 w-auto rounded-sm border border-border" />
-                    <span className="text-xs text-muted-foreground" style={fieldStyle}>{form.country_code || ''}</span>
+                  <div className="col-span-2">
+                    <FlagPreview flagUrl={form.country_flag} code={form.country_code} />
                   </div>
                 )}
               </div>

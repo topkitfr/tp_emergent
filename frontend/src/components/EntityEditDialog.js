@@ -10,24 +10,26 @@ import { createSubmission } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import IndividualAwardsField from '@/components/IndividualAwardsField';
 import CareerField from '@/components/CareerField';
+import PositionsToggle from '@/components/entity-form/PositionsToggle';
+import TeamTypeToggle from '@/components/entity-form/TeamTypeToggle';
+import FlagPreview from '@/components/entity-form/FlagPreview';
+import {
+  LEAGUE_LEVELS,
+  FOOT_OPTIONS,
+  SURFACE_OPTIONS,
+  GENDER_OPTIONS,
+  LEAGUE_TYPE_OPTIONS,
+  LEAGUE_ENTITY_TYPE_OPTIONS,
+  LEAGUE_SCOPE_OPTIONS,
+  IMAGE_FIELDS,
+} from '@/lib/entityFields';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 
 const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
 const inputClass = 'bg-card border-border rounded-none';
 
-const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const AURA_LEVELS = [1, 2, 3, 4, 5];
-const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
-const FOOT_OPTIONS = ['right', 'left', 'both'];
-const SURFACE_OPTIONS = ['Grass', 'Artificial Turf', 'Hybrid'];
-const GENDER_OPTIONS = ['male', 'female'];
-const LEAGUE_TYPE_OPTIONS = ['League', 'Cup'];
-const LEAGUE_ENTITY_TYPE_OPTIONS = ['league', 'cup', 'confederation'];
-const LEAGUE_SCOPE_OPTIONS = ['domestic', 'international'];
-
-// Tous les champs image connus — ne seront envoyés que si l'user a uploadé une nouvelle image
-const IMAGE_FIELDS = new Set(['crest_url', 'logo_url', 'photo_url', 'stadium_image_url']);
 
 const ENTITY_CONFIGS = {
   team: {
@@ -226,9 +228,8 @@ export default function EntityEditDialog({
     if (f.type === 'flag_preview') {
       if (!form.country_flag) return null;
       return (
-        <div className="sm:col-span-2 flex items-center gap-2">
-          <img src={form.country_flag} alt="flag" className="h-4 w-auto rounded-sm border border-border" />
-          <span className="text-xs text-muted-foreground" style={labelStyle}>{form.country_code || ''}</span>
+        <div className="sm:col-span-2">
+          <FlagPreview flagUrl={form.country_flag} code={form.country_code} />
         </div>
       );
     }
@@ -246,44 +247,19 @@ export default function EntityEditDialog({
 
     if (f.type === 'team_type') {
       return (
-        <div className="flex gap-2">
-          {[
-            { label: '🏟️ Club',     value: false },
-            { label: '🚩 Nationale', value: true  },
-          ].map(opt => (
-            <button
-              key={String(opt.value)}
-              type="button"
-              onClick={() => handleChange('is_national', opt.value)}
-              className={`px-3 py-1.5 text-xs border rounded-none transition-colors ${
-                form.is_national === opt.value
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:border-primary/50'
-              }`}
-              style={labelStyle}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <TeamTypeToggle
+          value={form.is_national}
+          onChange={val => handleChange('is_national', val)}
+        />
       );
     }
 
     if (f.type === 'positions') {
-      const current = Array.isArray(form.positions) ? form.positions : [];
       return (
-        <div className="flex flex-wrap gap-1.5">
-          {POSITIONS.map(pos => (
-            <button key={pos} type="button"
-              onClick={() => handleChange('positions', current.includes(pos) ? current.filter(p => p !== pos) : [...current, pos])}
-              className={`px-2 py-0.5 text-[11px] border rounded-none transition-colors ${
-                current.includes(pos)
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:border-primary/50'
-              }`}
-              style={labelStyle}>{pos}</button>
-          ))}
-        </div>
+        <PositionsToggle
+          value={form.positions}
+          onChange={val => handleChange('positions', val)}
+        />
       );
     }
 
