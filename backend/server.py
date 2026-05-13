@@ -22,7 +22,9 @@ from .database import db, client
 
 from .routers.beta import router as beta_router
 from .routers.auth import router as auth_router
-from .routers.kits import router as kits_router
+from .routers.master_kits import router as master_kits_router
+from .routers.versions import router as versions_router
+from .routers.kits_by_entity import router as kits_by_entity_router
 from .routers.collections import router as collections_router
 from .routers.estimation import router as estimation_router
 from .routers.reviews import router as reviews_router
@@ -198,7 +200,9 @@ app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads"
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(user_lists_router)
-app.include_router(kits_router)
+app.include_router(master_kits_router)
+app.include_router(versions_router)
+app.include_router(kits_by_entity_router)
 app.include_router(collections_router)
 app.include_router(estimation_router)
 app.include_router(reviews_router)
