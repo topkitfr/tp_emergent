@@ -42,7 +42,6 @@ from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
 from .routers.players_scoring import router as players_scoring_router
-from .routers.leagues_api import router as leagues_api_router
 from .routers.awards import router as awards_router
 from .middleware import maintenance_middleware
 
@@ -218,7 +217,6 @@ app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 app.include_router(beta_router)
 app.include_router(players_scoring_router)
-app.include_router(leagues_api_router)          # ← recherche leagues DB
 app.include_router(awards_router)               # ← CRUD awards individuels
 
 
