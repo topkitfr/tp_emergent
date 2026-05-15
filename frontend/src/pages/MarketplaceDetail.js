@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Loader2, ShoppingBag, RefreshCw, Check, X } from "lucide-react";
 import OfferDialog from "@/components/OfferDialog";
-import { getImageUrl } from "@/lib/api";
+import { proxyImageUrl as getImageUrl } from "@/lib/api";
 
 const TYPE_LABEL = { sale: "Vente", trade: "Échange", both: "Vente ou échange" };
 const STATUS_BADGE = {

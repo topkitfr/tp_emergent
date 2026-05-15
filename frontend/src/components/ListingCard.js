@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { getImageUrl } from "@/lib/api";
+import { proxyImageUrl as getImageUrl } from "@/lib/api";
 
 const TYPE_BADGE = {
   sale:  { label: "VENTE",          className: "bg-green-600 text-white" },
