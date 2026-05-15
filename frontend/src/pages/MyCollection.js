@@ -17,6 +17,7 @@ import {
   removeItemFromList,
   createListing,
   getMyListings,
+  cancelListing,
 } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -101,6 +102,7 @@ export default function MyCollection() {
   const [listingForm,    setListingForm]    = useState({ listing_type: 'sale', asking_price: '', trade_for: '' });
   const [listingLoading, setListingLoading] = useState(false);
   const [myListedIds,    setMyListedIds]    = useState(new Set());
+  const [myListings,     setMyListings]     = useState([]);
 
   // edit sheet ─ UNIFIÉ
   const [detailItem, setDetailItem] = useState(null);
@@ -135,9 +137,12 @@ export default function MyCollection() {
     fetchLists();
     getCollectionCategories().then(r => setCategories(r.data)).catch(() => {});
     getMyListings()
-      .then(r => setMyListedIds(new Set(
-        (r.data || []).filter(l => l.status === 'active').map(l => l.collection_id)
-      )))
+      .then(r => {
+        const all = r.data || [];
+        const active = all.filter(l => l.status === 'active');
+        setMyListings(active);
+        setMyListedIds(new Set(active.map(l => l.collection_id)));
+      })
       .catch(() => {});
   }, [fetchCollection, fetchLists]);
 
@@ -288,7 +293,8 @@ export default function MyCollection() {
       if ((listingForm.listing_type === 'trade' || listingForm.listing_type === 'both') && listingForm.trade_for) {
         payload.trade_for = listingForm.trade_for;
       }
-      await createListing(payload);
+      const res = await createListing(payload);
+      setMyListings(prev => [...prev, res.data]);
       setMyListedIds(prev => new Set([...prev, listingItem.collection_id]));
       toast.success('Annonce publiée !');
       setListingItem(null);
@@ -297,6 +303,18 @@ export default function MyCollection() {
       toast.error(normalizeDetail(e.response?.data?.detail) || 'Erreur lors de la publication');
     } finally {
       setListingLoading(false);
+    }
+  };
+
+  const handleCancelListing = async (listingId, collectionId) => {
+    if (!window.confirm('Annuler cette annonce ?')) return;
+    try {
+      await cancelListing(listingId);
+      setMyListings(prev => prev.filter(l => l.listing_id !== listingId));
+      setMyListedIds(prev => { const s = new Set(prev); s.delete(collectionId); return s; });
+      toast.success('Annonce annulée.');
+    } catch (e) {
+      toast.error(normalizeDetail(e.response?.data?.detail) || 'Erreur');
     }
   };
 
@@ -338,6 +356,34 @@ export default function MyCollection() {
                 <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="font-mono text-2xl">{stats.estimated_value.high}&euro;</div>
                 <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>High Est.</div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Mes annonces actives ── */}
+          {myListings.length > 0 && (
+            <div className="mb-6" data-testid="my-listings">
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={fieldStyle}>
+                <Tag className="w-3.5 h-3.5 inline mr-1" /> MES ANNONCES ({myListings.length})
+              </h3>
+              <div className="space-y-2">
+                {myListings.map(l => {
+                  const snap = l.kit_snapshot || {};
+                  const typeLabel = { sale: 'Vente', trade: 'Échange', both: 'Vente/Échange' }[l.listing_type] || l.listing_type;
+                  const typeCls   = { sale: 'bg-green-600', trade: 'bg-blue-600', both: 'bg-purple-600' }[l.listing_type] || 'bg-gray-500';
+                  return (
+                    <div key={l.listing_id} className="flex items-center gap-3 border border-border bg-card px-3 py-2 text-sm">
+                      <span className={`text-[10px] text-white px-1.5 py-0.5 rounded font-semibold shrink-0 ${typeCls}`}>{typeLabel}</span>
+                      <span className="flex-1 truncate text-xs">{snap.club || '—'} {snap.season ? `— ${snap.season}` : ''}</span>
+                      {l.asking_price != null && <span className="font-mono text-xs text-accent shrink-0">{l.asking_price} €</span>}
+                      {l.offer_count > 0 && (
+                        <Badge className="text-[10px] bg-yellow-100 text-yellow-800 shrink-0">{l.offer_count} offre{l.offer_count > 1 ? 's' : ''}</Badge>
+                      )}
+                      <Link to={`/marketplace/${l.listing_id}`} className="text-xs text-muted-foreground hover:text-foreground shrink-0">Voir</Link>
+                      <button onClick={() => handleCancelListing(l.listing_id, l.collection_id)} className="text-xs text-muted-foreground hover:text-destructive shrink-0" title="Annuler l'annonce"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
