@@ -15,7 +15,7 @@ export default function Marketplace() {
   const [skip, setSkip] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const [listingType, setListingType] = useState("");
+  const [listingType, setListingType] = useState("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
@@ -23,7 +23,7 @@ export default function Marketplace() {
     setLoading(true);
     try {
       const params = { skip: currentSkip, limit: LIMIT };
-      if (listingType) params.listing_type = listingType;
+      if (listingType && listingType !== "all") params.listing_type = listingType;
       if (minPrice)    params.min_price = parseFloat(minPrice);
       if (maxPrice)    params.max_price = parseFloat(maxPrice);
       const res = await getListings(params);
@@ -64,7 +64,7 @@ export default function Marketplace() {
           <Select value={listingType} onValueChange={setListingType}>
             <SelectTrigger><SelectValue placeholder="Tous les types" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous</SelectItem>
+              <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="sale">Vente</SelectItem>
               <SelectItem value="trade">Échange</SelectItem>
               <SelectItem value="both">Vente ou échange</SelectItem>
@@ -88,8 +88,8 @@ export default function Marketplace() {
             className="w-28"
           />
         </div>
-        {(listingType || minPrice || maxPrice) && (
-          <Button variant="ghost" size="sm" onClick={() => { setListingType(""); setMinPrice(""); setMaxPrice(""); }}>
+        {(listingType !== "all" || minPrice || maxPrice) && (
+          <Button variant="ghost" size="sm" onClick={() => { setListingType("all"); setMinPrice(""); setMaxPrice(""); }}>
             Réinitialiser
           </Button>
         )}
