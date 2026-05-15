@@ -86,6 +86,19 @@ async def my_offers(request: Request):
     return docs
 
 
+@router.get("/user/{user_id}")
+async def user_listings(user_id: str):
+    docs = await db.listings.find(
+        {"user_id": user_id, "status": "active"}, {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
+    for doc in docs:
+        col = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
+        if col:
+            version = await db.versions.find_one({"version_id": col.get("version_id", "")}, {"_id": 0})
+            doc["kit_snapshot"] = version or {}
+    return docs
+
+
 @router.get("/{listing_id}")
 async def get_listing(listing_id: str, request: Request):
     listing = await db.listings.find_one({"listing_id": listing_id}, {"_id": 0})
