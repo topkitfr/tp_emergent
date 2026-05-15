@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { loginUser, registerUser } from '@/lib/api';
+import { loginUser, registerUser, loginWithGoogle } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '920523740769-d74f1dsdajtilkqasrhtrei4blmf8ujj.apps.googleusercontent.com';
 
 export default function Login() {
   const { login } = useAuth();
@@ -12,6 +14,45 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '', name: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const googleBtnRef = useRef(null);
+
+  useEffect(() => {
+    const initGoogle = () => {
+      if (!window.google || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: googleBtnRef.current.offsetWidth || 360,
+        text: 'continue_with',
+        locale: 'fr',
+      });
+    };
+
+    if (window.google) {
+      initGoogle();
+    } else {
+      const script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+      if (script) script.addEventListener('load', initGoogle);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleGoogleCallback = async (googleResponse) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await loginWithGoogle(googleResponse.credential);
+      login(res.data);
+      navigate('/browse');
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Erreur de connexion Google');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,6 +154,15 @@ export default function Login() {
             {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
           </Button>
         </form>
+
+        <div className="mt-4">
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">ou</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div ref={googleBtnRef} className="w-full flex justify-center" />
+        </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground transition-colors">← Back to home</Link>

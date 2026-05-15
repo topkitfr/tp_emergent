@@ -18,6 +18,8 @@ import AddJersey from "@/pages/AddJersey";
 import Profile from "@/pages/Profile";
 import Contributions from "@/pages/Contributions";
 import Wishlist from "@/pages/Wishlist";
+import Marketplace from "@/pages/Marketplace";
+import MarketplaceDetail from "@/pages/MarketplaceDetail";
 import Teams from "@/pages/Teams";
 import TeamDetail from "@/pages/TeamDetail";
 import Leagues from "@/pages/Leagues";
@@ -92,6 +94,10 @@ const [betaUnlocked, setBetaUnlocked] = useState(
           <Route path="/sponsors/:id" element={<SponsorDetail />} />
           <Route path="/database/sponsors" element={<Navigate to="/sponsors" replace />} />
           <Route path="/database/sponsors/:id" element={<RedirectWithId to="/sponsors" />} />
+
+          {/* ── Marketplace ── */}
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/marketplace/:listingId" element={<MarketplaceDetail />} />
 
           {/* ── Pages protégées ── */}
           <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />

@@ -9,6 +9,7 @@ class UserOut(BaseModel):
     name: str
     picture: Optional[str] = None
     role: Optional[str] = "user"
+    auth_provider: Optional[str] = "email"
     created_at: Optional[str] = None
 
 
@@ -452,6 +453,48 @@ class PlayerOut(BaseModel):
         if isinstance(v, list):
             return v
         return [v]
+
+
+# ─── Marketplace ────────────────────────────────────────────────────────────
+
+class ListingCreate(BaseModel):
+    collection_id: str
+    listing_type: str  # "sale" | "trade" | "both"
+    asking_price: Optional[float] = None
+    trade_for: Optional[str] = None
+
+class ListingOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    listing_id: str
+    collection_id: str
+    user_id: str
+    version_id: str
+    listing_type: str
+    asking_price: Optional[float] = None
+    trade_for: Optional[str] = None
+    condition_summary: Optional[str] = None
+    estimated_price: Optional[float] = None
+    status: str
+    created_at: str
+    updated_at: str
+
+class OfferCreate(BaseModel):
+    offer_type: str  # "buy" | "trade" | "buy_and_trade"
+    offered_price: Optional[float] = None
+    offered_collection_id: Optional[str] = None
+    message: Optional[str] = None
+
+class OfferOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    offer_id: str
+    listing_id: str
+    offerer_id: str
+    offer_type: str
+    offered_price: Optional[float] = None
+    offered_collection_id: Optional[str] = None
+    message: Optional[str] = None
+    status: str
+    created_at: str
 
 
 class PlayerScoringOut(BaseModel):

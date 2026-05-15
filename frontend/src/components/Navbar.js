@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, FolderOpen, User, LogOut, FileCheck, Heart, Shield, Trophy, Tag, Users, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, FolderOpen, User, LogOut, FileCheck, Heart, Shield, Trophy, Tag, Users, Menu, X, ChevronDown, ShoppingBag } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +47,19 @@ export default function Navbar() {
               >
                 <Search className="w-4 h-4 mr-1.5" />
                 Browse
+              </Button>
+            </Link>
+
+            <Link to="/marketplace">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`rounded-none text-sm ${
+                  isActive('/marketplace') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <ShoppingBag className="w-4 h-4 mr-1.5" />
+                Marketplace
               </Button>
             </Link>
 
@@ -239,7 +252,8 @@ export default function Navbar() {
                 </div>
                 {[
                   { to: '/collection', icon: <FolderOpen className="w-4 h-4" />, label: 'Ma Collection' },
-                  { to: '/wishlist',   icon: <Heart className="w-4 h-4" />,      label: 'Wishlist' },
+                  { to: '/wishlist',     icon: <Heart className="w-4 h-4" />,       label: 'Wishlist' },
+                  { to: '/marketplace', icon: <ShoppingBag className="w-4 h-4" />, label: 'Marketplace' },
                   { to: '/profile',    icon: <User className="w-4 h-4" />,       label: 'Profil' },
                 ].map(item => (
                   <Link key={item.to} to={item.to} onClick={closeMobile}

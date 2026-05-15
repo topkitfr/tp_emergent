@@ -58,6 +58,7 @@ export const getReviews = (versionId) => api.get(`/reviews`, { params: { version
 // Auth
 export const loginUser = (email, password) => api.post('/auth/login', { email, password });
 export const registerUser = (email, password, name) => api.post('/auth/register', { email, password, name });
+export const loginWithGoogle = (idToken) => api.post('/auth/google', { id_token: idToken });
 export const getMe = () => api.get('/auth/me');
 export const logout = () => api.post('/auth/logout');
 
@@ -196,5 +197,16 @@ export const getPlayers = (params) => api.get('/players', { params });
 export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerId}/career`);
 export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
+
+// Marketplace
+export const getListings = (params) => api.get('/marketplace', { params });
+export const getListing = (id) => api.get(`/marketplace/${id}`);
+export const createListing = (data) => api.post('/marketplace', data);
+export const updateListing = (id, data) => api.put(`/marketplace/${id}`, data);
+export const cancelListing = (id) => api.delete(`/marketplace/${id}`);
+export const getMyListings = () => api.get('/marketplace/my-listings');
+export const getMyOffers = () => api.get('/marketplace/my-offers');
+export const createOffer = (listingId, data) => api.post(`/marketplace/${listingId}/offers`, data);
+export const updateOffer = (offerId, data) => api.put(`/marketplace/offers/${offerId}`, data);
 
 export default api;

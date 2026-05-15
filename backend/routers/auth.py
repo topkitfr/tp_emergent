@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 import uuid
 import os
+import httpx
 from ..database import db, client
 from ..auth import get_current_user
 from ..utils import MODERATOR_EMAILS
@@ -44,6 +45,10 @@ class ForgotPasswordBody(BaseModel):
 class ResetPasswordBody(BaseModel):
     token: str
     new_password: str
+
+
+class GoogleAuthBody(BaseModel):
+    id_token: str
 
 
 def set_session_cookie(response: Response, session_token: str):
@@ -169,6 +174,75 @@ async def logout(request: Request, response: Response):
         samesite="none",
     )
     return {"message": "Logged out"}
+
+
+@router.post("/google")
+async def google_auth(body: GoogleAuthBody, response: Response):
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    if not google_client_id:
+        raise HTTPException(status_code=503, detail="Google auth non configuré")
+
+    async with httpx.AsyncClient() as client_http:
+        resp = await client_http.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": body.id_token},
+            timeout=10,
+        )
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Token Google invalide")
+
+    payload = resp.json()
+
+    if payload.get("aud") != google_client_id:
+        raise HTTPException(status_code=401, detail="Token Google invalide (audience)")
+
+    email = payload.get("email")
+    if not email or not payload.get("email_verified", False):
+        raise HTTPException(status_code=401, detail="Email Google non vérifié")
+
+    name = payload.get("name", email.split("@")[0])
+    picture = payload.get("picture", "")
+
+    user = await db.users.find_one({"email": email})
+
+    if user:
+        user_id = user["user_id"]
+        if not user.get("auth_provider"):
+            await db.users.update_one(
+                {"user_id": user_id},
+                {"$set": {"auth_provider": "google", "profile_picture": picture or user.get("profile_picture", "")}},
+            )
+    else:
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        role = "moderator" if email in MODERATOR_EMAILS else "user"
+        await db.users.insert_one({
+            "user_id": user_id,
+            "email": email,
+            "name": name,
+            "profile_picture": picture,
+            "role": role,
+            "username": name.replace(" ", "").lower(),
+            "description": "",
+            "collection_privacy": "public",
+            "password_hash": "",
+            "auth_provider": "google",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        await send_welcome(email, name)
+
+    session_token = uuid.uuid4().hex
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "last_active": datetime.now(timezone.utc).isoformat(),
+    })
+
+    set_session_cookie(response, session_token)
+    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+    return user_doc
 
 
 @router.post("/forgot-password")
