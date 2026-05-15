@@ -15,7 +15,12 @@ import {
   deleteList,
   addItemToList,
   removeItemFromList,
+  createListing,
+  getMyListings,
 } from '@/lib/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +30,7 @@ import { toast } from 'sonner';
 import {
   Shirt, LayoutGrid, List, Trash2, FolderOpen, Edit2,
   Check, TrendingUp, TrendingDown, Minus, Plus,
-  BookMarked, X, Pencil, Loader2,
+  BookMarked, X, Pencil, Loader2, Tag,
 } from 'lucide-react';
 import { calculateEstimation } from '@/utils/estimation';
 import CollectionItemForm, {
@@ -91,6 +96,12 @@ export default function MyCollection() {
   const [editingListName,setEditingListName]= useState('');
   const [addToListItem,  setAddToListItem]  = useState(null);
 
+  // listing
+  const [listingItem,    setListingItem]    = useState(null);
+  const [listingForm,    setListingForm]    = useState({ listing_type: 'sale', asking_price: '', trade_for: '' });
+  const [listingLoading, setListingLoading] = useState(false);
+  const [myListedIds,    setMyListedIds]    = useState(new Set());
+
   // edit sheet ─ UNIFIÉ
   const [detailItem, setDetailItem] = useState(null);
   const [editForm,   setEditForm]   = useState(INITIAL_FORM_STATE);
@@ -123,6 +134,11 @@ export default function MyCollection() {
     fetchCollection();
     fetchLists();
     getCollectionCategories().then(r => setCategories(r.data)).catch(() => {});
+    getMyListings()
+      .then(r => setMyListedIds(new Set(
+        (r.data || []).filter(l => l.status === 'active').map(l => l.collection_id)
+      )))
+      .catch(() => {});
   }, [fetchCollection, fetchLists]);
 
   // ─── listes handlers ──────────────────────────────────────────────────────
@@ -257,6 +273,33 @@ export default function MyCollection() {
     }
   };
 
+  // ─── listing handler ─────────────────────────────────────────────────────
+  const handleCreateListing = async () => {
+    if (!listingItem) return;
+    setListingLoading(true);
+    try {
+      const payload = {
+        collection_id: listingItem.collection_id,
+        listing_type: listingForm.listing_type,
+      };
+      if ((listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && listingForm.asking_price) {
+        payload.asking_price = parseFloat(listingForm.asking_price);
+      }
+      if ((listingForm.listing_type === 'trade' || listingForm.listing_type === 'both') && listingForm.trade_for) {
+        payload.trade_for = listingForm.trade_for;
+      }
+      await createListing(payload);
+      setMyListedIds(prev => new Set([...prev, listingItem.collection_id]));
+      toast.success('Annonce publiée !');
+      setListingItem(null);
+      setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '' });
+    } catch (e) {
+      toast.error(normalizeDetail(e.response?.data?.detail) || 'Erreur lors de la publication');
+    } finally {
+      setListingLoading(false);
+    }
+  };
+
   // ─── computed ─────────────────────────────────────────────────────────────
   const activeList     = lists.find(l => l.list_id === activeListId);
   const displayedItems = activeListId && activeList
@@ -384,6 +427,9 @@ export default function MyCollection() {
                     <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt={item.master_kit?.club} className="w-full h-full object-cover group-hover:scale-105" style={{ transition: 'transform 0.5s ease' }} />
                     {getConditionLabel(item) && <div className="absolute bottom-2 left-2"><Badge variant="secondary" className="rounded-none text-[10px]">{getConditionLabel(item)}</Badge></div>}
                     {item.signed && <div className="absolute bottom-2 right-2"><Badge className="rounded-none text-[10px] bg-accent/90 text-accent-foreground border-none">Signed</Badge></div>}
+                    {myListedIds.has(item.collection_id) && (
+                      <span className="absolute top-2 right-2 text-[10px] bg-green-600 text-white px-1.5 py-0.5 rounded font-semibold z-10">EN VENTE</span>
+                    )}
                   </div>
                   <div className="p-3 space-y-1">
                     <h3 className="text-sm font-semibold tracking-tight truncate" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{item.master_kit?.club}</h3>
@@ -401,6 +447,9 @@ export default function MyCollection() {
                     <button onClick={e => { e.preventDefault(); e.stopPropagation(); handleRemoveFromList(activeListId, item.collection_id); }} className="p-1.5 bg-card/90 border border-primary/40 text-primary hover:text-destructive" title="Retirer de la liste" data-testid={`remove-from-list-${item.collection_id}`}><X className="w-3 h-3" /></button>
                   ) : (
                     <button onClick={e => { e.preventDefault(); e.stopPropagation(); setAddToListItem(item.collection_id); }} className="p-1.5 bg-card/90 border border-border text-muted-foreground hover:text-primary" title="Ajouter à une liste" data-testid={`add-to-list-${item.collection_id}`}><BookMarked className="w-3 h-3" /></button>
+                  )}
+                  {!myListedIds.has(item.collection_id) && (
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); setListingItem(item); }} className="p-1.5 bg-black/60 text-white hover:bg-primary/80 rounded" title="Mettre en vente" data-testid={`list-item-${item.collection_id}`}><Tag className="w-3 h-3" /></button>
                   )}
                   <button onClick={e => { e.preventDefault(); e.stopPropagation(); handleRemove(item.collection_id); }} className="p-1.5 bg-destructive/90 text-destructive-foreground" data-testid={`remove-collection-${item.collection_id}`}><Trash2 className="w-3 h-3" /></button>
                 </div>
@@ -424,8 +473,14 @@ export default function MyCollection() {
                 {item.size && <span className="font-mono text-[10px] text-muted-foreground shrink-0">{item.size}</span>}
                 {item.estimated_price && <span className="font-mono text-xs text-accent shrink-0">{item.estimated_price}&euro;</span>}
                 {item.signed && <Badge className="rounded-none text-[10px] bg-accent/90 shrink-0">Signed</Badge>}
+                {myListedIds.has(item.collection_id) && (
+                  <span className="text-[10px] bg-green-600 text-white px-1.5 py-0.5 rounded font-semibold shrink-0">EN VENTE</span>
+                )}
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0" style={{ transition: 'opacity 0.2s ease' }}>
                   <button onClick={() => openDetail(item)} className="p-1.5 text-muted-foreground hover:text-foreground" data-testid={`edit-list-${item.collection_id}`}><Edit2 className="w-4 h-4" /></button>
+                  {!myListedIds.has(item.collection_id) && (
+                    <button onClick={() => setListingItem(item)} className="p-1.5 text-muted-foreground hover:text-primary" title="Mettre en vente" data-testid={`list-item-list-${item.collection_id}`}><Tag className="w-4 h-4" /></button>
+                  )}
                   <button onClick={() => handleRemove(item.collection_id)} className="p-1.5 text-muted-foreground hover:text-destructive" style={{ transition: 'color 0.2s ease' }} data-testid={`remove-list-${item.collection_id}`}><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
@@ -499,6 +554,63 @@ export default function MyCollection() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* ══ LISTING DIALOG ══ */}
+      <Dialog open={!!listingItem} onOpenChange={open => { if (!open) { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '' }); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mettre en vente / échange</DialogTitle>
+          </DialogHeader>
+          {listingItem && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {listingItem.master_kit?.club} — {listingItem.master_kit?.season}
+              </p>
+              <div className="space-y-1">
+                <Label>Type d'annonce</Label>
+                <Select value={listingForm.listing_type} onValueChange={v => setListingForm(f => ({ ...f, listing_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sale">Vente</SelectItem>
+                    <SelectItem value="trade">Échange</SelectItem>
+                    <SelectItem value="both">Vente ou échange</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && (
+                <div className="space-y-1">
+                  <Label>Prix demandé (€)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    placeholder="Ex: 80"
+                    value={listingForm.asking_price}
+                    onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))}
+                  />
+                </div>
+              )}
+              {(listingForm.listing_type === 'trade' || listingForm.listing_type === 'both') && (
+                <div className="space-y-1">
+                  <Label>Cherche en échange (optionnel)</Label>
+                  <Input
+                    placeholder="Ex: PSG 2012 domicile taille L"
+                    value={listingForm.trade_for}
+                    onChange={e => setListingForm(f => ({ ...f, trade_for: e.target.value }))}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '' }); }}>Annuler</Button>
+            <Button onClick={handleCreateListing} disabled={listingLoading || ((listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && !listingForm.asking_price)}>
+              {listingLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Tag className="w-4 h-4 mr-2" />}
+              Publier l'annonce
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add to list mini-panel */}
       {addToListItem && (
