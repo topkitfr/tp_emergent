@@ -58,6 +58,7 @@ export const getReviews = (versionId) => api.get(`/reviews`, { params: { version
 // Auth
 export const loginUser = (email, password) => api.post('/auth/login', { email, password });
 export const registerUser = (email, password, name) => api.post('/auth/register', { email, password, name });
+export const loginWithGoogle = (idToken) => api.post('/auth/google', { id_token: idToken });
 export const getMe = () => api.get('/auth/me');
 export const logout = () => api.post('/auth/logout');
 

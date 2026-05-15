@@ -9,6 +9,7 @@ class UserOut(BaseModel):
     name: str
     picture: Optional[str] = None
     role: Optional[str] = "user"
+    auth_provider: Optional[str] = "email"
     created_at: Optional[str] = None
 
 
