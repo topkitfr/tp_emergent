@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { proxyImageUrl, addToCollection, createPlayerPending } from '@/lib/api';
+import { proxyImageUrl, addToCollection, createPlayerPending, estimatePrice } from '@/lib/api';
 import { Check, Loader2 } from 'lucide-react';
 import { calculateEstimation } from '@/utils/estimation';
 import CollectionItemForm, {
@@ -89,9 +89,28 @@ export default function AddToCollectionDialog({ version, onClose, onSuccess }) {
         } catch {}
       }
 
+      const estRes = await estimatePrice({
+        model_type:         version?.model || 'Replica',
+        competition:        version?.competition || '',
+        condition_origin:   form.condition_origin || '',
+        physical_state:     form.physical_state || '',
+        flocking_origin:    form.flocking_origin === 'none' ? 'None' : (form.flocking_origin || ''),
+        flocking_player_id: resolvedFlockingPlayerId || '',
+        signed:             form.signed || false,
+        signed_type:        form.signed_type || '',
+        signed_other_detail: form.signed_other_text || '',
+        signed_proof:       form.signed_proof_level || 'none',
+        season_year:        seasonYear,
+        patch:              (form.patches?.length > 0) || !!form.patch_other_text,
+        is_rare:            form.is_rare || false,
+        rare_reason:        form.rare_reason || '',
+        mode,
+      }).catch(() => ({ data: estimation }));
+      const finalEstimation = estRes.data || estimation;
+
       const payload = formToPayload(
         { ...form, flocking_player_id: resolvedFlockingPlayerId, signed_player_id: resolvedSignedByPlayerId },
-        estimation,
+        finalEstimation,
       );
 
       await addToCollection({ version_id: version.version_id, ...payload });

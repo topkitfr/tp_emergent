@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   getMyCollection, getCollectionStats, updateProfile, updateCredentials,
   getUserBadges, getUserByUsername, getFollows, proxyImageUrl,
-  getUserPublicCollection, getUserPublicSubmissions, getUserPublicFollows
+  getUserPublicCollection, getUserPublicSubmissions, getUserPublicFollows,
+  getUserListings,
 } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import { toast } from 'sonner';
 import {
   Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X,
   Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus,
-  FileCheck, Shield, KeyRound, Users, User
+  FileCheck, Shield, KeyRound, Users, User, Tag,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 
@@ -39,6 +40,7 @@ export default function Profile() {
   const [publicCollectionPrivate, setPublicCollectionPrivate] = useState(false);
   const [publicSubmissions, setPublicSubmissions] = useState([]);
   const [publicFollows, setPublicFollows]         = useState([]);
+  const [publicListings, setPublicListings]       = useState([]);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -88,6 +90,9 @@ export default function Profile() {
         .catch(() => {});
       getUserPublicFollows(uid)
         .then(r => setPublicFollows(r.data?.follows || []))
+        .catch(() => {});
+      getUserListings(uid)
+        .then(r => setPublicListings(r.data || []))
         .catch(() => {});
     }
   }, [profileUser, isOwnProfile]);
@@ -504,6 +509,28 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+
+              {publicListings.length > 0 && (
+                <div>
+                  <h2 className="text-xl tracking-tight mb-6">MARKETPLACE ({publicListings.length})</h2>
+                  <div className="space-y-2">
+                    {publicListings.map(l => {
+                      const snap = l.kit_snapshot || {};
+                      const typeLabel = { sale: 'Vente', trade: 'Échange', both: 'Vente/Échange' }[l.listing_type] || l.listing_type;
+                      const typeCls   = { sale: 'bg-green-600', trade: 'bg-blue-600', both: 'bg-purple-600' }[l.listing_type] || 'bg-gray-500';
+                      return (
+                        <Link to={`/marketplace/${l.listing_id}`} key={l.listing_id} className="flex items-center gap-3 border border-border bg-card px-3 py-2 hover:border-primary/30 transition-colors">
+                          <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className={`text-[10px] text-white px-1.5 py-0.5 rounded font-semibold shrink-0 ${typeCls}`}>{typeLabel}</span>
+                          <span className="flex-1 truncate text-xs">{snap.club || '—'}{snap.season ? ` — ${snap.season}` : ''}</span>
+                          {l.asking_price != null && <span className="font-mono text-xs text-accent shrink-0">{l.asking_price} €</span>}
+                          <span className="text-xs text-muted-foreground shrink-0">Voir →</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {publicSubmissions.length > 0 && (
                 <div>
