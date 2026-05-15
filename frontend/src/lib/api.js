@@ -198,6 +198,9 @@ export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerI
 export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
 
+// Estimation
+export const estimatePrice = (data) => api.post('/estimate', data);
+
 // Marketplace
 export const getListings = (params) => api.get('/marketplace', { params });
 export const getListing = (id) => api.get(`/marketplace/${id}`);

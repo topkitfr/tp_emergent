@@ -18,6 +18,7 @@ import {
   createListing,
   getMyListings,
   cancelListing,
+  estimatePrice,
 } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -242,7 +243,7 @@ export default function MyCollection() {
       }
 
       const seasonYear = parseSeasonYear(detailItem.master_kit?.season);
-      const estimation = calculateEstimation({
+      const localEst = calculateEstimation({
         mode:             editMode,
         modelType:        detailItem.version?.model       || 'Replica',
         competition:      detailItem.version?.competition || '',
@@ -260,6 +261,24 @@ export default function MyCollection() {
         rareReason:       editForm.rare_reason,
         seasonYear,
       });
+      const estRes = await estimatePrice({
+        model_type:          detailItem.version?.model || 'Replica',
+        competition:         detailItem.version?.competition || '',
+        condition_origin:    editForm.condition_origin || '',
+        physical_state:      editForm.physical_state || '',
+        flocking_origin:     editForm.flocking_origin === 'none' ? 'None' : (editForm.flocking_origin || ''),
+        flocking_player_id:  resolvedFlockingPlayerId || '',
+        signed:              editForm.signed || false,
+        signed_type:         editForm.signed_type || '',
+        signed_other_detail: editForm.signed_other_text || '',
+        signed_proof:        editForm.signed_proof_level || 'none',
+        season_year:         seasonYear,
+        patch:               (editForm.patches?.length > 0) || !!editForm.patch_other_text,
+        is_rare:             editForm.is_rare || false,
+        rare_reason:         editForm.rare_reason || '',
+        mode:                editMode,
+      }).catch(() => ({ data: localEst }));
+      const estimation = estRes.data || localEst;
 
       const payload = formToPayload(
         { ...editForm, flocking_player_id: resolvedFlockingPlayerId, signed_player_id: resolvedSignedPlayerId },
