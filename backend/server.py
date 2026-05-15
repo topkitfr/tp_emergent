@@ -45,6 +45,7 @@ from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
 from .routers.players_scoring import router as players_scoring_router
 from .routers.awards import router as awards_router
+from .routers.marketplace import router as marketplace_router
 from .middleware import maintenance_middleware
 
 
@@ -221,7 +222,8 @@ app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 app.include_router(beta_router)
 app.include_router(players_scoring_router)
-app.include_router(awards_router)               # ← CRUD awards individuels
+app.include_router(awards_router)
+app.include_router(marketplace_router)
 
 
 @app.on_event("startup")
@@ -271,6 +273,13 @@ async def create_indexes():
     await db.user_sessions.create_index("session_token", unique=True, sparse=True)
     await db.user_sessions.create_index("user_id")
     await db.user_sessions.create_index("expires_at")
+    await db.listings.create_index("listing_id", unique=True, sparse=True)
+    await db.listings.create_index([("status", 1), ("created_at", -1)])
+    await db.listings.create_index("user_id")
+    await db.listings.create_index("version_id")
+    await db.offers.create_index("offer_id", unique=True, sparse=True)
+    await db.offers.create_index([("listing_id", 1), ("status", 1)])
+    await db.offers.create_index("offerer_id")
     await db.reports.create_index([("reported_by", 1), ("target_id", 1), ("status", 1)])
     await db.reports.create_index("status")
     await db.reports.create_index("created_at")

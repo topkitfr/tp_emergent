@@ -197,4 +197,15 @@ export const getPlayerCareer = (playerId) => api.get(`/scoring/players/${playerI
 export const getPlayerFull = (playerId) => api.get(`/scoring/players/${playerId}/full`);
 export const getPlayerScoring = (playerId) => api.get(`/scoring/players/${playerId}`);
 
+// Marketplace
+export const getListings = (params) => api.get('/marketplace', { params });
+export const getListing = (id) => api.get(`/marketplace/${id}`);
+export const createListing = (data) => api.post('/marketplace', data);
+export const updateListing = (id, data) => api.put(`/marketplace/${id}`, data);
+export const cancelListing = (id) => api.delete(`/marketplace/${id}`);
+export const getMyListings = () => api.get('/marketplace/my-listings');
+export const getMyOffers = () => api.get('/marketplace/my-offers');
+export const createOffer = (listingId, data) => api.post(`/marketplace/${listingId}/offers`, data);
+export const updateOffer = (offerId, data) => api.put(`/marketplace/offers/${offerId}`, data);
+
 export default api;
