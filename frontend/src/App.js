@@ -21,7 +21,8 @@ const VerifyEmail      = lazy(() => import("@/pages/VerifyEmail"));
 const Browse           = lazy(() => import("@/pages/Browse"));
 const KitDetail        = lazy(() => import("@/pages/KitDetail"));
 const VersionDetail    = lazy(() => import("@/pages/VersionDetail"));
-const MyCollection     = lazy(() => import("@/pages/MyCollection"));
+const MyCollection           = lazy(() => import("@/pages/MyCollection"));
+const CollectionItemDetail   = lazy(() => import("@/pages/CollectionItemDetail"));
 const AddJersey        = lazy(() => import("@/pages/AddJersey"));
 const Profile          = lazy(() => import("@/pages/Profile"));
 const Contributions    = lazy(() => import("@/pages/Contributions"));
@@ -107,6 +108,7 @@ const [betaUnlocked, setBetaUnlocked] = useState(
 
           {/* ── Pages protégées ── */}
           <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
+          <Route path="/collection/:collection_id" element={<ProtectedRoute><CollectionItemDetail /></ProtectedRoute>} />
           <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
           <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
           <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />

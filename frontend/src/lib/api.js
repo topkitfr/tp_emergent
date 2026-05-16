@@ -78,6 +78,7 @@ export const getVersions = (params) => api.get('/versions', { params });
 // Collections
 export const getMyCollection = (params) => api.get('/collections', { params });
 export const getCollectionCategories = () => api.get('/collections/categories');
+export const getCollectionItem = (id) => api.get(`/collections/${id}`);
 export const addToCollection = (data) => api.post('/collections', data);
 export const removeFromCollection = (id) => api.delete(`/collections/${id}`);
 export const updateCollectionItem = (id, data) => api.put(`/collections/${id}`, data);
@@ -204,6 +205,7 @@ export const estimatePrice = (data) => api.post('/estimate', data);
 
 // Marketplace
 export const getListings = (params) => api.get('/marketplace', { params });
+export const getMarketplaceFilters = () => api.get('/marketplace/filters');
 export const getListing = (id) => api.get(`/marketplace/${id}`);
 export const createListing = (data) => api.post('/marketplace', data);
 export const updateListing = (id, data) => api.put(`/marketplace/${id}`, data);
