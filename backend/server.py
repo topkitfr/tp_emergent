@@ -244,21 +244,6 @@ async def _purge_rate_limit_store():
 async def create_indexes():
     if _ENV != "test":
         asyncio.create_task(_purge_rate_limit_store())
-    for collection, index_name in [
-        ("teams", "team_id_1"),
-        ("leagues", "league_id_1"),
-        ("brands", "brand_id_1"),
-        ("players", "player_id_1"),
-        ("players", "slug_1"),
-        # Cleanup Vague 3 — indexes API-Football abandonnés
-        ("teams", "apifootball_team_id_1"),
-        ("leagues", "apifootball_league_id_1"),
-    ]:
-        try:
-            await db[collection].drop_index(index_name)
-            logger.info(f"Index {index_name} supprime sur {collection}")
-        except Exception:
-            pass
 
     await db.teams.create_index("team_id", unique=True, sparse=True)
     await db.teams.create_index("slug", unique=True)
