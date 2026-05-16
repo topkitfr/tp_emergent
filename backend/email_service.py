@@ -221,3 +221,55 @@ async def send_offer_refused(
       <a href="{FRONTEND_URL}/marketplace" style="{_BTN_STYLE}">Voir le marketplace</a>
     """)
     await send_email(to, "Topkit — Ton offre n'a pas été retenue", html)
+
+
+async def send_email_changed(
+    old_email: str,
+    new_email: str,
+    name: str,
+) -> None:
+    """M2 — Notification à l'ancienne adresse + confirmation à la nouvelle."""
+    html_old = _wrap(f"""
+      <h2 style="margin-top:0;color:#f59e0b;">Adresse email modifiée ⚠️</h2>
+      <p>Bonjour {name},</p>
+      <p>L'adresse email de ton compte Topkit vient d'être changée pour
+         <strong>{new_email}</strong>.</p>
+      <p>Si tu n'es pas à l'origine de cette modification, contacte-nous
+         immédiatement en répondant à cet email.</p>
+    """)
+    await send_email(old_email, "Topkit — Ton adresse email a été modifiée", html_old)
+
+    html_new = _wrap(f"""
+      <h2 style="margin-top:0;">Nouvelle adresse confirmée ✅</h2>
+      <p>Bonjour {name},</p>
+      <p>Ton adresse email Topkit a bien été mise à jour vers <strong>{new_email}</strong>.
+         Tu recevras désormais toutes les notifications à cette adresse.</p>
+      <a href="{FRONTEND_URL}" style="{_BTN_STYLE}">Accéder à Topkit</a>
+    """)
+    await send_email(new_email, "Topkit — Bienvenue sur ta nouvelle adresse", html_new)
+
+
+async def send_login_alert(to: str, name: str, ip: str) -> None:
+    """M3 — Alerte de connexion (envoyée à chaque login email/password)."""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">Nouvelle connexion détectée 🔐</h2>
+      <p>Bonjour {name},</p>
+      <p>Une connexion à ton compte Topkit vient d'être effectuée.</p>
+      <p style="color:#777;font-size:13px;">IP : {ip}</p>
+      <p>Si ce n'est pas toi, change immédiatement ton mot de passe.</p>
+      <a href="{FRONTEND_URL}/forgot-password" style="{_BTN_STYLE}">Changer mon mot de passe</a>
+    """)
+    await send_email(to, "Topkit — Nouvelle connexion à ton compte", html)
+
+
+async def send_account_banned(to: str, name: str) -> None:
+    """M10 — Notification de bannissement."""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;color:#ef4444;">Compte suspendu ❌</h2>
+      <p>Bonjour {name},</p>
+      <p>Ton compte Topkit a été suspendu suite à une violation de nos conditions
+         d'utilisation.</p>
+      <p>Si tu penses qu'il s'agit d'une erreur, tu peux contacter notre équipe
+         en répondant à cet email.</p>
+    """)
+    await send_email(to, "Topkit — Ton compte a été suspendu", html)

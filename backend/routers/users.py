@@ -20,6 +20,7 @@ from typing import Optional, Literal
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
+from ..email_service import send_email_changed
 from ..database import db, client
 from ..auth import get_current_user
 from .notifications import create_notification
@@ -183,7 +184,8 @@ async def update_credentials(update: CredentialsUpdate, request: Request):
             existing = await db.users.find_one({"email": update.new_email})
             if existing:
                 raise HTTPException(status_code=400, detail="Email déjà utilisé")
-        patch["email"] = update.new_email
+            patch["email"] = update.new_email
+            await send_email_changed(user_doc["email"], update.new_email, user_doc.get("name", ""))
 
     if update.new_password:
         if len(update.new_password) < 8:
