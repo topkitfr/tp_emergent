@@ -34,113 +34,7 @@ async def get_collection_categories(request: Request):
     cats = await db.collections.distinct("category", {"user_id": user["user_id"]})
     return sorted(cats)
 
-@router.post("")
-async def add_to_collection(item: CollectionAdd, request: Request):
-    user = await get_current_user(request)
-    version = await db.versions.find_one({"version_id": item.version_id}, {"_id": 0})
-    if not version:
-        raise HTTPException(status_code=404, detail="Version not found")
-    existing = await db.collections.find_one(
-        {"user_id": user["user_id"], "version_id": item.version_id}, {"_id": 0}
-    )
-    if existing:
-        raise HTTPException(status_code=400, detail="Already in collection")
-    est_price = item.estimated_price or item.value_estimate or item.price_estimate
-    doc = {
-        "collection_id": f"col_{uuid.uuid4().hex[:12]}",
-        "user_id": user["user_id"],
-        "version_id": item.version_id,
-        "category": item.category or "General",
-        "notes": item.notes or "",
-        "flocking_type": item.flocking_type or "",
-        "flocking_origin": item.flocking_origin or "",
-        "flocking_detail": item.flocking_detail or "",
-        "flocking_player_id": item.flocking_player_id or "",   # ← NOUVEAU
-        "condition_origin": item.condition_origin or "",
-        "physical_state": item.physical_state or "",
-        "size": item.size or "",
-        "purchase_cost": item.purchase_cost,
-        "estimated_price": est_price,
-        "price_estimate": est_price,
-        "value_estimate": est_price,
-        "signed": item.signed or False,
-        "signed_by": item.signed_by or "",
-        "signed_by_player_id": item.signed_by_player_id or "",  # ← NOUVEAU
-        "signed_proof": item.signed_proof or False,
-        "condition": item.condition or "",
-        "printing": item.printing or "",
-        "added_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.collections.insert_one(doc)
-
-    # ── Notifier les followers du joueur flocqué ──
-    flocking_player_id = doc.get("flocking_player_id", "")
-    if flocking_player_id:
-        player = await db.players.find_one({"player_id": flocking_player_id}, {"_id": 0, "full_name": 1})
-        player_name = player.get("full_name", "") if player else ""
-        followers = await db.follows.find(
-            {"target_type": "player", "target_id": flocking_player_id}, {"_id": 0, "user_id": 1}
-        ).to_list(1000)
-        for f in followers:
-            if f["user_id"] != user["user_id"]:
-                await create_notification(
-                    user_id=f["user_id"],
-                    notif_type="new_kit",
-                    title=f"New kit flocké {player_name}",
-                    message=f"Un maillot flocké {player_name} vient d’être ajouté à la catalog.",
-                    target_type="version",
-                    target_id=doc["version_id"],
-                )
-
-    result = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
-    return result
-
-@router.get("/{collection_id}")
-async def get_collection_item(collection_id: str, request: Request):
-    user = await get_current_user(request)
-    item = await db.collections.find_one({"collection_id": collection_id, "user_id": user["user_id"]}, {"_id": 0})
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    version = await db.versions.find_one({"version_id": item["version_id"]}, {"_id": 0})
-    if version:
-        kit = await db.master_kits.find_one({"kit_id": version["kit_id"]}, {"_id": 0})
-        item["version"] = version
-        item["master_kit"] = kit
-    listing = await db.listings.find_one(
-        {"collection_id": collection_id, "status": "active"}, {"_id": 0, "listing_id": 1}
-    )
-    item["active_listing_id"] = listing["listing_id"] if listing else None
-    return item
-
-
-@router.delete("/{collection_id}")
-async def remove_from_collection(collection_id: str, request: Request):
-    user = await get_current_user(request)
-    result = await db.collections.delete_one({"collection_id": collection_id, "user_id": user["user_id"]})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return {"message": "Removed from collection"}
-
-@router.put("/{collection_id}")
-async def update_collection_item(collection_id: str, update: CollectionUpdate, request: Request):
-    user = await get_current_user(request)
-    update_dict = {k: v for k, v in update.model_dump().items() if v is not None}
-    if not update_dict:
-        raise HTTPException(status_code=400, detail="No fields to update")
-    est_price = update_dict.get("estimated_price") or update_dict.get("value_estimate") or update_dict.get("price_estimate")
-    if est_price:
-        update_dict["estimated_price"] = est_price
-        update_dict["price_estimate"] = est_price
-        update_dict["value_estimate"] = est_price
-    result = await db.collections.update_one(
-        {"collection_id": collection_id, "user_id": user["user_id"]},
-        {"$set": update_dict}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
-    updated = await db.collections.find_one({"collection_id": collection_id}, {"_id": 0})
-    return updated
-
+# /stats and /category-stats MUST come before /{collection_id} to avoid route shadowing
 @router.get("/stats")
 async def get_collection_stats(request: Request):
     user = await get_current_user(request)
@@ -186,3 +80,104 @@ async def get_category_stats(request: Request):
             }
         })
     return result
+
+@router.post("")
+async def add_to_collection(item: CollectionAdd, request: Request):
+    user = await get_current_user(request)
+    version = await db.versions.find_one({"version_id": item.version_id}, {"_id": 0})
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    est_price = item.estimated_price or item.value_estimate or item.price_estimate
+    doc = {
+        "collection_id": f"col_{uuid.uuid4().hex[:12]}",
+        "user_id": user["user_id"],
+        "version_id": item.version_id,
+        "category": item.category or "General",
+        "notes": item.notes or "",
+        "flocking_type": item.flocking_type or "",
+        "flocking_origin": item.flocking_origin or "",
+        "flocking_detail": item.flocking_detail or "",
+        "flocking_player_id": item.flocking_player_id or "",
+        "condition_origin": item.condition_origin or "",
+        "physical_state": item.physical_state or "",
+        "size": item.size or "",
+        "purchase_cost": item.purchase_cost,
+        "estimated_price": est_price,
+        "price_estimate": est_price,
+        "value_estimate": est_price,
+        "signed": item.signed or False,
+        "signed_by": item.signed_by or "",
+        "signed_by_player_id": item.signed_by_player_id or "",
+        "signed_proof": item.signed_proof or False,
+        "condition": item.condition or "",
+        "printing": item.printing or "",
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.collections.insert_one(doc)
+
+    # Notifier les followers du joueur flocqué
+    flocking_player_id = doc.get("flocking_player_id", "")
+    if flocking_player_id:
+        player = await db.players.find_one({"player_id": flocking_player_id}, {"_id": 0, "full_name": 1})
+        player_name = player.get("full_name", "") if player else ""
+        followers = await db.follows.find(
+            {"target_type": "player", "target_id": flocking_player_id}, {"_id": 0, "user_id": 1}
+        ).to_list(1000)
+        for f in followers:
+            if f["user_id"] != user["user_id"]:
+                await create_notification(
+                    user_id=f["user_id"],
+                    notif_type="new_kit",
+                    title=f"New kit flocké {player_name}",
+                    message=f"Un maillot flocké {player_name} vient d'être ajouté à la catalog.",
+                    target_type="version",
+                    target_id=doc["version_id"],
+                )
+
+    result = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
+    return result
+
+@router.get("/{collection_id}")
+async def get_collection_item(collection_id: str, request: Request):
+    user = await get_current_user(request)
+    item = await db.collections.find_one({"collection_id": collection_id, "user_id": user["user_id"]}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    version = await db.versions.find_one({"version_id": item["version_id"]}, {"_id": 0})
+    if version:
+        kit = await db.master_kits.find_one({"kit_id": version["kit_id"]}, {"_id": 0})
+        item["version"] = version
+        item["master_kit"] = kit
+    listing = await db.listings.find_one(
+        {"collection_id": collection_id, "status": "active"}, {"_id": 0, "listing_id": 1}
+    )
+    item["active_listing_id"] = listing["listing_id"] if listing else None
+    return item
+
+@router.delete("/{collection_id}")
+async def remove_from_collection(collection_id: str, request: Request):
+    user = await get_current_user(request)
+    result = await db.collections.delete_one({"collection_id": collection_id, "user_id": user["user_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Removed from collection"}
+
+@router.put("/{collection_id}")
+async def update_collection_item(collection_id: str, update: CollectionUpdate, request: Request):
+    user = await get_current_user(request)
+    update_dict = {k: v for k, v in update.model_dump().items() if v is not None}
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    est_price = update_dict.get("estimated_price") or update_dict.get("value_estimate") or update_dict.get("price_estimate")
+    if est_price:
+        update_dict["estimated_price"] = est_price
+        update_dict["price_estimate"] = est_price
+        update_dict["value_estimate"] = est_price
+    result = await db.collections.update_one(
+        {"collection_id": collection_id, "user_id": user["user_id"]},
+        {"$set": update_dict}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    updated = await db.collections.find_one({"collection_id": collection_id}, {"_id": 0})
+    return updated
