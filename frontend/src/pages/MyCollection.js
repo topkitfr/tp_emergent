@@ -20,6 +20,7 @@ import {
   cancelListing,
   estimatePrice,
   getMyTransactions,
+  uploadImage,
 } from '@/lib/api';
 import TransactionCard from '@/components/TransactionCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -106,8 +107,10 @@ export default function MyCollection() {
 
   // listing
   const [listingItem,    setListingItem]    = useState(null);
-  const [listingForm,    setListingForm]    = useState({ listing_type: 'sale', asking_price: '', trade_for: '' });
+  const [listingForm,    setListingForm]    = useState({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false });
   const [listingLoading, setListingLoading] = useState(false);
+  const [listingPhotos,  setListingPhotos]  = useState({ front: null, back: null }); // { url, uploading }
+  const [photoUploading, setPhotoUploading] = useState({ front: false, back: false });
   const [myListedIds,    setMyListedIds]    = useState(new Set());
   const [myListings,     setMyListings]     = useState([]);
 
@@ -305,13 +308,39 @@ export default function MyCollection() {
   };
 
   // ─── listing handler ─────────────────────────────────────────────────────
+  const handleUploadListingPhoto = async (side, file) => {
+    if (!file) return;
+    setPhotoUploading(p => ({ ...p, [side]: true }));
+    try {
+      const res = await uploadImage(file, 'listing', listingItem?.collection_id, side);
+      const url = res.data?.url || res.data?.image_url || res.data?.path;
+      setListingPhotos(p => ({ ...p, [side]: url }));
+    } catch {
+      toast.error(`Erreur lors du chargement de la photo ${side === 'front' ? 'avant' : 'arrière'}`);
+    } finally {
+      setPhotoUploading(p => ({ ...p, [side]: false }));
+    }
+  };
+
+  const resetListingDialog = () => {
+    setListingItem(null);
+    setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false });
+    setListingPhotos({ front: null, back: null });
+    setPhotoUploading({ front: false, back: false });
+  };
+
   const handleCreateListing = async () => {
     if (!listingItem) return;
+    if (!listingPhotos.front || !listingPhotos.back) {
+      toast.error('Ajoutez une photo avant et une photo arrière avant de publier');
+      return;
+    }
     setListingLoading(true);
     try {
       const payload = {
         collection_id: listingItem.collection_id,
         listing_type: listingForm.listing_type,
+        listing_photos: [listingPhotos.front, listingPhotos.back],
       };
       if ((listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && listingForm.asking_price) {
         payload.asking_price = parseFloat(listingForm.asking_price);
@@ -323,8 +352,7 @@ export default function MyCollection() {
       setMyListings(prev => [...prev, res.data]);
       setMyListedIds(prev => new Set([...prev, listingItem.collection_id]));
       toast.success('Annonce publiée !');
-      setListingItem(null);
-      setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '' });
+      resetListingDialog();
     } catch (e) {
       toast.error(normalizeDetail(e.response?.data?.detail) || 'Erreur lors de la publication');
     } finally {
@@ -704,7 +732,7 @@ export default function MyCollection() {
       </Sheet>
 
       {/* ══ LISTING DIALOG ══ */}
-      <Dialog open={!!listingItem} onOpenChange={open => { if (!open) { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false }); } }}>
+      <Dialog open={!!listingItem} onOpenChange={open => { if (!open) resetListingDialog(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Mettre en vente / échange</DialogTitle>
@@ -793,9 +821,51 @@ export default function MyCollection() {
               </div>
             );
           })()}
+          {/* Photos obligatoires */}
+          <div className="space-y-2 pt-2 border-t border-border">
+            <p className="text-xs font-medium uppercase tracking-wide" style={{ fontFamily: 'Barlow Condensed' }}>
+              Photos du maillot <span className="text-destructive">*</span>
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {[{ side: 'front', label: 'Face avant' }, { side: 'back', label: 'Face arrière' }].map(({ side, label }) => (
+                <label key={side} className={`relative flex flex-col items-center justify-center border-2 border-dashed cursor-pointer aspect-[3/4] overflow-hidden transition-colors ${
+                  listingPhotos[side] ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-primary/40'
+                }`}>
+                  <input type="file" accept="image/*" className="sr-only"
+                    onChange={e => e.target.files[0] && handleUploadListingPhoto(side, e.target.files[0])} />
+                  {photoUploading[side] ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  ) : listingPhotos[side] ? (
+                    <>
+                      <img src={listingPhotos[side]} alt={label} className="absolute inset-0 w-full h-full object-cover" />
+                      <span className="absolute bottom-1 right-1 bg-primary text-primary-foreground text-[9px] px-1 py-0.5 rounded">✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                      <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>{label}</span>
+                    </>
+                  )}
+                </label>
+              ))}
+            </div>
+            {(!listingPhotos.front || !listingPhotos.back) && (
+              <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>
+                Les deux photos sont obligatoires pour publier l'annonce.
+              </p>
+            )}
+          </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false }); }}>Annuler</Button>
-            <Button onClick={handleCreateListing} disabled={listingLoading || ((listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && !listingForm.asking_price)}>
+            <Button variant="ghost" onClick={resetListingDialog}>Annuler</Button>
+            <Button
+              onClick={handleCreateListing}
+              disabled={
+                listingLoading ||
+                !listingPhotos.front || !listingPhotos.back ||
+                photoUploading.front || photoUploading.back ||
+                ((listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && !listingForm.asking_price)
+              }
+            >
               {listingLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Tag className="w-4 h-4 mr-2" />}
               Publier l'annonce
             </Button>

@@ -83,7 +83,10 @@ export default function MarketplaceDetail() {
 
   const kit = listing.version || {};
   const col = listing.collection_item || {};
-  const photo = col.front_photo ? getImageUrl(col.front_photo) : kit.front_photo ? getImageUrl(kit.front_photo) : null;
+  const listingPhotos = listing.listing_photos || [];
+  const fallbackPhoto = col.front_photo ? getImageUrl(col.front_photo) : kit.front_photo ? getImageUrl(kit.front_photo) : null;
+  const [activePhoto, setActivePhoto] = useState(0);
+  const photos = listingPhotos.length > 0 ? listingPhotos : (fallbackPhoto ? [fallbackPhoto] : []);
   const sb = STATUS_BADGE[listing.status] || STATUS_BADGE.active;
 
   return (
@@ -93,12 +96,24 @@ export default function MarketplaceDetail() {
       </Button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Photo */}
-        <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden flex items-center justify-center">
-          {photo
-            ? <img src={photo} alt="kit" className="object-cover w-full h-full" />
-            : <ShoppingBag className="w-16 h-16 opacity-20" />
-          }
+        {/* Photos */}
+        <div className="space-y-2">
+          <div className="aspect-[3/4] bg-muted overflow-hidden flex items-center justify-center border border-border">
+            {photos.length > 0
+              ? <img src={photos[activePhoto]} alt="kit" className="object-cover w-full h-full" />
+              : <ShoppingBag className="w-16 h-16 opacity-20" />
+            }
+          </div>
+          {photos.length > 1 && (
+            <div className="flex gap-2">
+              {photos.map((url, i) => (
+                <button key={i} onClick={() => setActivePhoto(i)}
+                  className={`w-16 h-20 border-2 overflow-hidden shrink-0 transition-colors ${i === activePhoto ? 'border-primary' : 'border-border'}`}>
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Infos */}
