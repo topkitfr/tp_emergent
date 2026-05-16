@@ -442,18 +442,19 @@ async def update_offer(offer_id: str, body: dict, request: Request):
         buyer_name = (buyer_user or {}).get("name", "") if buyer_user else ""
 
         if new_status == "accepted":
-            # Clôture le listing
+            # Passe le listing en "reserved" (pas "completed" — la transaction gère la clôture)
             await db.listings.update_one(
                 {"listing_id": offer["listing_id"]},
-                {"$set": {"status": "completed", "updated_at": _now()}}
+                {"$set": {"status": "reserved", "updated_at": _now()}}
             )
             # Refuse toutes les autres offres pending
             await db.offers.update_many(
                 {"listing_id": offer["listing_id"], "status": "pending", "offer_id": {"$ne": offer_id}},
                 {"$set": {"status": "refused"}}
             )
-            # Retire le maillot de la collection du vendeur
-            await db.collections.delete_one({"collection_id": listing["collection_id"]})
+            # Crée la transaction (ne supprime pas l'item de la collection)
+            from .transactions import create_transaction
+            await create_transaction(listing=listing, offer=offer)
 
             # Notifie l'acheteur (in-app + email)
             await create_notification(
