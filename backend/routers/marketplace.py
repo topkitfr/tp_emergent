@@ -39,6 +39,8 @@ async def list_listings(
     gender: Optional[str] = None,
     physical_state: Optional[str] = None,
     signed: Optional[bool] = None,
+    flocking_origin: Optional[str] = None,
+    size: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(48, ge=1, le=100),
 ):
@@ -57,7 +59,7 @@ async def list_listings(
 
     # Kit metadata filters via kit → version → collection chain
     has_kit_filter = any([search, team_type, club, brand, season, kit_type, league, gender])
-    has_coll_filter = physical_state or signed is not None
+    has_coll_filter = physical_state or signed is not None or flocking_origin or size
 
     if has_kit_filter or has_coll_filter:
         matching_versions = None
@@ -89,6 +91,12 @@ async def list_listings(
             coll_query["physical_state"] = physical_state
         if signed is not None:
             coll_query["signed"] = signed
+        if flocking_origin == "none":
+            coll_query["$or"] = [{"flocking_origin": ""}, {"flocking_origin": "none"}, {"flocking_origin": {"$exists": False}}]
+        elif flocking_origin:
+            coll_query["flocking_origin"] = flocking_origin
+        if size:
+            coll_query["size"] = size
 
         if coll_query:
             matching_cols = await db.collections.distinct("collection_id", coll_query)
@@ -113,13 +121,26 @@ async def list_listings(
 
 @router.get("/filters")
 async def get_marketplace_filters():
-    clubs     = sorted([c for c in await db.master_kits.distinct("club",      {}) if c])
-    brands    = sorted([b for b in await db.master_kits.distinct("brand",     {}) if b])
-    seasons   = sorted([s for s in await db.master_kits.distinct("season",    {}) if s], reverse=True)
-    kit_types = sorted([k for k in await db.master_kits.distinct("kit_type",  {}) if k])
-    leagues   = sorted([l for l in await db.master_kits.distinct("league",    {}) if l])
-    genders   = sorted([g for g in await db.master_kits.distinct("gender",    {}) if g])
-    return {"clubs": clubs, "brands": brands, "seasons": seasons, "kit_types": kit_types, "leagues": leagues, "genders": genders}
+    version_ids = await db.listings.distinct("version_id", {"status": "active"})
+    col_ids     = await db.listings.distinct("collection_id", {"status": "active"})
+    kit_ids = await db.versions.distinct("kit_id", {"version_id": {"$in": version_ids}})
+    base = {"kit_id": {"$in": kit_ids}}
+    coll_base = {"collection_id": {"$in": col_ids}}
+    clubs     = sorted([c for c in await db.master_kits.distinct("club",     base) if c])
+    brands    = sorted([b for b in await db.master_kits.distinct("brand",    base) if b])
+    seasons   = sorted([s for s in await db.master_kits.distinct("season",   base) if s], reverse=True)
+    kit_types = sorted([k for k in await db.master_kits.distinct("kit_type", base) if k])
+    leagues   = sorted([l for l in await db.master_kits.distinct("league",   base) if l])
+    genders   = sorted([g for g in await db.master_kits.distinct("gender",   base) if g])
+    sizes     = [s for s in ["XS", "S", "M", "L", "XL", "XXL", "3XL"]
+                 if s in await db.collections.distinct("size", coll_base)]
+    flockings = sorted([f for f in await db.collections.distinct("flocking_origin", coll_base)
+                        if f and f not in ("", "none")])
+    return {
+        "clubs": clubs, "brands": brands, "seasons": seasons,
+        "kit_types": kit_types, "leagues": leagues, "genders": genders,
+        "sizes": sizes, "flocking_origins": flockings,
+    }
 
 
 @router.get("/my-listings")
@@ -421,18 +442,19 @@ async def update_offer(offer_id: str, body: dict, request: Request):
         buyer_name = (buyer_user or {}).get("name", "") if buyer_user else ""
 
         if new_status == "accepted":
-            # Clôture le listing
+            # Passe le listing en "reserved" (pas "completed" — la transaction gère la clôture)
             await db.listings.update_one(
                 {"listing_id": offer["listing_id"]},
-                {"$set": {"status": "completed", "updated_at": _now()}}
+                {"$set": {"status": "reserved", "updated_at": _now()}}
             )
             # Refuse toutes les autres offres pending
             await db.offers.update_many(
                 {"listing_id": offer["listing_id"], "status": "pending", "offer_id": {"$ne": offer_id}},
                 {"$set": {"status": "refused"}}
             )
-            # Retire le maillot de la collection du vendeur
-            await db.collections.delete_one({"collection_id": listing["collection_id"]})
+            # Crée la transaction (ne supprime pas l'item de la collection)
+            from .transactions import create_transaction
+            await create_transaction(listing=listing, offer=offer)
 
             # Notifie l'acheteur (in-app + email)
             await create_notification(

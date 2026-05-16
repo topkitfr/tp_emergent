@@ -497,6 +497,34 @@ class OfferOut(BaseModel):
     created_at: str
 
 
+class TransactionOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    transaction_id: str
+    transaction_type: str           # "sale" | "trade"
+    listing_id: str
+    offer_id: str
+    seller_id: str
+    buyer_id: str
+    seller_collection_id: str
+    buyer_collection_id: Optional[str] = None  # trade only
+    agreed_price: Optional[float] = None
+    status: str                     # awaiting_shipment | shipped | delivered | completed | disputed
+    seller_shipped: bool = False
+    seller_tracking: Optional[str] = None
+    buyer_shipped: bool = False     # trade only
+    buyer_tracking: Optional[str] = None
+    buyer_received: bool = False
+    seller_received: bool = False   # trade only
+    buyer_approved: bool = False
+    seller_approved: bool = False   # trade only
+    dispute_opened_by: Optional[str] = None
+    dispute_reason: Optional[str] = None
+    timeline: list = []
+    created_at: str
+    updated_at: str
+    completed_at: Optional[str] = None
+
+
 class PlayerScoringOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     player_id: str

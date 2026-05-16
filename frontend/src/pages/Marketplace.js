@@ -17,21 +17,27 @@ const EMPTY = "__all__";
 const GENDER_LABELS = { man: "Men", woman: "Women", youth: "Youth" };
 const PHYSICAL_STATES = ["New with tag", "Very good", "Used", "Damaged", "Needs restoration"];
 
+const FLOCKING_LABELS = { Official: "Officiel", Personalized: "Personnalisé", none: "Non flocqué" };
+
 function FiltersPanel({ filters, state, setState, activeFilterCount, clearFilters }) {
   const { search, setSearch, teamType, setTeamType, listingType, setListingType,
     minPrice, setMinPrice, maxPrice, setMaxPrice,
     club, setClub, brand, setBrand, season, setSeason,
     kitType, setKitType, league, setLeague, gender, setGender,
-    physicalState, setPhysicalState, signed, setSigned } = state;
+    physicalState, setPhysicalState, signed, setSigned,
+    flockingOrigin, setFlockingOrigin, size, setSize } = state;
 
   const selectFilters = [
-    { label: "Club",     value: club,     set: setClub,     options: filters.clubs     ?? [] },
-    { label: "Brand",    value: brand,    set: setBrand,    options: filters.brands    ?? [] },
-    { label: "Season",   value: season,   set: setSeason,   options: filters.seasons   ?? [] },
-    { label: "Kit type", value: kitType,  set: setKitType,  options: filters.kit_types ?? [] },
-    { label: "League",   value: league,   set: setLeague,   options: filters.leagues   ?? [] },
-    { label: "Gender",   value: gender,   set: setGender,   options: filters.genders   ?? [], labelMap: GENDER_LABELS },
-    { label: "État",     value: physicalState, set: setPhysicalState, options: PHYSICAL_STATES },
+    { label: "Club",     value: club,          set: setClub,          options: filters.clubs            ?? [] },
+    { label: "Brand",    value: brand,          set: setBrand,         options: filters.brands           ?? [] },
+    { label: "Season",   value: season,         set: setSeason,        options: filters.seasons          ?? [] },
+    { label: "Kit type", value: kitType,        set: setKitType,       options: filters.kit_types        ?? [] },
+    { label: "League",   value: league,         set: setLeague,        options: filters.leagues          ?? [] },
+    { label: "Gender",   value: gender,         set: setGender,        options: filters.genders          ?? [], labelMap: GENDER_LABELS },
+    { label: "Taille",   value: size,           set: setSize,          options: filters.sizes            ?? [] },
+    { label: "État",     value: physicalState,  set: setPhysicalState, options: PHYSICAL_STATES },
+    { label: "Flocage",  value: flockingOrigin, set: setFlockingOrigin,
+      options: [...(filters.flocking_origins ?? []), "none"], labelMap: FLOCKING_LABELS },
   ];
 
   return (
@@ -143,20 +149,23 @@ export default function Marketplace() {
   const [kitType,     setKitType]     = useState("");
   const [league,      setLeague]      = useState("");
   const [gender,      setGender]      = useState("");
-  const [physicalState, setPhysicalState] = useState("");
-  const [signed,      setSigned]      = useState(null);
+  const [physicalState,   setPhysicalState]   = useState("");
+  const [signed,          setSigned]          = useState(null);
+  const [flockingOrigin,  setFlockingOrigin]  = useState("");
+  const [size,            setSize]            = useState("");
 
   const activeFilterCount = [
     listingType !== "all" ? listingType : "",
     teamType, search, minPrice, maxPrice, club, brand,
     season, kitType, league, gender, physicalState,
     signed === true ? "signed" : "",
+    flockingOrigin, size,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
     setListingType("all"); setTeamType(""); setSearch(""); setMinPrice(""); setMaxPrice("");
     setClub(""); setBrand(""); setSeason(""); setKitType(""); setLeague("");
-    setGender(""); setPhysicalState(""); setSigned(null);
+    setGender(""); setPhysicalState(""); setSigned(null); setFlockingOrigin(""); setSize("");
   };
 
   useEffect(() => {
@@ -180,8 +189,10 @@ export default function Marketplace() {
       if (kitType)       params.kit_type       = kitType;
       if (league)        params.league         = league;
       if (gender)        params.gender         = gender;
-      if (physicalState) params.physical_state = physicalState;
-      if (signed === true) params.signed       = true;
+      if (physicalState)    params.physical_state  = physicalState;
+      if (signed === true)  params.signed          = true;
+      if (flockingOrigin)   params.flocking_origin = flockingOrigin;
+      if (size)             params.size            = size;
       const res = await getListings(params);
       setListings(res.data.results);
       setTotal(res.data.total);
@@ -190,7 +201,7 @@ export default function Marketplace() {
     } finally {
       setLoading(false);
     }
-  }, [listingType, teamType, search, minPrice, maxPrice, club, brand, season, kitType, league, gender, physicalState, signed]);
+  }, [listingType, teamType, search, minPrice, maxPrice, club, brand, season, kitType, league, gender, physicalState, signed, flockingOrigin, size]);
 
   useEffect(() => {
     setSkip(0);
@@ -210,6 +221,7 @@ export default function Marketplace() {
     club, setClub, brand, setBrand, season, setSeason,
     kitType, setKitType, league, setLeague, gender, setGender,
     physicalState, setPhysicalState, signed, setSigned,
+    flockingOrigin, setFlockingOrigin, size, setSize,
   };
 
   const gridClass = viewMode === "grid"

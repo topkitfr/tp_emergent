@@ -216,4 +216,13 @@ export const getMyOffers = () => api.get('/marketplace/my-offers');
 export const createOffer = (listingId, data) => api.post(`/marketplace/${listingId}/offers`, data);
 export const updateOffer = (offerId, data) => api.put(`/marketplace/offers/${offerId}`, data);
 
+// Transactions
+export const getMyTransactions = (params) => api.get('/transactions', { params });
+export const getTransaction = (id) => api.get(`/transactions/${id}`);
+export const getTransactionPendingCount = () => api.get('/transactions/pending-action');
+export const markShipped = (id, tracking) => api.post(`/transactions/${id}/ship`, { tracking: tracking || '' });
+export const confirmReceipt = (id) => api.post(`/transactions/${id}/confirm-receipt`, {});
+export const approveTransaction = (id) => api.post(`/transactions/${id}/approve`, {});
+export const openDispute = (id, reason) => api.post(`/transactions/${id}/dispute`, { reason });
+
 export default api;
