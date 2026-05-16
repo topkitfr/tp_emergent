@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import {
   getVersion, getMasterKit, getVersionEstimates, getVersionWornBy, getReviews,
   createSubmission, proxyImageUrl, addToWishlist, checkWishlist,
-  removeFromWishlist, createReview,
+  removeFromWishlist, createReview, getListings,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
@@ -120,6 +120,7 @@ export default function VersionDetail() {
   const [reviewHover,     setReviewHover]     = useState(0);
   const [reviewComment,   setReviewComment]   = useState('');
   const [submitting,      setSubmitting]      = useState(false);
+  const [forSaleListings, setForSaleListings] = useState([]);
 
   const fetchReviews = useCallback(async () => {
     try { const res = await getReviews(versionId); setReviews(Array.isArray(res.data) ? res.data : []); }
@@ -148,6 +149,9 @@ export default function VersionDetail() {
         const wRes = await checkWishlist(v.version_id);
         if (wRes.data?.in_wishlist) { setWishStatus('done'); setWishlistId(wRes.data.wishlist_id); }
       } catch {}
+      getListings({ version_id: v.version_id, limit: 5 })
+        .then(r => setForSaleListings(r.data?.results || []))
+        .catch(() => {});
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [versionId, fetchReviews]);
@@ -371,6 +375,61 @@ export default function VersionDetail() {
           kitId={version.kit_id || masterKit?.kit_id}
           onSuccess={() => toast.success('Merci pour ta contribution !')}
         />
+      )}
+
+      <Separator />
+
+      {/* For Sale */}
+      {forSaleListings.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl tracking-tighter">FOR SALE</h2>
+            <Link to={`/marketplace?version_id=${version?.version_id}`} className="text-xs text-muted-foreground hover:text-foreground uppercase tracking-wide" style={{ fontFamily: 'Barlow Condensed' }}>
+              Voir toutes les annonces →
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {forSaleListings.map(l => {
+              const col = l.collection_item || {};
+              const typeLabel = { sale: 'Vente', trade: 'Échange', both: 'Vente / Échange' }[l.listing_type] || l.listing_type;
+              const typeCls   = { sale: 'bg-green-600', trade: 'bg-blue-600', both: 'bg-purple-600' }[l.listing_type] || 'bg-muted';
+              return (
+                <Link to={`/marketplace/${l.listing_id}`} key={l.listing_id}
+                  className="flex items-center gap-4 border border-border bg-card px-4 py-3 hover:border-primary/30 transition-colors">
+                  <span className={`text-[10px] text-white px-2 py-0.5 font-semibold shrink-0 ${typeCls}`}>{typeLabel}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {col.physical_state && (
+                        <span className="text-[10px] border border-border px-1.5 py-0.5 text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>{col.physical_state}</span>
+                      )}
+                      {col.size && (
+                        <span className="text-[10px] border border-border px-1.5 py-0.5 text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Taille {col.size}</span>
+                      )}
+                      {col.signed && (
+                        <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5" style={{ fontFamily: 'Barlow Condensed' }}>Signé</span>
+                      )}
+                      {col.flocking_detail && (
+                        <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>{col.flocking_detail}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    {l.asking_price != null && (
+                      <span className="font-mono text-base font-bold">{l.asking_price} €</span>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {l.seller?.picture
+                        ? <img src={proxyImageUrl(l.seller.picture)} alt="" className="w-6 h-6 rounded-full object-cover" />
+                        : <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center"><User className="w-3 h-3 text-muted-foreground" /></div>}
+                      <span className="text-xs text-muted-foreground">@{l.seller?.username || '?'}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       <Separator />

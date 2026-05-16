@@ -239,6 +239,8 @@ async def create_listing(body: ListingCreate, request: Request):
         raise HTTPException(status_code=422, detail="asking_price required for sale or both")
     if body.listing_type in ("trade", "both") and not body.trade_for:
         raise HTTPException(status_code=422, detail="trade_for required for trade or both")
+    if len(body.listing_photos) < 2:
+        raise HTTPException(status_code=422, detail="2 photos minimum requises (face avant et face arrière)")
 
     col = await db.collections.find_one(
         {"collection_id": body.collection_id, "user_id": user["user_id"]},
@@ -272,6 +274,7 @@ async def create_listing(body: ListingCreate, request: Request):
         "trade_for": body.trade_for,
         "condition_summary": col.get("physical_state") or col.get("condition", ""),
         "estimated_price": col.get("estimated_price") or col.get("value_estimate"),
+        "listing_photos": body.listing_photos,
         "status": "active",
         "created_at": now,
         "updated_at": now,

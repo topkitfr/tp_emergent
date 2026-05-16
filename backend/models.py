@@ -462,6 +462,7 @@ class ListingCreate(BaseModel):
     listing_type: str  # "sale" | "trade" | "both"
     asking_price: Optional[float] = None
     trade_for: Optional[str] = None
+    listing_photos: list = []   # [front_url, back_url] — minimum 2 requis
 
 class ListingOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -474,6 +475,7 @@ class ListingOut(BaseModel):
     trade_for: Optional[str] = None
     condition_summary: Optional[str] = None
     estimated_price: Optional[float] = None
+    listing_photos: list = []
     status: str
     created_at: str
     updated_at: str
