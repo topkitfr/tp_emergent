@@ -242,7 +242,8 @@ async def _purge_rate_limit_store():
 
 @app.on_event("startup")
 async def create_indexes():
-    asyncio.create_task(_purge_rate_limit_store())
+    if _ENV != "test":
+        asyncio.create_task(_purge_rate_limit_store())
     for collection, index_name in [
         ("teams", "team_id_1"),
         ("leagues", "league_id_1"),
