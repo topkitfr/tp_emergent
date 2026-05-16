@@ -5,9 +5,8 @@ import {
   getMyCollection, getCollectionStats, updateProfile, updateCredentials,
   getUserBadges, getUserByUsername, getFollows, proxyImageUrl,
   getUserPublicCollection, getUserPublicSubmissions, getUserPublicFollows,
-  getUserListings, deleteAccount, getMyTransactions,
+  getUserListings, deleteAccount,
 } from '@/lib/api';
-import TransactionCard from '@/components/TransactionCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,8 +44,6 @@ export default function Profile() {
   const [publicSubmissions, setPublicSubmissions] = useState([]);
   const [publicFollows, setPublicFollows]         = useState([]);
   const [publicListings, setPublicListings]       = useState([]);
-  const [transactions, setTransactions]           = useState([]);
-  const [txnTab, setTxnTab]                       = useState("active"); // "active" | "completed"
 
   const [formData, setFormData] = useState({
     username: '',
@@ -80,7 +77,6 @@ export default function Profile() {
       getCollectionStats().then(r => setStats(r.data)).catch(() => {});
       getUserBadges().then(r => setBadges(r.data?.badges || [])).catch(() => {});
       getFollows().then(r => setFollows(r.data?.follows || [])).catch(() => {});
-      getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {});
     }
   }, [profileUser, isOwnProfile]);
 
@@ -501,61 +497,6 @@ export default function Profile() {
           )}
 
           <Separator className="bg-border mb-8" />
-
-          {/* Transactions */}
-          {isOwnProfile && (() => {
-            const activeTxns    = transactions.filter(t => !["completed"].includes(t.status));
-            const completedTxns = transactions.filter(t => t.status === "completed");
-            const pendingCount  = activeTxns.filter(t => {
-              const isSeller = t.seller_id === user?.user_id;
-              const isTrade  = t.transaction_type === "trade";
-              return (
-                (isSeller  && t.status === "awaiting_shipment" && !t.seller_shipped) ||
-                (!isSeller && t.status === "shipped"           && !t.buyer_received)  ||
-                (!isSeller && t.status === "delivered"         && !t.buyer_approved)  ||
-                (isTrade && isSeller  && t.status === "delivered" && !t.seller_approved) ||
-                (isTrade && !isSeller && t.status === "awaiting_shipment" && !t.buyer_shipped)
-              );
-            }).length;
-            return (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl tracking-tight">MES TRANSACTIONS</h2>
-                    {pendingCount > 0 && (
-                      <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        {pendingCount} action{pendingCount > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    {["active", "completed"].map(tab => (
-                      <button key={tab} onClick={() => setTxnTab(tab)}
-                        className={`text-xs px-3 py-1 border font-medium uppercase tracking-wide ${txnTab === tab ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
-                        style={{ fontFamily: "Barlow Condensed" }}>
-                        {tab === "active" ? `En cours (${activeTxns.length})` : `Terminées (${completedTxns.length})`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {(txnTab === "active" ? activeTxns : completedTxns).map(txn => (
-                    <TransactionCard
-                      key={txn.transaction_id}
-                      txn={txn}
-                      currentUserId={user?.user_id}
-                      onRefresh={() => getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {})}
-                    />
-                  ))}
-                  {(txnTab === "active" ? activeTxns : completedTxns).length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-8 border border-dashed border-border" style={{ fontFamily: "DM Sans" }}>
-                      {txnTab === "active" ? "Aucune transaction en cours" : "Aucune transaction terminée"}
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Collection propre profil */}
           {isOwnProfile && (

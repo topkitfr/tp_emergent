@@ -387,11 +387,11 @@ export default function MyCollection() {
           )}
 
           {/* ── Mes annonces actives ── */}
-          {myListings.length > 0 && (
-            <div className="mb-6" data-testid="my-listings">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={fieldStyle}>
-                <Tag className="w-3.5 h-3.5 inline mr-1" /> MES ANNONCES ({myListings.length})
-              </h3>
+          <div className="mb-6" data-testid="my-listings">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={fieldStyle}>
+              <Tag className="w-3.5 h-3.5 inline mr-1" /> MES ANNONCES {myListings.length > 0 && `(${myListings.length})`}
+            </h3>
+            {myListings.length > 0 ? (
               <div className="space-y-2">
                 {myListings.map(l => {
                   const snap = l.kit_snapshot || {};
@@ -411,8 +411,16 @@ export default function MyCollection() {
                   );
                 })}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="border border-dashed border-border p-4 text-center">
+                <Tag className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground mb-2" style={{ fontFamily: 'DM Sans' }}>Vendez votre premier maillot</p>
+                <Link to="/collection">
+                  <Button variant="outline" size="sm" className="rounded-none text-xs h-7">Parcourir ma collection</Button>
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* ── Mes transactions ── */}
           {(() => {
@@ -464,9 +472,19 @@ export default function MyCollection() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-muted-foreground text-center py-4 border border-dashed border-border" style={{ fontFamily: "DM Sans" }}>
-                    {txnTab === "active" ? "Aucune transaction en cours" : "Aucune transaction terminée"}
-                  </p>
+                  <div className="border border-dashed border-border p-4 text-center">
+                    {txnTab === "active" ? (
+                      <>
+                        <Shirt className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground mb-2" style={{ fontFamily: 'DM Sans' }}>Achetez votre premier maillot</p>
+                        <Link to="/marketplace">
+                          <Button variant="outline" size="sm" className="rounded-none text-xs h-7">Explorer la marketplace</Button>
+                        </Link>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans' }}>Aucune transaction terminée</p>
+                    )}
+                  </div>
                 )}
               </div>
             );
@@ -686,54 +704,97 @@ export default function MyCollection() {
       </Sheet>
 
       {/* ══ LISTING DIALOG ══ */}
-      <Dialog open={!!listingItem} onOpenChange={open => { if (!open) { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '' }); } }}>
+      <Dialog open={!!listingItem} onOpenChange={open => { if (!open) { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false }); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Mettre en vente / échange</DialogTitle>
           </DialogHeader>
-          {listingItem && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {listingItem.master_kit?.club} — {listingItem.master_kit?.season}
-              </p>
-              <div className="space-y-1">
-                <Label>Type d'annonce</Label>
-                <Select value={listingForm.listing_type} onValueChange={v => setListingForm(f => ({ ...f, listing_type: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sale">Vente</SelectItem>
-                    <SelectItem value="trade">Échange</SelectItem>
-                    <SelectItem value="both">Vente ou échange</SelectItem>
-                  </SelectContent>
-                </Select>
+          {listingItem && (() => {
+            const topkitPrice = listingItem.estimated_price || listingItem.value_estimate || listingItem.price_estimate || null;
+            const customPrice = parseFloat(listingForm.asking_price) || 0;
+            const priceDiff = topkitPrice && customPrice > 0
+              ? Math.round(((customPrice - topkitPrice) / topkitPrice) * 100)
+              : null;
+            const showPrice = listingForm.listing_type === 'sale' || listingForm.listing_type === 'both';
+            return (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  {listingItem.master_kit?.club} — {listingItem.master_kit?.season}
+                </p>
+                <div className="space-y-1">
+                  <Label>Type d'annonce</Label>
+                  <Select value={listingForm.listing_type} onValueChange={v => setListingForm(f => ({ ...f, listing_type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sale">Vente</SelectItem>
+                      <SelectItem value="trade">Échange</SelectItem>
+                      <SelectItem value="both">Vente ou échange</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {showPrice && topkitPrice && (
+                  <div className="space-y-2">
+                    <Label>Prix de vente</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
+                        className={`border p-3 text-left transition-colors ${listingForm.use_topkit_price ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+                      >
+                        <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Prix Topkit</div>
+                        <div className="font-mono text-lg font-bold">{topkitPrice} €</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">Estimation automatique</div>
+                      </button>
+                      <button
+                        onClick={() => setListingForm(f => ({ ...f, use_topkit_price: false, asking_price: '' }))}
+                        className={`border p-3 text-left transition-colors ${!listingForm.use_topkit_price ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+                      >
+                        <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Prix personnalisé</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">Définir mon prix</div>
+                      </button>
+                    </div>
+                    {!listingForm.use_topkit_price && (
+                      <div className="space-y-1">
+                        <Input
+                          type="number" min={0} step={1} placeholder={`Ex: ${topkitPrice}`}
+                          value={listingForm.asking_price}
+                          onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))}
+                          className="font-mono"
+                          autoFocus
+                        />
+                        {priceDiff !== null && (
+                          <p className={`text-xs font-medium ${priceDiff < 0 ? 'text-green-600' : priceDiff > 0 ? 'text-orange-600' : 'text-muted-foreground'}`}>
+                            {priceDiff === 0 ? 'Au prix Topkit' : priceDiff < 0 ? `${Math.abs(priceDiff)}% moins cher que Topkit` : `${priceDiff}% plus cher que Topkit`}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {showPrice && !topkitPrice && (
+                  <div className="space-y-1">
+                    <Label>Prix demandé (€)</Label>
+                    <Input
+                      type="number" min={0} step={1} placeholder="Ex: 80"
+                      value={listingForm.asking_price}
+                      onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))}
+                    />
+                  </div>
+                )}
+                {(listingForm.listing_type === 'trade' || listingForm.listing_type === 'both') && (
+                  <div className="space-y-1">
+                    <Label>Cherche en échange (optionnel)</Label>
+                    <Input
+                      placeholder="Ex: PSG 2012 domicile taille L"
+                      value={listingForm.trade_for}
+                      onChange={e => setListingForm(f => ({ ...f, trade_for: e.target.value }))}
+                    />
+                  </div>
+                )}
               </div>
-              {(listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && (
-                <div className="space-y-1">
-                  <Label>Prix demandé (€)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    placeholder="Ex: 80"
-                    value={listingForm.asking_price}
-                    onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))}
-                  />
-                </div>
-              )}
-              {(listingForm.listing_type === 'trade' || listingForm.listing_type === 'both') && (
-                <div className="space-y-1">
-                  <Label>Cherche en échange (optionnel)</Label>
-                  <Input
-                    placeholder="Ex: PSG 2012 domicile taille L"
-                    value={listingForm.trade_for}
-                    onChange={e => setListingForm(f => ({ ...f, trade_for: e.target.value }))}
-                  />
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })()}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '' }); }}>Annuler</Button>
+            <Button variant="ghost" onClick={() => { setListingItem(null); setListingForm({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false }); }}>Annuler</Button>
             <Button onClick={handleCreateListing} disabled={listingLoading || ((listingForm.listing_type === 'sale' || listingForm.listing_type === 'both') && !listingForm.asking_price)}>
               {listingLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Tag className="w-4 h-4 mr-2" />}
               Publier l'annonce
