@@ -275,6 +275,25 @@ async def send_listing_cancelled_by_admin(to: str, name: str, kit_label: str) ->
     await send_email(to, "Topkit — Ton annonce a été retirée", html)
 
 
+async def send_offer_reminder(
+    to: str,
+    seller_name: str,
+    listing_url: str,
+    offer_count: int,
+) -> None:
+    """M8 — Rappel au vendeur : offre(s) en attente depuis +72h."""
+    plural = "offres en attente" if offer_count > 1 else "offre en attente"
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">Tu as {offer_count} {plural} ⏳</h2>
+      <p>Bonjour {seller_name},</p>
+      <p>Ton annonce a reçu <strong>{offer_count} {plural}</strong> depuis plus de 72 heures
+         sans réponse de ta part.</p>
+      <p>Connecte-toi pour accepter ou refuser ces offres avant qu'elles ne expirent.</p>
+      <a href="{listing_url}" style="{_BTN_STYLE}">Voir les offres</a>
+    """)
+    await send_email(to, f"Topkit — {offer_count} offre(s) en attente sur ton annonce", html)
+
+
 async def send_account_deleted(to: str, name: str) -> None:
     """M11 — Confirmation de suppression de compte (RGPD)."""
     html = _wrap(f"""
