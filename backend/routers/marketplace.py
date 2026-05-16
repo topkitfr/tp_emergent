@@ -113,12 +113,15 @@ async def list_listings(
 
 @router.get("/filters")
 async def get_marketplace_filters():
-    clubs     = sorted([c for c in await db.master_kits.distinct("club",      {}) if c])
-    brands    = sorted([b for b in await db.master_kits.distinct("brand",     {}) if b])
-    seasons   = sorted([s for s in await db.master_kits.distinct("season",    {}) if s], reverse=True)
-    kit_types = sorted([k for k in await db.master_kits.distinct("kit_type",  {}) if k])
-    leagues   = sorted([l for l in await db.master_kits.distinct("league",    {}) if l])
-    genders   = sorted([g for g in await db.master_kits.distinct("gender",    {}) if g])
+    version_ids = await db.listings.distinct("version_id", {"status": "active"})
+    kit_ids = await db.versions.distinct("kit_id", {"version_id": {"$in": version_ids}})
+    base = {"kit_id": {"$in": kit_ids}}
+    clubs     = sorted([c for c in await db.master_kits.distinct("club",     base) if c])
+    brands    = sorted([b for b in await db.master_kits.distinct("brand",    base) if b])
+    seasons   = sorted([s for s in await db.master_kits.distinct("season",   base) if s], reverse=True)
+    kit_types = sorted([k for k in await db.master_kits.distinct("kit_type", base) if k])
+    leagues   = sorted([l for l in await db.master_kits.distinct("league",   base) if l])
+    genders   = sorted([g for g in await db.master_kits.distinct("gender",   base) if g])
     return {"clubs": clubs, "brands": brands, "seasons": seasons, "kit_types": kit_types, "leagues": leagues, "genders": genders}
 
 
