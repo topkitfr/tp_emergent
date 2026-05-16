@@ -17,6 +17,7 @@ const Landing          = lazy(() => import("@/pages/Landing"));
 const Login            = lazy(() => import("@/pages/Login"));
 const ForgotPassword   = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword    = lazy(() => import("@/pages/ResetPassword"));
+const VerifyEmail      = lazy(() => import("@/pages/VerifyEmail"));
 const Browse           = lazy(() => import("@/pages/Browse"));
 const KitDetail        = lazy(() => import("@/pages/KitDetail"));
 const VersionDetail    = lazy(() => import("@/pages/VersionDetail"));
@@ -66,6 +67,7 @@ const [betaUnlocked, setBetaUnlocked] = useState(
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         <Route element={<Layout />}>
           {/* ── Navigation principale ── */}

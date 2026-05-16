@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from ..database import db
-from ..email_service import send_account_banned
+from ..email_service import send_account_banned, send_listing_cancelled_by_admin
 from ..auth import get_current_user
 from ..utils import safe_regex
 
@@ -403,3 +403,35 @@ async def delete_version(version_id: str, request: Request):
     await db.versions.delete_one({"version_id": version_id})
 
     return {"deleted": True, "version_id": version_id}
+
+
+@router.delete("/listings/{listing_id}")
+async def admin_cancel_listing(listing_id: str, request: Request):
+    admin = await get_current_user(request)
+    _require_admin(admin)
+
+    listing = await db.listings.find_one({"listing_id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing["status"] in ("completed", "cancelled"):
+        raise HTTPException(status_code=400, detail="Listing already closed")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.listings.update_one(
+        {"listing_id": listing_id},
+        {"$set": {"status": "cancelled", "updated_at": now}}
+    )
+    await db.offers.update_many(
+        {"listing_id": listing_id, "status": "pending"},
+        {"$set": {"status": "withdrawn"}}
+    )
+
+    # M7 — email au propriétaire de l'annonce
+    owner = await db.users.find_one({"user_id": listing["user_id"]}, {"_id": 0, "email": 1, "name": 1})
+    if owner and owner.get("email"):
+        col = await db.collections.find_one({"collection_id": listing["collection_id"]}, {"_id": 0})
+        version = await db.versions.find_one({"version_id": listing.get("version_id", "")}, {"_id": 0}) if col else None
+        kit_label = (version or {}).get("label") or (version or {}).get("display_name") or "ton maillot"
+        await send_listing_cancelled_by_admin(owner["email"], owner.get("name", ""), kit_label)
+
+    return {"ok": True, "listing_id": listing_id}
