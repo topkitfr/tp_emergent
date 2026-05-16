@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X,
-  ArrowLeft, CheckCircle2, Trophy, Activity, Users, Package,
+  ArrowLeft, ArrowRight, CheckCircle2, Trophy, Activity, Users, Package, ThumbsUp,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
