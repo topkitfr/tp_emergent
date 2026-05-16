@@ -8,7 +8,7 @@ import httpx
 from ..database import db, client
 from ..auth import get_current_user
 from ..utils import MODERATOR_EMAILS
-from ..email_service import send_welcome, send_password_reset
+from ..email_service import send_welcome, send_password_reset, send_email_verification
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -101,6 +101,7 @@ async def register(body: RegisterBody, response: Response):
             "description": "",
             "collection_privacy": "public",
             "password_hash": pwd_context.hash(password),
+            "email_verified": False,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
     )
@@ -122,6 +123,17 @@ async def register(body: RegisterBody, response: Response):
     )
 
     await send_welcome(body.email, body.name.strip())
+
+    # Envoi email de vérification (soft — n'empêche pas la connexion)
+    verification_token = uuid.uuid4().hex
+    await db.email_verifications.insert_one({
+        "user_id": user_id,
+        "token": verification_token,
+        "email": body.email,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+        "used": False,
+    })
+    await send_email_verification(body.email, body.name.strip(), verification_token)
 
     return user_doc
 
@@ -307,3 +319,27 @@ async def reset_password(body: ResetPasswordBody):
     await db.user_sessions.delete_many({"user_id": doc["user_id"]})
 
     return {"message": "Mot de passe réinitialisé. Reconnecte-toi."}
+
+
+@router.get("/verify-email")
+async def verify_email(token: str):
+    """Confirme l'adresse email via le lien reçu par email."""
+    doc = await db.email_verifications.find_one({"token": token, "used": False})
+    if not doc:
+        raise HTTPException(status_code=400, detail="Lien invalide ou déjà utilisé")
+
+    expires = datetime.fromisoformat(doc["expires_at"])
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if expires < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Lien expiré (24h max)")
+
+    await db.users.update_one(
+        {"user_id": doc["user_id"]},
+        {"$set": {"email_verified": True}}
+    )
+    await db.email_verifications.update_one(
+        {"token": token},
+        {"$set": {"used": True}}
+    )
+    return {"message": "Email confirmé avec succès !"}

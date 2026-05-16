@@ -212,6 +212,7 @@ class TestOffers:
             "collection_id": col["collection_id"],
             "listing_type": "both",
             "asking_price": 100.0,
+            "trade_for": "n'importe quel maillot",
         }, cookies=seller_cookies)
         assert r.status_code == 200
         listing_id = r.json()["listing_id"]

@@ -242,7 +242,8 @@ async def _purge_rate_limit_store():
 
 @app.on_event("startup")
 async def create_indexes():
-    asyncio.create_task(_purge_rate_limit_store())
+    if _ENV != "test":
+        asyncio.create_task(_purge_rate_limit_store())
     for collection, index_name in [
         ("teams", "team_id_1"),
         ("leagues", "league_id_1"),
@@ -295,6 +296,9 @@ async def create_indexes():
     await db.offers.create_index("offer_id", unique=True, sparse=True)
     await db.offers.create_index([("listing_id", 1), ("status", 1)])
     await db.offers.create_index("offerer_id")
+    await db.email_verifications.create_index("token", unique=True, sparse=True)
+    await db.email_verifications.create_index("user_id")
+    await db.email_verifications.create_index("expires_at")
     await db.reports.create_index([("reported_by", 1), ("target_id", 1), ("status", 1)])
     await db.reports.create_index("status")
     await db.reports.create_index("created_at")
