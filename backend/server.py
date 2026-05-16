@@ -240,10 +240,52 @@ async def _purge_rate_limit_store():
             logger.info(f"Rate-limit store purgé : {len(stale)} clés supprimées")
 
 
+async def _remind_pending_offers():
+    """Toutes les 24h : envoie un rappel au vendeur pour les offres pending depuis +72h."""
+    from datetime import datetime, timezone, timedelta
+    from .email_service import send_offer_reminder, FRONTEND_URL
+
+    while True:
+        await asyncio.sleep(24 * 3600)
+        try:
+            cutoff = (datetime.now(timezone.utc) - timedelta(hours=72)).isoformat()
+            # Offres pending > 72h sans rappel déjà envoyé
+            offers = await db.offers.find(
+                {"status": "pending", "created_at": {"$lt": cutoff}, "reminder_sent": {"$ne": True}},
+                {"_id": 0, "offer_id": 1, "listing_id": 1}
+            ).to_list(500)
+
+            # Regroupe par listing pour envoyer un seul email par vendeur
+            listing_offer_count: dict[str, int] = {}
+            for o in offers:
+                listing_offer_count[o["listing_id"]] = listing_offer_count.get(o["listing_id"], 0) + 1
+
+            for listing_id, count in listing_offer_count.items():
+                listing = await db.listings.find_one({"listing_id": listing_id, "status": "active"}, {"_id": 0})
+                if not listing:
+                    continue
+                seller = await db.users.find_one({"user_id": listing["user_id"]}, {"_id": 0, "email": 1, "name": 1})
+                if seller and seller.get("email"):
+                    listing_url = f"{FRONTEND_URL}/marketplace/{listing_id}"
+                    await send_offer_reminder(seller["email"], seller.get("name", ""), listing_url, count)
+
+            # Marque les offres comme rappelées
+            offer_ids = [o["offer_id"] for o in offers]
+            if offer_ids:
+                await db.offers.update_many(
+                    {"offer_id": {"$in": offer_ids}},
+                    {"$set": {"reminder_sent": True}}
+                )
+                logger.info(f"M8 rappel offres : {len(offer_ids)} offres notifiées sur {len(listing_offer_count)} annonces")
+        except Exception as e:
+            logger.error(f"M8 _remind_pending_offers error: {e}")
+
+
 @app.on_event("startup")
 async def create_indexes():
     if _ENV != "test":
         asyncio.create_task(_purge_rate_limit_store())
+        asyncio.create_task(_remind_pending_offers())
 
     await db.teams.create_index("team_id", unique=True, sparse=True)
     await db.teams.create_index("slug", unique=True)
