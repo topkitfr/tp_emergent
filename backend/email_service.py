@@ -154,3 +154,70 @@ async def send_report_result(
     """)
     subject = f"Topkit — Signalement {'approuvé' if approved else 'rejeté'}"
     await send_email(to, subject, html)
+
+
+async def send_email_verification(to: str, name: str, token: str) -> None:
+    url = f"{FRONTEND_URL}/verify-email?token={token}"
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">Confirme ton adresse email ✉️</h2>
+      <p>Bonjour {name},</p>
+      <p>Il ne reste qu'une étape : confirme ton adresse email pour activer toutes
+         les fonctionnalités de ton compte Topkit.</p>
+      <p>Ce lien est valable <strong>24 heures</strong>.</p>
+      <a href="{url}" style="{_BTN_STYLE}">Confirmer mon email</a>
+      <p style="margin-top:24px;color:#777;font-size:13px;">
+        Si tu n'as pas créé de compte sur Topkit, ignore cet email.
+      </p>
+    """)
+    await send_email(to, "Topkit — Confirme ton adresse email", html)
+
+
+async def send_offer_received(
+    to: str,
+    seller_name: str,
+    buyer_name: str,
+    listing_url: str,
+    offered_price: float | None = None,
+) -> None:
+    price_line = f"<p>Prix proposé : <strong>{offered_price} €</strong></p>" if offered_price else ""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">Nouvelle offre reçue 📬</h2>
+      <p>Bonjour {seller_name},</p>
+      <p><strong>{buyer_name}</strong> vient de faire une offre sur ton annonce.</p>
+      {price_line}
+      <p>Connecte-toi pour accepter ou refuser cette offre.</p>
+      <a href="{listing_url}" style="{_BTN_STYLE}">Voir l'offre</a>
+    """)
+    await send_email(to, "Topkit — Tu as reçu une nouvelle offre", html)
+
+
+async def send_offer_accepted(
+    to: str,
+    buyer_name: str,
+    listing_url: str,
+    offered_price: float | None = None,
+) -> None:
+    price_line = f" pour <strong>{offered_price} €</strong>" if offered_price else ""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;color:#22c55e;">Offre acceptée ✅</h2>
+      <p>Bonjour {buyer_name},</p>
+      <p>Bonne nouvelle ! Ton offre{price_line} a été <strong>acceptée</strong> par le vendeur.</p>
+      <p>Connecte-toi pour contacter le vendeur et finaliser la transaction.</p>
+      <a href="{listing_url}" style="{_BTN_STYLE}">Voir l'annonce</a>
+    """)
+    await send_email(to, "Topkit — Ton offre a été acceptée !", html)
+
+
+async def send_offer_refused(
+    to: str,
+    buyer_name: str,
+    listing_url: str,
+) -> None:
+    html = _wrap(f"""
+      <h2 style="margin-top:0;color:#ef4444;">Offre refusée ❌</h2>
+      <p>Bonjour {buyer_name},</p>
+      <p>Le vendeur n'a pas retenu ton offre cette fois-ci.</p>
+      <p>Tu peux continuer à explorer le marketplace pour trouver d'autres maillots.</p>
+      <a href="{FRONTEND_URL}/marketplace" style="{_BTN_STYLE}">Voir le marketplace</a>
+    """)
+    await send_email(to, "Topkit — Ton offre n'a pas été retenue", html)

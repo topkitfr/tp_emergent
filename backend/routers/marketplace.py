@@ -8,6 +8,7 @@ from ..database import db
 from ..models import ListingCreate, ListingOut, OfferCreate, OfferOut
 from ..auth import get_current_user
 from .notifications import create_notification
+from ..email_service import send_offer_received, send_offer_accepted, send_offer_refused
 
 router = APIRouter(prefix="/api/marketplace", tags=["marketplace"])
 
@@ -291,7 +292,7 @@ async def create_offer(listing_id: str, body: OfferCreate, request: Request):
     }
     await db.offers.insert_one(doc)
 
-    # Notifie le vendeur
+    # Notifie le vendeur (in-app + email)
     await create_notification(
         user_id=listing["user_id"],
         notif_type="marketplace_offer",
@@ -300,6 +301,20 @@ async def create_offer(listing_id: str, body: OfferCreate, request: Request):
         target_type="listing",
         target_id=listing_id,
     )
+    seller_user = await db.users.find_one(
+        {"user_id": listing["user_id"]}, {"_id": 0, "email": 1, "name": 1}
+    )
+    if seller_user and seller_user.get("email"):
+        from ..email_service import FRONTEND_URL
+        listing_url = f"{FRONTEND_URL}/marketplace/{listing_id}"
+        buyer_name = user.get("name") or user.get("username") or "Un utilisateur"
+        await send_offer_received(
+            seller_user["email"],
+            seller_user.get("name", ""),
+            buyer_name,
+            listing_url,
+            body.offered_price,
+        )
 
     result = await db.offers.find_one({"offer_id": doc["offer_id"]}, {"_id": 0})
     return result
@@ -336,6 +351,13 @@ async def update_offer(offer_id: str, body: dict, request: Request):
 
         await db.offers.update_one({"offer_id": offer_id}, {"$set": {"status": new_status}})
 
+        from ..email_service import FRONTEND_URL
+        listing_url = f"{FRONTEND_URL}/marketplace/{offer['listing_id']}"
+        buyer_user = await db.users.find_one(
+            {"user_id": offer["offerer_id"]}, {"_id": 0, "email": 1, "name": 1}
+        )
+        buyer_name = (buyer_user or {}).get("name", "") if buyer_user else ""
+
         if new_status == "accepted":
             # Clôture le listing
             await db.listings.update_one(
@@ -350,7 +372,7 @@ async def update_offer(offer_id: str, body: dict, request: Request):
             # Retire le maillot de la collection du vendeur
             await db.collections.delete_one({"collection_id": listing["collection_id"]})
 
-            # Notifie l'acheteur
+            # Notifie l'acheteur (in-app + email)
             await create_notification(
                 user_id=offer["offerer_id"],
                 notif_type="marketplace_offer_accepted",
@@ -359,6 +381,10 @@ async def update_offer(offer_id: str, body: dict, request: Request):
                 target_type="listing",
                 target_id=offer["listing_id"],
             )
+            if buyer_user and buyer_user.get("email"):
+                await send_offer_accepted(
+                    buyer_user["email"], buyer_name, listing_url, offer.get("offered_price")
+                )
         else:
             await create_notification(
                 user_id=offer["offerer_id"],
@@ -368,6 +394,9 @@ async def update_offer(offer_id: str, body: dict, request: Request):
                 target_type="listing",
                 target_id=offer["listing_id"],
             )
-        return {"ok": True}
+            if buyer_user and buyer_user.get("email"):
+                await send_offer_refused(buyer_user["email"], buyer_name, listing_url)
+
+        return await db.offers.find_one({"offer_id": offer_id}, {"_id": 0})
 
     raise HTTPException(status_code=422, detail="status must be accepted, refused or withdrawn")
