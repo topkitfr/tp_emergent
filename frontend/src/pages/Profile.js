@@ -517,7 +517,6 @@ export default function Profile() {
                 (isTrade && !isSeller && t.status === "awaiting_shipment" && !t.buyer_shipped)
               );
             }).length;
-            if (transactions.length === 0) return null;
             return (
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">

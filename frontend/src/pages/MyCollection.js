@@ -19,7 +19,9 @@ import {
   getMyListings,
   cancelListing,
   estimatePrice,
+  getMyTransactions,
 } from '@/lib/api';
+import TransactionCard from '@/components/TransactionCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -98,6 +100,10 @@ export default function MyCollection() {
   const [editingListName,setEditingListName]= useState('');
   const [addToListItem,  setAddToListItem]  = useState(null);
 
+  // transactions
+  const [transactions,   setTransactions]   = useState([]);
+  const [txnTab,         setTxnTab]         = useState("active");
+
   // listing
   const [listingItem,    setListingItem]    = useState(null);
   const [listingForm,    setListingForm]    = useState({ listing_type: 'sale', asking_price: '', trade_for: '' });
@@ -145,6 +151,7 @@ export default function MyCollection() {
         setMyListedIds(new Set(active.map(l => l.collection_id)));
       })
       .catch(() => {});
+    getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {});
   }, [fetchCollection, fetchLists]);
 
   // ─── listes handlers ──────────────────────────────────────────────────────
@@ -406,6 +413,64 @@ export default function MyCollection() {
               </div>
             </div>
           )}
+
+          {/* ── Mes transactions ── */}
+          {(() => {
+            const uid = user?.user_id;
+            const activeTxns    = transactions.filter(t => t.status !== "completed");
+            const completedTxns = transactions.filter(t => t.status === "completed");
+            const displayTxns   = txnTab === "active" ? activeTxns : completedTxns;
+            const pendingCount  = activeTxns.filter(t => {
+              const isSeller = t.seller_id === uid;
+              const isTrade  = t.transaction_type === "trade";
+              return (
+                (isSeller  && t.status === "awaiting_shipment" && !t.seller_shipped) ||
+                (!isSeller && t.status === "shipped"           && !t.buyer_received)  ||
+                (!isSeller && t.status === "delivered"         && !t.buyer_approved)  ||
+                (isTrade && isSeller  && t.status === "delivered" && !t.seller_approved) ||
+                (isTrade && !isSeller && t.status === "awaiting_shipment" && !t.buyer_shipped)
+              );
+            }).length;
+            return (
+              <div className="mb-6" data-testid="my-transactions">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1" style={fieldStyle}>
+                    <Tag className="w-3.5 h-3.5" /> MES TRANSACTIONS
+                    {pendingCount > 0 && (
+                      <span className="ml-1 bg-destructive text-destructive-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </h3>
+                  <div className="flex gap-0.5">
+                    {[["active", `En cours (${activeTxns.length})`], ["completed", `Terminées (${completedTxns.length})`]].map(([key, label]) => (
+                      <button key={key} onClick={() => setTxnTab(key)}
+                        className={`text-[10px] px-2 py-0.5 border font-medium uppercase ${txnTab === key ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
+                        style={{ fontFamily: "Barlow Condensed" }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {displayTxns.length > 0 ? (
+                  <div className="space-y-2">
+                    {displayTxns.map(txn => (
+                      <TransactionCard
+                        key={txn.transaction_id}
+                        txn={txn}
+                        currentUserId={uid}
+                        onRefresh={() => getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {})}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground text-center py-4 border border-dashed border-border" style={{ fontFamily: "DM Sans" }}>
+                    {txnTab === "active" ? "Aucune transaction en cours" : "Aucune transaction terminée"}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── Listes ── */}
           <div className="mb-6" data-testid="my-lists">
