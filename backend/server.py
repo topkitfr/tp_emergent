@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 import logging
 import time
+import asyncio
 from collections import defaultdict
 
 # ─── Garde-fous configuration (avant toute initialisation) ──────────────────────
@@ -226,8 +227,22 @@ app.include_router(awards_router)
 app.include_router(marketplace_router)
 
 
+async def _purge_rate_limit_store():
+    """Supprime toutes les 5 min les clés expirées du store rate-limit."""
+    while True:
+        await asyncio.sleep(300)
+        now = time.time()
+        max_window = max(w for _, w in RATE_LIMITS.values()) if RATE_LIMITS else DEFAULT_RATE_LIMIT[1]
+        stale = [k for k, ts in _rate_limit_store.items() if not any(now - t < max_window for t in ts)]
+        for k in stale:
+            del _rate_limit_store[k]
+        if stale:
+            logger.info(f"Rate-limit store purgé : {len(stale)} clés supprimées")
+
+
 @app.on_event("startup")
 async def create_indexes():
+    asyncio.create_task(_purge_rate_limit_store())
     for collection, index_name in [
         ("teams", "team_id_1"),
         ("leagues", "league_id_1"),
