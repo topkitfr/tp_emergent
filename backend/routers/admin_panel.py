@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from ..database import db
+from ..email_service import send_account_banned
 from ..auth import get_current_user
 from ..utils import safe_regex
 
@@ -109,11 +110,14 @@ async def ban_user(user_id: str, request: Request):
         raise HTTPException(status_code=403, detail="Impossible de bannir un admin.")
 
     now = datetime.now(timezone.utc).isoformat()
+    target_full = await db.users.find_one({"user_id": user_id}, {"_id": 0, "email": 1, "name": 1})
     await db.users.update_one(
         {"user_id": user_id},
         {"$set": {"is_banned": True, "banned_at": now, "banned_by": admin["user_id"]}}
     )
     await db.user_sessions.delete_many({"user_id": user_id})
+    if target_full and target_full.get("email"):
+        await send_account_banned(target_full["email"], target_full.get("name", ""))
     return {"message": "Utilisateur banni.", "user_id": user_id}
 
 

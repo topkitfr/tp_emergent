@@ -8,7 +8,7 @@ import httpx
 from ..database import db, client
 from ..auth import get_current_user
 from ..utils import MODERATOR_EMAILS
-from ..email_service import send_welcome, send_password_reset, send_email_verification
+from ..email_service import send_welcome, send_password_reset, send_email_verification, send_login_alert
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -139,7 +139,7 @@ async def register(body: RegisterBody, response: Response):
 
 
 @router.post("/login")
-async def login(body: LoginBody, response: Response):
+async def login(body: LoginBody, response: Response, request: Request):
     user = await db.users.find_one({"email": body.email})
     password = normalize_password(body.password)
     if not user or not pwd_context.verify(
@@ -164,6 +164,12 @@ async def login(body: LoginBody, response: Response):
     user_doc = await db.users.find_one(
         {"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0}
     )
+
+    # M3 — alerte connexion
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "inconnu")
+    await send_login_alert(body.email, user.get("name", ""), ip)
+
     return user_doc
 
 
