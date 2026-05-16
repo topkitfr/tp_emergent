@@ -475,6 +475,77 @@ function PendingEntitiesTab() {
   );
 }
 
+// ─── Suppression physique ─────────────────────────────────────────────────────
+function DeleteTab() {
+  const [kitId, setKitId]       = useState('');
+  const [verId, setVerId]       = useState('');
+  const [result, setResult]     = useState(null);
+  const [loading, setLoading]   = useState(false);
+
+  const del = async (endpoint, label) => {
+    if (!window.confirm(`⚠️ Supprimer définitivement ${label} ? Cette action est irréversible.`)) return;
+    setLoading(true); setResult(null);
+    try {
+      const r = await apiFetch(endpoint, { method: 'DELETE' });
+      const d = await r.json();
+      if (r.ok) setResult({ ok: true, text: JSON.stringify(d) });
+      else       setResult({ ok: false, text: d.detail || 'Erreur' });
+    } catch { setResult({ ok: false, text: 'Erreur réseau' }); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div className="space-y-8 max-w-lg">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Suppression physique</h2>
+        <p className="text-xs text-red-500 mb-6">⚠️ Réservé superadmin — supprime définitivement de la DB (master kit + ses versions + les items de collection associés).</p>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Supprimer un Master Kit</label>
+        <div className="flex gap-2">
+          <input
+            value={kitId} onChange={e => setKitId(e.target.value)}
+            placeholder="kit_id (ex: kit_abc123)"
+            className="flex-1 border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800"
+          />
+          <button
+            onClick={() => del(`/admin/master-kits/${kitId}`, `master kit ${kitId}`)}
+            disabled={!kitId.trim() || loading}
+            className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg disabled:opacity-40"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Supprimer une Version</label>
+        <div className="flex gap-2">
+          <input
+            value={verId} onChange={e => setVerId(e.target.value)}
+            placeholder="version_id (ex: ver_abc123)"
+            className="flex-1 border dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800"
+          />
+          <button
+            onClick={() => del(`/admin/versions/${verId}`, `version ${verId}`)}
+            disabled={!verId.trim() || loading}
+            className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg disabled:opacity-40"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      {result && (
+        <div className={`px-3 py-2 rounded-lg text-sm ${result.ok ? 'bg-green-50 text-green-700 dark:bg-green-950/30' : 'bg-red-50 text-red-700 dark:bg-red-950/30'}`}>
+          {result.ok ? '✅' : '❌'} {result.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -493,6 +564,7 @@ export default function AdminPanel() {
     { id: "maintenance", label: "🔧 Maintenance", adminOnly: true },
     { id: "pending",     label: "⏳ Entités" },
     { id: "csv",         label: "📥 Import CSV" },
+    { id: "delete",      label: "🗑️ Suppression", adminOnly: true },
   ].filter(t => !t.adminOnly || isSuperAdmin);
 
   return (
@@ -516,6 +588,7 @@ export default function AdminPanel() {
       {activeTab === "maintenance" && <MaintenancePage />}
       {activeTab === "pending"     && <PendingEntitiesTab />}
       {activeTab === "csv"         && <CsvImportTab />}
+      {activeTab === "delete"      && <DeleteTab />}
     </div>
   );
 }

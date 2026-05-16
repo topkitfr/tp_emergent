@@ -364,3 +364,38 @@ async def toggle_maintenance(request: Request):
         "maintenance_mode": new_val,
         "message": "Mode maintenance activé." if new_val else "Mode maintenance désactivé."
     }
+
+
+@router.delete("/master-kits/{kit_id}")
+async def delete_master_kit(kit_id: str, request: Request):
+    admin = await get_current_user(request)
+    _require_superadmin(admin)
+
+    kit = await db.master_kits.find_one({"kit_id": kit_id}, {"_id": 0})
+    if not kit:
+        raise HTTPException(status_code=404, detail="Master kit not found")
+
+    versions = await db.versions.find({"kit_id": kit_id}, {"_id": 0, "version_id": 1}).to_list(500)
+    version_ids = [v["version_id"] for v in versions]
+
+    await db.versions.delete_many({"kit_id": kit_id})
+    if version_ids:
+        await db.collections.delete_many({"version_id": {"$in": version_ids}})
+    await db.master_kits.delete_one({"kit_id": kit_id})
+
+    return {"deleted": True, "kit_id": kit_id, "versions_deleted": len(version_ids)}
+
+
+@router.delete("/versions/{version_id}")
+async def delete_version(version_id: str, request: Request):
+    admin = await get_current_user(request)
+    _require_superadmin(admin)
+
+    version = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    await db.collections.delete_many({"version_id": version_id})
+    await db.versions.delete_one({"version_id": version_id})
+
+    return {"deleted": True, "version_id": version_id}
