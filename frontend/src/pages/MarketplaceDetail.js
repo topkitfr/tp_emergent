@@ -36,6 +36,7 @@ export default function MarketplaceDetail() {
   const [loading, setLoading] = useState(true);
   const [offerOpen, setOfferOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [activePhoto, setActivePhoto] = useState(0);
 
   const fetchListing = async () => {
     setLoading(true);
@@ -85,7 +86,6 @@ export default function MarketplaceDetail() {
   const col = listing.collection_item || {};
   const listingPhotos = listing.listing_photos || [];
   const fallbackPhoto = col.front_photo ? getImageUrl(col.front_photo) : kit.front_photo ? getImageUrl(kit.front_photo) : null;
-  const [activePhoto, setActivePhoto] = useState(0);
   const photos = listingPhotos.length > 0 ? listingPhotos : (fallbackPhoto ? [fallbackPhoto] : []);
   const sb = STATUS_BADGE[listing.status] || STATUS_BADGE.active;
 
