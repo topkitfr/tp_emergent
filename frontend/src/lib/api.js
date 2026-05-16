@@ -114,6 +114,7 @@ export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`);
 export const getUserByUsername = (username) => api.get(`/users/by-username/${username}`);
 export const updateProfile = (data) => api.put('/users/profile', data);
 export const updateCredentials = (data) => api.put('/users/credentials', data);
+export const deleteAccount = (current_password) => api.delete('/users/me', { data: { current_password } });
 export const getUserBadges = () => api.get('/users/profile/badges');
 export const followEntity = (data) => api.post('/users/follow', data);
 export const unfollowEntity = (data) => api.delete('/users/follow', { data });

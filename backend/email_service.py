@@ -262,6 +262,33 @@ async def send_login_alert(to: str, name: str, ip: str) -> None:
     await send_email(to, "Topkit — Nouvelle connexion à ton compte", html)
 
 
+async def send_listing_cancelled_by_admin(to: str, name: str, kit_label: str) -> None:
+    """M7 — Notification annulation d'annonce par un modérateur."""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;color:#f59e0b;">Annonce retirée ⚠️</h2>
+      <p>Bonjour {name},</p>
+      <p>Ton annonce pour <strong>{kit_label}</strong> a été retirée par l'équipe de modération
+         car elle ne respecte pas nos conditions d'utilisation.</p>
+      <p>Si tu penses qu'il s'agit d'une erreur, contacte-nous en répondant à cet email.</p>
+      <a href="{FRONTEND_URL}/marketplace" style="{_BTN_STYLE}">Voir le marketplace</a>
+    """)
+    await send_email(to, "Topkit — Ton annonce a été retirée", html)
+
+
+async def send_account_deleted(to: str, name: str) -> None:
+    """M11 — Confirmation de suppression de compte (RGPD)."""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">Compte supprimé</h2>
+      <p>Bonjour {name},</p>
+      <p>Ton compte Topkit a bien été supprimé. Toutes tes données personnelles
+         ont été effacées de nos serveurs conformément au RGPD.</p>
+      <p style="color:#777;font-size:13px;">
+        Si tu changes d'avis, tu peux créer un nouveau compte à tout moment.
+      </p>
+    """)
+    await send_email(to, "Topkit — Ton compte a été supprimé", html)
+
+
 async def send_account_banned(to: str, name: str) -> None:
     """M10 — Notification de bannissement."""
     html = _wrap(f"""
