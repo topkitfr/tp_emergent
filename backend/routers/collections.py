@@ -95,6 +95,24 @@ async def add_to_collection(item: CollectionAdd, request: Request):
     result = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
     return result
 
+@router.get("/{collection_id}")
+async def get_collection_item(collection_id: str, request: Request):
+    user = await get_current_user(request)
+    item = await db.collections.find_one({"collection_id": collection_id, "user_id": user["user_id"]}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    version = await db.versions.find_one({"version_id": item["version_id"]}, {"_id": 0})
+    if version:
+        kit = await db.master_kits.find_one({"kit_id": version["kit_id"]}, {"_id": 0})
+        item["version"] = version
+        item["master_kit"] = kit
+    listing = await db.listings.find_one(
+        {"collection_id": collection_id, "status": "active"}, {"_id": 0, "listing_id": 1}
+    )
+    item["active_listing_id"] = listing["listing_id"] if listing else None
+    return item
+
+
 @router.delete("/{collection_id}")
 async def remove_from_collection(collection_id: str, request: Request):
     user = await get_current_user(request)

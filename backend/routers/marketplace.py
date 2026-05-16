@@ -29,6 +29,16 @@ async def list_listings(
     min_price: Optional[float] = Query(None, ge=0),
     max_price: Optional[float] = Query(None, ge=0),
     version_id: Optional[str] = None,
+    search: Optional[str] = None,
+    team_type: Optional[str] = None,
+    club: Optional[str] = None,
+    brand: Optional[str] = None,
+    season: Optional[str] = None,
+    kit_type: Optional[str] = None,
+    league: Optional[str] = None,
+    gender: Optional[str] = None,
+    physical_state: Optional[str] = None,
+    signed: Optional[bool] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(48, ge=1, le=100),
 ):
@@ -45,6 +55,45 @@ async def list_listings(
             price_filter["$lte"] = max_price
         query["asking_price"] = price_filter
 
+    # Kit metadata filters via kit → version → collection chain
+    has_kit_filter = any([search, team_type, club, brand, season, kit_type, league, gender])
+    has_coll_filter = physical_state or signed is not None
+
+    if has_kit_filter or has_coll_filter:
+        matching_versions = None
+        if has_kit_filter:
+            kit_query: dict = {}
+            if team_type == "club":
+                kit_query["entity_type"] = "club"
+            elif team_type == "national":
+                kit_query["entity_type"] = "national"
+            if club:      kit_query["club"] = club
+            if brand:     kit_query["brand"] = brand
+            if season:    kit_query["season"] = season
+            if kit_type:  kit_query["kit_type"] = kit_type
+            if league:    kit_query["league"] = league
+            if gender:    kit_query["gender"] = gender
+            if search:
+                kit_query["$or"] = [
+                    {"club":   {"$regex": search, "$options": "i"}},
+                    {"brand":  {"$regex": search, "$options": "i"}},
+                    {"season": {"$regex": search, "$options": "i"}},
+                ]
+            matching_kits = await db.master_kits.distinct("kit_id", kit_query)
+            matching_versions = await db.versions.distinct("version_id", {"kit_id": {"$in": matching_kits}})
+
+        coll_query: dict = {}
+        if matching_versions is not None:
+            coll_query["version_id"] = {"$in": matching_versions}
+        if physical_state:
+            coll_query["physical_state"] = physical_state
+        if signed is not None:
+            coll_query["signed"] = signed
+
+        if coll_query:
+            matching_cols = await db.collections.distinct("collection_id", coll_query)
+            query["collection_id"] = {"$in": matching_cols}
+
     total = await db.listings.count_documents(query)
     docs = await db.listings.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
 
@@ -53,11 +102,29 @@ async def list_listings(
         col = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
         if col:
             version = await db.versions.find_one({"version_id": col["version_id"]}, {"_id": 0})
-            doc["kit_snapshot"] = version or {}
+            kit = await db.master_kits.find_one({"kit_id": (version or {}).get("kit_id", "")}, {"_id": 0}) if version else None
+            doc["kit_snapshot"] = {**(version or {}), **(kit or {})}
+            doc["collection_item"] = {k: col.get(k) for k in ("physical_state", "signed", "signed_by", "size", "flocking_detail")}
         seller = await db.users.find_one({"user_id": doc["user_id"]}, {"_id": 0, "username": 1, "name": 1, "picture": 1})
         doc["seller"] = seller or {}
 
     return {"results": docs, "total": total, "skip": skip, "limit": limit}
+
+
+@router.get("/filters")
+async def get_marketplace_filters():
+    active = await db.listings.find({"status": "active"}, {"_id": 0, "collection_id": 1}).to_list(10000)
+    col_ids = [l["collection_id"] for l in active]
+    version_ids = await db.collections.distinct("version_id", {"collection_id": {"$in": col_ids}})
+    kit_ids = await db.versions.distinct("kit_id", {"version_id": {"$in": version_ids}})
+    base = {"kit_id": {"$in": kit_ids}}
+    clubs    = sorted([c for c in await db.master_kits.distinct("club",     base) if c])
+    brands   = sorted([b for b in await db.master_kits.distinct("brand",    base) if b])
+    seasons  = sorted([s for s in await db.master_kits.distinct("season",   base) if s], reverse=True)
+    kit_types = sorted([k for k in await db.master_kits.distinct("kit_type", base) if k])
+    leagues  = sorted([l for l in await db.master_kits.distinct("league",   base) if l])
+    genders  = sorted([g for g in await db.master_kits.distinct("gender",   base) if g])
+    return {"clubs": clubs, "brands": brands, "seasons": seasons, "kit_types": kit_types, "leagues": leagues, "genders": genders}
 
 
 @router.get("/my-listings")

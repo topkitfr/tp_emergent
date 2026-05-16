@@ -487,7 +487,7 @@ export default function MyCollection() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children" data-testid="collection-grid">
             {displayedItems.map((item) => (
               <div key={item.collection_id} className="card-shimmer relative border border-border bg-card overflow-hidden group" data-testid={`collection-item-${item.collection_id}`}>
-                <Link to={`/version/${item.version_id}`}>
+                <Link to={`/collection/${item.collection_id}`}>
                   <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
                     <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt={item.master_kit?.club} className="w-full h-full object-cover group-hover:scale-105" style={{ transition: 'transform 0.5s ease' }} />
                     {getConditionLabel(item) && <div className="absolute bottom-2 left-2"><Badge variant="secondary" className="rounded-none text-[10px]">{getConditionLabel(item)}</Badge></div>}
@@ -525,7 +525,7 @@ export default function MyCollection() {
           <div className="space-y-2 stagger-children" data-testid="collection-list">
             {displayedItems.map((item) => (
               <div key={item.collection_id} className="flex items-center gap-4 p-3 border border-border bg-card group" data-testid={`collection-list-item-${item.collection_id}`}>
-                <Link to={`/version/${item.version_id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                <Link to={`/collection/${item.collection_id}`} className="flex items-center gap-4 flex-1 min-w-0">
                   <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-14 h-18 object-cover" />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold truncate">{item.master_kit?.club}</h3>
