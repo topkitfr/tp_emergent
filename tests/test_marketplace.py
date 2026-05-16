@@ -60,6 +60,7 @@ class TestCreateListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 75.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         assert r.status_code == 200, r.text
         data = r.json()
@@ -77,6 +78,7 @@ class TestCreateListing:
             "collection_id": col["collection_id"],
             "listing_type": "trade",
             "trade_for": "PSG 2012 home L",
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         assert r.status_code == 200, r.text
         data = r.json()
@@ -92,6 +94,7 @@ class TestCreateListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 50.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         })
         assert r.status_code == 401
 
@@ -105,6 +108,7 @@ class TestCreateListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 50.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=thief_cookies)
         assert r.status_code == 404
 
@@ -131,6 +135,7 @@ class TestCreateListing:
             "collection_id": col11["collection_id"],
             "listing_type": "sale",
             "asking_price": 50.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         assert r.status_code == 400
         assert "quota" in r.json()["detail"].lower() or "max" in r.json()["detail"].lower()
@@ -144,6 +149,7 @@ class TestCreateListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 50.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         assert r1.status_code == 200
 
@@ -151,6 +157,7 @@ class TestCreateListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 60.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         assert r2.status_code == 400
         assert "already listed" in r2.json()["detail"].lower()
@@ -168,6 +175,7 @@ class TestBrowseListings:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 90.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
 
         r = await client.get("/api/marketplace")
@@ -186,10 +194,12 @@ class TestBrowseListings:
             "collection_id": col1["collection_id"],
             "listing_type": "sale",
             "asking_price": 50.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         await client.post("/api/marketplace", json={
             "collection_id": col2["collection_id"],
             "listing_type": "trade",
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
 
         r = await client.get("/api/marketplace?listing_type=trade")
@@ -213,6 +223,7 @@ class TestOffers:
             "listing_type": "both",
             "asking_price": 100.0,
             "trade_for": "n'importe quel maillot",
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=seller_cookies)
         assert r.status_code == 200
         listing_id = r.json()["listing_id"]
@@ -313,6 +324,7 @@ class TestCancelListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 60.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=cookies)
         listing_id = r_create.json()["listing_id"]
 
@@ -332,6 +344,7 @@ class TestCancelListing:
             "collection_id": col["collection_id"],
             "listing_type": "sale",
             "asking_price": 60.0,
+            "listing_photos": ["https://example.com/front.jpg", "https://example.com/back.jpg"],
         }, cookies=owner_cookies)
         listing_id = r_create.json()["listing_id"]
 
