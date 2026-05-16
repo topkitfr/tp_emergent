@@ -275,6 +275,20 @@ async def send_listing_cancelled_by_admin(to: str, name: str, kit_label: str) ->
     await send_email(to, "Topkit — Ton annonce a été retirée", html)
 
 
+async def send_account_deleted(to: str, name: str) -> None:
+    """M11 — Confirmation de suppression de compte (RGPD)."""
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">Compte supprimé</h2>
+      <p>Bonjour {name},</p>
+      <p>Ton compte Topkit a bien été supprimé. Toutes tes données personnelles
+         ont été effacées de nos serveurs conformément au RGPD.</p>
+      <p style="color:#777;font-size:13px;">
+        Si tu changes d'avis, tu peux créer un nouveau compte à tout moment.
+      </p>
+    """)
+    await send_email(to, "Topkit — Ton compte a été supprimé", html)
+
+
 async def send_account_banned(to: str, name: str) -> None:
     """M10 — Notification de bannissement."""
     html = _wrap(f"""

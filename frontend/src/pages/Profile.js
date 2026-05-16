@@ -5,7 +5,7 @@ import {
   getMyCollection, getCollectionStats, updateProfile, updateCredentials,
   getUserBadges, getUserByUsername, getFollows, proxyImageUrl,
   getUserPublicCollection, getUserPublicSubmissions, getUserPublicFollows,
-  getUserListings,
+  getUserListings, deleteAccount,
 } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,9 @@ export default function Profile() {
   const [follows, setFollows]               = useState([]);
   const [credForm, setCredForm]             = useState({ current_password: '', new_email: '', new_password: '' });
   const [savingCreds, setSavingCreds]       = useState(false);
+  const [showDelete, setShowDelete]         = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting]             = useState(false);
 
   const [publicCollection, setPublicCollection]   = useState([]);
   const [publicCollectionPrivate, setPublicCollectionPrivate] = useState(false);
@@ -146,6 +149,20 @@ export default function Profile() {
       toast.error(err.response?.data?.detail || 'Failed to update credentials');
     } finally {
       setSavingCreds(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) { toast.error('Mot de passe requis'); return; }
+    setDeleting(true);
+    try {
+      await deleteAccount(deletePassword);
+      toast.success('Compte supprimé. À bientôt !');
+      setTimeout(() => window.location.href = '/', 1500);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erreur lors de la suppression');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -303,6 +320,54 @@ export default function Profile() {
                 onCheckedChange={togglePrivacy}
                 data-testid="privacy-switch"
               />
+            </div>
+          )}
+
+          {/* Danger Zone — suppression compte */}
+          {isOwnProfile && user && (
+            <div className="border border-red-900/40 p-4 mb-8">
+              <p className="text-xs font-semibold text-red-500 mb-3 uppercase tracking-widest">Zone dangereuse</p>
+              {!showDelete ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-none border-red-800 text-red-500 hover:bg-red-950 hover:text-red-400"
+                  onClick={() => setShowDelete(true)}
+                >
+                  Supprimer mon compte
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Cette action est <strong className="text-red-400">irréversible</strong>. Toutes tes données seront supprimées (collection, annonces, offres).
+                  </p>
+                  <Input
+                    type="password"
+                    placeholder="Confirme ton mot de passe"
+                    value={deletePassword}
+                    onChange={e => setDeletePassword(e.target.value)}
+                    className="rounded-none border-red-900/40 bg-card"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="rounded-none bg-red-700 hover:bg-red-600 text-white"
+                      onClick={handleDeleteAccount}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Suppression...' : 'Confirmer la suppression'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-none"
+                      onClick={() => { setShowDelete(false); setDeletePassword(''); }}
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

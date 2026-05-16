@@ -20,7 +20,7 @@ from typing import Optional, Literal
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
-from ..email_service import send_email_changed
+from ..email_service import send_email_changed, send_account_deleted
 from ..database import db, client
 from ..auth import get_current_user
 from .notifications import create_notification
@@ -198,6 +198,62 @@ async def update_credentials(update: CredentialsUpdate, request: Request):
     patch["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.users.update_one({"user_id": uid}, {"$set": patch})
     return {"message": "Credentials updated"}
+
+
+class DeleteAccountBody(BaseModel):
+    current_password: str
+
+
+@router.delete("/users/me")
+async def delete_account(body: DeleteAccountBody, request: Request):
+    """Suppression définitive du compte (RGPD). Requiert le mot de passe actuel."""
+    user = await get_current_user(request)
+    uid  = user["user_id"]
+    user_doc = await db.users.find_one({"user_id": uid})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Google OAuth users n'ont pas de password_hash — on autorise sans vérification
+    if user_doc.get("password_hash"):
+        if not pwd_context.verify(body.current_password, user_doc["password_hash"]):
+            raise HTTPException(status_code=401, detail="Mot de passe incorrect")
+
+    email = user_doc.get("email", "")
+    name  = user_doc.get("name", "")
+
+    # Annule les annonces actives + retire les offres pending
+    active_listings = await db.listings.find(
+        {"user_id": uid, "status": "active"}, {"_id": 0, "listing_id": 1}
+    ).to_list(200)
+    for lst in active_listings:
+        await db.listings.update_one(
+            {"listing_id": lst["listing_id"]},
+            {"$set": {"status": "cancelled"}}
+        )
+        await db.offers.update_many(
+            {"listing_id": lst["listing_id"], "status": "pending"},
+            {"$set": {"status": "withdrawn"}}
+        )
+
+    # Anonymise les soumissions approuvées (pour ne pas casser la base)
+    await db.submissions.update_many(
+        {"submitted_by": uid},
+        {"$set": {"submitted_by": "deleted_user"}}
+    )
+
+    # Suppression des données personnelles
+    await db.collections.delete_many({"user_id": uid})
+    await db.offers.delete_many({"offerer_id": uid})
+    await db.notifications.delete_many({"user_id": uid})
+    await db.user_sessions.delete_many({"user_id": uid})
+    await db.email_verifications.delete_many({"user_id": uid})
+    await db.users.delete_one({"user_id": uid})
+
+    # Email de confirmation RGPD (avant suppression, email encore dispo)
+    if email:
+        await send_account_deleted(email, name)
+
+    return {"message": "Compte supprimé."}
 
 
 # ─── Badges ───────────────────────────────────────────────────────────────────
