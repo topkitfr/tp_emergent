@@ -287,12 +287,8 @@ export default function CollectionItemDetail() {
                   <Tag className="w-4 h-4" /> Annuler l'annonce
                 </Button>
               </>
-            ) : item.estimated_price ? (
-              <Button onClick={() => setListingOpen(true)} variant="outline" className="w-full rounded-none justify-start gap-2">
-                <Tag className="w-4 h-4" /> Mettre en vente
-              </Button>
             ) : (
-              <Button onClick={() => { setEditForm(formFromItem(item)); setEditMode("advanced"); setEditOpen(true); toast("Estimez votre maillot pour le mettre en vente", { description: "Remplissez les champs état et flocage puis sauvegardez." }); }} variant="outline" className="w-full rounded-none justify-start gap-2">
+              <Button onClick={() => setListingOpen(true)} variant="outline" className="w-full rounded-none justify-start gap-2">
                 <Tag className="w-4 h-4" /> Mettre en vente
               </Button>
             )}
@@ -457,15 +453,25 @@ export default function CollectionItemDetail() {
                     <div className="space-y-2">
                       <Label>Prix de vente</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => topkitPrice && setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
-                          disabled={!topkitPrice}
-                          className={`border p-3 text-left transition-colors ${!topkitPrice ? "opacity-40 cursor-not-allowed" : ""} ${listingForm.use_topkit_price && topkitPrice ? "border-primary bg-primary/5" : "border-border"}`}
-                        >
-                          <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix Topkit</div>
-                          <div className="font-mono text-lg font-bold">{topkitPrice ? `${topkitPrice} €` : "—"}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">{topkitPrice ? "Estimation automatique" : "Non estimé"}</div>
-                        </button>
+                        {topkitPrice ? (
+                          <button
+                            onClick={() => setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
+                            className={`border p-3 text-left transition-colors ${listingForm.use_topkit_price ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                          >
+                            <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix Topkit</div>
+                            <div className="font-mono text-lg font-bold">{topkitPrice} €</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">Estimation automatique</div>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => { resetListingDialog(); setEditForm(formFromItem(item)); setEditMode("advanced"); setEditOpen(true); }}
+                            className="border border-dashed border-border p-3 text-left flex flex-col hover:border-primary/40 transition-colors"
+                          >
+                            <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix Topkit</div>
+                            <div className="text-xs text-primary font-medium mt-1">Estimez votre maillot →</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">Pour débloquer l'estimation</div>
+                          </button>
+                        )}
                         <button
                           onClick={() => setListingForm(f => ({ ...f, use_topkit_price: false, asking_price: "" }))}
                           className={`border p-3 text-left transition-colors ${!listingForm.use_topkit_price || !topkitPrice ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
