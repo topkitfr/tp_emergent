@@ -34,17 +34,22 @@ export default function TransactionMessaging({
   useEffect(() => {
     if (!open || !transactionId) return;
     let cancelled = false;
+
+    const fetchMessages = () => {
+      getTransactionMessages(transactionId)
+        .then((r) => { if (!cancelled) setMessages(r.data || []); })
+        .catch(() => {});
+    };
+
     setLoading(true);
     getTransactionMessages(transactionId)
-      .then((r) => {
-        if (!cancelled) setMessages(r.data || []);
-      })
+      .then((r) => { if (!cancelled) setMessages(r.data || []); })
       .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .finally(() => { if (!cancelled) setLoading(false); });
     markMessagesRead(transactionId).catch(() => {});
-    return () => { cancelled = true; };
+
+    const interval = setInterval(fetchMessages, 5000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [open, transactionId]);
 
   // Auto-scroll to bottom when messages change
