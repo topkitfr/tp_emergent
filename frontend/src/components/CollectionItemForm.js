@@ -109,7 +109,7 @@ export function formToPayload(form, estimation) {
     is_rare: form.is_rare || undefined,
     rare_reason: form.is_rare && form.rare_reason ? form.rare_reason : undefined,
     notes: form.notes || undefined,
-    estimated_price: estimation?.estimatedPrice,
+    estimated_price: estimation?.estimatedPrice ?? estimation?.estimated_price,
   };
 }
 
