@@ -324,8 +324,8 @@ def calculate_estimation(
                 }
                 breakdown.append({"label": proof_labels.get(signed_proof, "Certificate"), "coeff": proof_c})
 
-            # ── Profil joueur — note du signataire (player_flocked uniquement) ──
-            if signed_type == "player_flocked" and flocking_player_note > 0:
+            # ── Profil joueur — note du signataire (player_flocked + Official uniquement) ──
+            if signed_type == "player_flocked" and flocking_origin == "Official" and flocking_player_note > 0:
                 profile_label, profile_c = _player_note_to_profile(flocking_player_note)
                 if profile_c > 0:
                     coeff_sum += profile_c

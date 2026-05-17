@@ -121,35 +121,37 @@ class TestSignedPlayerProfile:
     def test_legend_profile_applied(self):
         r = self._call(flocking_player_note=92)
         assert r["flocking_player_profile"] == "football_legend"
-        # flocking Official = 0.20, signed player_flocked = 0.80, profil legend = 1.00 → 2.00
-        assert r["coeff_sum"] == pytest.approx(2.00)
+        # flocking Official = 0.20, signed player_flocked = 0.80, profil legend = 0.50 → 1.50
+        assert r["coeff_sum"] == pytest.approx(1.50)
 
-    def test_no_profile_below_40(self):
-        r = self._call(flocking_player_note=10)
+    def test_no_profile_below_threshold(self):
+        r = self._call(flocking_player_note=0)
         assert r["flocking_player_profile"] == "none"
-        # flocking Official = 0.20, signed player_flocked = 0.80, pas de profil → 1.00
+        # flocking Official = 0.20, signed player_flocked = 0.80, note=0 → pas de profil → 1.00
         assert r["coeff_sum"] == pytest.approx(1.00)
 
     def test_profile_thresholds(self):
-        """Les seuils 40/65/80/90 doivent matcher exactement la grille du PRD."""
-        # 39 = none, 40 = good_player
-        assert self._call(flocking_player_note=39)["flocking_player_profile"] == "none"
-        assert self._call(flocking_player_note=40)["flocking_player_profile"] == "good_player"
-        # 64 = good, 65 = club_star
-        assert self._call(flocking_player_note=64)["flocking_player_profile"] == "good_player"
-        assert self._call(flocking_player_note=65)["flocking_player_profile"] == "club_star"
-        # 79 = club_star, 80 = world_star
-        assert self._call(flocking_player_note=79)["flocking_player_profile"] == "club_star"
-        assert self._call(flocking_player_note=80)["flocking_player_profile"] == "world_star"
-        # 89 = world_star, 90 = legend
-        assert self._call(flocking_player_note=89)["flocking_player_profile"] == "world_star"
-        assert self._call(flocking_player_note=90)["flocking_player_profile"] == "football_legend"
+        """Les seuils 0/25/50/75 doivent matcher exactement la grille."""
+        # 0 = none
+        assert self._call(flocking_player_note=0)["flocking_player_profile"] == "none"
+        # 1–24 = good_player
+        assert self._call(flocking_player_note=1)["flocking_player_profile"] == "good_player"
+        assert self._call(flocking_player_note=24)["flocking_player_profile"] == "good_player"
+        # 25–49 = club_star
+        assert self._call(flocking_player_note=25)["flocking_player_profile"] == "club_star"
+        assert self._call(flocking_player_note=49)["flocking_player_profile"] == "club_star"
+        # 50–74 = world_star
+        assert self._call(flocking_player_note=50)["flocking_player_profile"] == "world_star"
+        assert self._call(flocking_player_note=74)["flocking_player_profile"] == "world_star"
+        # 75–100 = football_legend
+        assert self._call(flocking_player_note=75)["flocking_player_profile"] == "football_legend"
+        assert self._call(flocking_player_note=100)["flocking_player_profile"] == "football_legend"
 
     def test_profile_ignored_if_not_player_flocked(self):
         """Signed handsigned ne doit PAS appliquer le coeff profil joueur."""
         r = self._call(
             signed_type="handsigned",
-            flocking_player_note=95,  # serait legend (+1.00) avec player_flocked
+            flocking_player_note=95,  # serait legend (+0.50) avec player_flocked
         )
         # flocking Official = 0.20, handsigned = 0.40, pas de coeff profil → 0.60
         assert r["coeff_sum"] == pytest.approx(0.60)
@@ -159,7 +161,7 @@ class TestSignedPlayerProfile:
             flocking_origin="Personalized",
             flocking_player_note=95,
         )
-        # flocking Personalized = 0, signed player_flocked = 0.80, pas de coeff profil
+        # flocking Personalized = 0, signed player_flocked = 0.80, pas de coeff profil car non Official
         assert r["coeff_sum"] == pytest.approx(0.80)
 
 
