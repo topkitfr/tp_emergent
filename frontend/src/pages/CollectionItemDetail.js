@@ -9,6 +9,7 @@ import {
   proxyImageUrl,
   createPlayerPending,
   estimatePrice,
+  uploadImage,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   ArrowLeft, Edit2, Trash2, Tag, ExternalLink,
-  ShoppingBag, Loader2, Check, Shield, Star, Package,
+  ShoppingBag, Loader2, Check, Shield, Star, Package, Plus, Shirt,
 } from "lucide-react";
 import CollectionItemForm, {
   PHYSICAL_STATES,
@@ -78,8 +79,10 @@ export default function CollectionItemDetail() {
 
   // listing dialog
   const [listingOpen, setListingOpen] = useState(false);
-  const [listingForm, setListingForm] = useState({ listing_type: "sale", asking_price: "", trade_for: "" });
+  const [listingForm, setListingForm] = useState({ listing_type: "sale", asking_price: "", trade_for: "", use_topkit_price: false });
   const [listingLoading, setListingLoading] = useState(false);
+  const [listingPhotos, setListingPhotos] = useState({ front: null, back: null });
+  const [photoUploading, setPhotoUploading] = useState({ front: false, back: false });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -146,10 +149,39 @@ export default function CollectionItemDetail() {
     }
   };
 
+  const handleUploadListingPhoto = async (side, file) => {
+    if (!file) return;
+    setPhotoUploading(p => ({ ...p, [side]: true }));
+    try {
+      const res = await uploadImage(file, "listing", collection_id, side);
+      const url = res.data?.url || res.data?.image_url || res.data?.path;
+      setListingPhotos(p => ({ ...p, [side]: url }));
+    } catch {
+      toast.error(`Erreur lors du chargement de la photo ${side === "front" ? "avant" : "arrière"}`);
+    } finally {
+      setPhotoUploading(p => ({ ...p, [side]: false }));
+    }
+  };
+
+  const resetListingDialog = () => {
+    setListingOpen(false);
+    setListingForm({ listing_type: "sale", asking_price: "", trade_for: "", use_topkit_price: false });
+    setListingPhotos({ front: null, back: null });
+    setPhotoUploading({ front: false, back: false });
+  };
+
   const handleCreateListing = async () => {
+    if (!listingPhotos.front || !listingPhotos.back) {
+      toast.error("Ajoutez une photo avant et une photo arrière avant de publier");
+      return;
+    }
     setListingLoading(true);
     try {
-      const payload = { collection_id, listing_type: listingForm.listing_type };
+      const payload = {
+        collection_id,
+        listing_type: listingForm.listing_type,
+        listing_photos: [listingPhotos.front, listingPhotos.back],
+      };
       if ((listingForm.listing_type === "sale" || listingForm.listing_type === "both") && listingForm.asking_price) {
         payload.asking_price = parseFloat(listingForm.asking_price);
       }
@@ -158,7 +190,7 @@ export default function CollectionItemDetail() {
       }
       await createListing(payload);
       toast.success("Annonce publiée !");
-      setListingOpen(false);
+      resetListingDialog();
       load();
     } catch (e) {
       toast.error(e.response?.data?.detail || "Erreur lors de la publication");
@@ -375,43 +407,138 @@ export default function CollectionItemDetail() {
       </Sheet>
 
       {/* ══ Listing Dialog ══ */}
-      <Dialog open={listingOpen} onOpenChange={open => { if (!open) setListingOpen(false); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+      <Dialog open={listingOpen} onOpenChange={open => { if (!open) resetListingDialog(); }}>
+        <DialogContent className="max-w-md flex flex-col max-h-[92vh] gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
             <DialogTitle>Mettre en vente / échange</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{kit.club} — {kit.season}</p>
-            <div className="space-y-1">
-              <Label>Type d'annonce</Label>
-              <Select value={listingForm.listing_type} onValueChange={v => setListingForm(f => ({ ...f, listing_type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sale">Vente</SelectItem>
-                  <SelectItem value="trade">Échange</SelectItem>
-                  <SelectItem value="both">Vente ou échange</SelectItem>
-                </SelectContent>
-              </Select>
+
+          <div className="overflow-y-auto flex-1 px-6 pb-4 space-y-4">
+            {(() => {
+              const topkitPrice = item.estimated_price || null;
+              const customPrice = parseFloat(listingForm.asking_price) || 0;
+              const priceDiff = topkitPrice && customPrice > 0
+                ? Math.round(((customPrice - topkitPrice) / topkitPrice) * 100)
+                : null;
+              const showPrice = listingForm.listing_type === "sale" || listingForm.listing_type === "both";
+              return (
+                <>
+                  <p className="text-sm text-muted-foreground">{kit.club} — {kit.season}</p>
+                  <div className="space-y-1">
+                    <Label>Type d'annonce</Label>
+                    <Select value={listingForm.listing_type} onValueChange={v => setListingForm(f => ({ ...f, listing_type: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sale">Vente</SelectItem>
+                        <SelectItem value="trade">Échange</SelectItem>
+                        <SelectItem value="both">Vente ou échange</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {showPrice && topkitPrice && (
+                    <div className="space-y-2">
+                      <Label>Prix de vente</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
+                          className={`border p-3 text-left transition-colors ${listingForm.use_topkit_price ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                        >
+                          <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix Topkit</div>
+                          <div className="font-mono text-lg font-bold">{topkitPrice} €</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">Estimation automatique</div>
+                        </button>
+                        <button
+                          onClick={() => setListingForm(f => ({ ...f, use_topkit_price: false, asking_price: "" }))}
+                          className={`border p-3 text-left transition-colors ${!listingForm.use_topkit_price ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                        >
+                          <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix personnalisé</div>
+                          <div className="text-[11px] text-muted-foreground mt-1">Définir mon prix</div>
+                        </button>
+                      </div>
+                      {!listingForm.use_topkit_price && (
+                        <div className="space-y-1">
+                          <Input
+                            type="number" min={0} step={1} placeholder={`Ex: ${topkitPrice}`}
+                            value={listingForm.asking_price}
+                            onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))}
+                            className="font-mono"
+                          />
+                          {priceDiff !== null && (
+                            <p className={`text-xs font-medium ${priceDiff < 0 ? "text-green-600" : priceDiff > 0 ? "text-orange-600" : "text-muted-foreground"}`}>
+                              {priceDiff === 0 ? "Au prix Topkit" : priceDiff < 0 ? `${Math.abs(priceDiff)}% moins cher que Topkit` : `${priceDiff}% plus cher que Topkit`}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {showPrice && !topkitPrice && (
+                    <div className="space-y-1">
+                      <Label>Prix demandé (€)</Label>
+                      <Input type="number" min={0} step={1} placeholder="Ex: 80"
+                        value={listingForm.asking_price}
+                        onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))} />
+                    </div>
+                  )}
+                  {(listingForm.listing_type === "trade" || listingForm.listing_type === "both") && (
+                    <div className="space-y-1">
+                      <Label>Cherche en échange (optionnel)</Label>
+                      <Input placeholder="Ex: PSG 2012 domicile taille L"
+                        value={listingForm.trade_for}
+                        onChange={e => setListingForm(f => ({ ...f, trade_for: e.target.value }))} />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Photos obligatoires */}
+            <div className="space-y-2 pt-2 border-t border-border">
+              <p className="text-xs font-medium uppercase tracking-wide" style={{ fontFamily: "Barlow Condensed" }}>
+                Photos du maillot <span className="text-destructive">*</span>
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[{ side: "front", label: "Face avant" }, { side: "back", label: "Face arrière" }].map(({ side, label }) => (
+                  <label key={side} className={`relative flex flex-col items-center justify-center border-2 border-dashed cursor-pointer aspect-[3/4] overflow-hidden transition-colors ${
+                    listingPhotos[side] ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/40"
+                  }`}>
+                    <input type="file" accept="image/*" className="sr-only"
+                      onChange={e => e.target.files[0] && handleUploadListingPhoto(side, e.target.files[0])} />
+                    {photoUploading[side] ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    ) : listingPhotos[side] ? (
+                      <>
+                        <img src={listingPhotos[side]} alt={label} className="absolute inset-0 w-full h-full object-cover" />
+                        <span className="absolute bottom-1 right-1 bg-primary text-primary-foreground text-[9px] px-1 py-0.5 rounded">✓</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                        <span className="text-[10px] text-muted-foreground" style={{ fontFamily: "DM Sans" }}>{label}</span>
+                      </>
+                    )}
+                  </label>
+                ))}
+              </div>
+              {(!listingPhotos.front || !listingPhotos.back) && (
+                <p className="text-[10px] text-muted-foreground" style={{ fontFamily: "DM Sans" }}>
+                  Les deux photos sont obligatoires pour publier l'annonce.
+                </p>
+              )}
             </div>
-            {(listingForm.listing_type === "sale" || listingForm.listing_type === "both") && (
-              <div className="space-y-1">
-                <Label>Prix demandé (€)</Label>
-                <Input type="number" min={0} step={0.01} placeholder="Ex: 80"
-                  value={listingForm.asking_price} onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))} />
-              </div>
-            )}
-            {(listingForm.listing_type === "trade" || listingForm.listing_type === "both") && (
-              <div className="space-y-1">
-                <Label>Cherche en échange (optionnel)</Label>
-                <Input placeholder="Ex: PSG 2012 domicile taille L"
-                  value={listingForm.trade_for} onChange={e => setListingForm(f => ({ ...f, trade_for: e.target.value }))} />
-              </div>
-            )}
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setListingOpen(false)}>Annuler</Button>
-            <Button onClick={handleCreateListing}
-              disabled={listingLoading || ((listingForm.listing_type === "sale" || listingForm.listing_type === "both") && !listingForm.asking_price)}>
+
+          <DialogFooter className="px-6 py-4 border-t border-border shrink-0">
+            <Button variant="ghost" onClick={resetListingDialog}>Annuler</Button>
+            <Button
+              onClick={handleCreateListing}
+              disabled={
+                listingLoading ||
+                !listingPhotos.front || !listingPhotos.back ||
+                photoUploading.front || photoUploading.back ||
+                ((listingForm.listing_type === "sale" || listingForm.listing_type === "both") && !listingForm.asking_price)
+              }
+            >
               {listingLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Tag className="w-4 h-4 mr-2" />}
               Publier l'annonce
             </Button>
