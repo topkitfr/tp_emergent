@@ -125,6 +125,7 @@ export default function CollectionItemForm({
   version = {},
   seasonYear = 0,
   showEstimation = true,
+  flockingPlayerNote = 0,
 }) {
   const set = (field, value) => onChange(field, value);
 
@@ -407,6 +408,7 @@ export default function CollectionItemForm({
           isRare={form.is_rare}
           rareReason={form.rare_reason}
           seasonYear={seasonYear}
+          flockingPlayerNote={flockingPlayerNote}
         />
       )}
     </div>

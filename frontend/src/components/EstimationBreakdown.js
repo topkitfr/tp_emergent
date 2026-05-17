@@ -28,6 +28,7 @@ export default function EstimationBreakdown({
   isRare = false,
   rareReason = '',
   seasonYear = 0,
+  flockingPlayerNote = 0,
   auraLevel = 0,
 }) {
   const [open, setOpen] = useState(false);
@@ -51,6 +52,7 @@ export default function EstimationBreakdown({
     isRare,
     rareReason,
     seasonYear,
+    flockingPlayerNote,
     auraLevel,
   });
 

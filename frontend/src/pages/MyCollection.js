@@ -21,6 +21,7 @@ import {
   estimatePrice,
   getMyTransactions,
   uploadImage,
+  getPlayer,
 } from '@/lib/api';
 import TransactionCard from '@/components/TransactionCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -120,6 +121,7 @@ export default function MyCollection() {
   const [editForm,   setEditForm]   = useState(INITIAL_FORM_STATE);
   const [editMode,   setEditMode]   = useState('basic');   // 'basic' | 'advanced'
   const [saving,     setSaving]     = useState(false);
+  const [flockingPlayerNote, setFlockingPlayerNote] = useState(0);
 
   // ─── fetch ────────────────────────────────────────────────────────────────
   const fetchCollection = useCallback(async () => {
@@ -223,11 +225,18 @@ export default function MyCollection() {
   const openDetail = (item) => {
     setDetailItem(item);
     setEditForm(formFromItem(item));
-    // Si l'item a des champs avancés renseignés → ouvrir en mode advanced
     const hasAdvanced = item.condition_origin ||
       (Array.isArray(item.patches) && item.patches.length > 0) ||
       item.has_patch || item.signed || item.is_rare;
     setEditMode(hasAdvanced ? 'advanced' : 'basic');
+    // Fetch note joueur flocqué pour le breakdown d'estimation
+    if (item.flocking_player_id) {
+      getPlayer(item.flocking_player_id)
+        .then(r => setFlockingPlayerNote(parseFloat(r.data?.note) || 0))
+        .catch(() => setFlockingPlayerNote(0));
+    } else {
+      setFlockingPlayerNote(0);
+    }
   };
 
   // ─── saveEdit — identique à AddToCollectionDialog ─────────────────────────
@@ -731,6 +740,7 @@ export default function MyCollection() {
                 version={detailItem.version}
                 seasonYear={parseSeasonYear(detailItem.master_kit?.season)}
                 showEstimation
+                flockingPlayerNote={flockingPlayerNote}
               />
 
               {/* Actions */}
