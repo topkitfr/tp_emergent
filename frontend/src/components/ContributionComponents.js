@@ -71,6 +71,8 @@ export const TYPE_COLORS = {
   sponsor:    'text-pink-500 bg-pink-500/10 border-pink-500/20',
 };
 
+export const VOTE_THRESHOLD = 5;
+
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
 export function getDisplayName(item) {
@@ -244,7 +246,7 @@ export function SubmissionDetail({ sub, existingKits }) {
     : sub.submission_type === 'master_kit'
       ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender']
       : ['competition', 'model', 'sku_code', 'ean_code'];
-  const parentKit = sub.submission_type === 'version' && existingKits.find(k => k.kit_id === sub.data?.kit_id);
+  const parentKit = sub.submission_type === 'version' && existingKits && existingKits.find(k => k.kit_id === sub.data?.kit_id);
 
   return (
     <div className="mt-4 pt-4 border-t border-border">
@@ -300,48 +302,261 @@ export function SubmissionDetail({ sub, existingKits }) {
   );
 }
 
-export function ReportDetail({ rep }) {
-  const skipFields = ['_id', 'kit_id', 'version_id', 'created_by', 'created_at', 'version_count', 'avg_rating', 'review_count'];
-  const allFields = [...new Set([
-    ...Object.keys(rep.original_data || {}).filter(f => !skipFields.includes(f)),
-    ...Object.keys(rep.corrections || {}).filter(f => !skipFields.includes(f)),
-  ])];
+// ─── VoteProgressBar ─────────────────────────────────────────────────────────
+
+export function VoteProgressBar({ upvotes = 0, threshold = VOTE_THRESHOLD }) {
+  const filled = Math.min(upvotes, threshold);
+  const blocks = Array.from({ length: threshold }, (_, i) => i < filled);
   return (
-    <div className="mt-4 pt-4 border-t border-border">
-      <div className="grid grid-cols-[1fr,1fr,1fr] gap-0 text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-2" style={{ fontFamily: 'Barlow Condensed' }}>
-        <span>Field</span><span>Current</span><span>Proposed</span>
+    <div className="flex items-center gap-1.5 mt-1.5">
+      <div className="flex items-center gap-0.5">
+        {blocks.map((isFilled, i) => (
+          <div
+            key={i}
+            className={`w-4 h-2 ${isFilled ? 'bg-primary' : 'border border-border bg-transparent'}`}
+          />
+        ))}
       </div>
-      {allFields.map(field => {
-        const original = rep.original_data?.[field];
-        const proposed = rep.corrections?.[field];
-        const changed = proposed !== undefined && String(proposed) !== String(original);
-        const isMediaField = field.includes('photo') || field === 'logo_url' || field === 'crest_url';
-        return (
-          <div key={field} className={`grid grid-cols-[1fr,1fr,1fr] gap-0 py-2 px-2 border-t border-border/30 ${changed ? 'bg-primary/5' : ''}`}>
-            <span className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{FIELD_LABELS[field] || field}</span>
-            {isMediaField ? (
-              <>
-                <div>{original ? <img src={proxyImageUrl(original)} alt="" className="w-12 h-16 object-cover border border-border" /> : <span className="text-xs text-muted-foreground">—</span>}</div>
-                <div>{changed && proposed ? <img src={proxyImageUrl(proposed)} alt="" className="w-12 h-16 object-cover border border-primary/30" /> : <span className="text-xs text-muted-foreground">—</span>}</div>
-              </>
-            ) : (
-              <>
-                <span className={`text-sm ${changed ? 'line-through text-muted-foreground/50' : ''}`} style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{original !== undefined && original !== null ? String(original) : '—'}</span>
-                <span className={`text-sm ${changed ? 'text-primary font-medium' : 'text-muted-foreground'}`} style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{changed ? String(proposed) : '—'}</span>
-              </>
+      <span className="font-mono text-[10px] text-muted-foreground">{filled}/{threshold} votes</span>
+    </div>
+  );
+}
+
+// ─── BeforeAfterDiff ─────────────────────────────────────────────────────────
+
+const SKIP_DIFF_FIELDS = ['_id', 'kit_id', 'version_id', 'created_by', 'created_at', 'version_count', 'avg_rating', 'review_count'];
+
+export function BeforeAfterDiff({ original = {}, corrections = {} }) {
+  const [showUnchanged, setShowUnchanged] = useState(false);
+
+  const allFields = [...new Set([
+    ...Object.keys(original).filter(f => !SKIP_DIFF_FIELDS.includes(f)),
+    ...Object.keys(corrections).filter(f => !SKIP_DIFF_FIELDS.includes(f)),
+  ])];
+
+  const changedFields = allFields.filter(f => {
+    const proposed = corrections[f];
+    return proposed !== undefined && String(proposed) !== String(original[f] ?? '');
+  });
+  const unchangedFields = allFields.filter(f => !changedFields.includes(f));
+
+  if (allFields.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground italic" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+        Aucun changement détecté.
+      </p>
+    );
+  }
+
+  const renderField = (field) => {
+    const orig = original[field];
+    const proposed = corrections[field];
+    const changed = proposed !== undefined && String(proposed) !== String(orig ?? '');
+    const isMedia = field.includes('photo') || field === 'logo_url' || field === 'crest_url';
+
+    return (
+      <div key={field} className={`py-2 px-3 border-b border-border/30 last:border-b-0 ${changed ? 'bg-primary/5' : ''}`}>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5" style={{ fontFamily: 'Barlow Condensed' }}>
+          {FIELD_LABELS[field] || field}
+        </p>
+        {isMedia ? (
+          <div className="flex items-start gap-4">
+            <div className="flex flex-col items-start gap-1">
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Actuel</span>
+              {orig ? (
+                <img src={proxyImageUrl(orig)} alt="actuel" className="w-14 h-18 object-cover border border-border" />
+              ) : (
+                <span className="text-xs text-muted-foreground">—</span>
+              )}
+            </div>
+            {changed && (
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[9px] uppercase tracking-wider text-primary" style={{ fontFamily: 'Barlow Condensed' }}>Proposé</span>
+                {proposed ? (
+                  <img src={proxyImageUrl(proposed)} alt="proposé" className="w-14 h-18 object-cover border border-primary/40" />
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </div>
             )}
           </div>
-        );
-      })}
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-start gap-2">
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground shrink-0 mt-0.5 w-8" style={{ fontFamily: 'Barlow Condensed' }}>
+                {changed ? 'Avant' : 'Val.'}
+              </span>
+              <span
+                className={`text-sm ${changed ? 'line-through text-muted-foreground/50' : 'text-foreground'}`}
+                style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+              >
+                {orig !== undefined && orig !== null ? String(orig) : '—'}
+              </span>
+            </div>
+            {changed && (
+              <div className="flex items-start gap-2">
+                <span className="text-[9px] uppercase tracking-wider text-primary shrink-0 mt-0.5 w-8" style={{ fontFamily: 'Barlow Condensed' }}>Après</span>
+                <span className="text-sm text-primary font-medium" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                  {String(proposed)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="border border-border">
+      {changedFields.map(renderField)}
+      {unchangedFields.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowUnchanged(v => !v)}
+            className="w-full text-left px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            style={{ fontFamily: 'Barlow Condensed' }}
+          >
+            {showUnchanged
+              ? <><ChevronUp className="w-3 h-3" /> Masquer</>
+              : <><ChevronDown className="w-3 h-3" /> Voir les {unchangedFields.length} champs inchangés</>
+            }
+          </button>
+          {showUnchanged && unchangedFields.map(renderField)}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── VoteCard ────────────────────────────────────────────────────────────────
+
+export function VoteCard({
+  item,
+  onVoteUp,
+  onVoteDown,
+  hasVoted,
+  canVote = true,
+  expanded,
+  onToggle,
+  children,
+  title,
+  subtitle,
+  badges,
+  isModerator = false,
+}) {
+  const isPending = item?.status === 'pending';
+
+  return (
+    <div className="border border-border bg-card">
+      <div
+        className="flex items-start justify-between gap-4 p-4 cursor-pointer hover:bg-secondary/20 transition-colors"
+        onClick={onToggle}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">{badges}</div>
+          <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{title}</h4>
+          <p className="text-xs text-muted-foreground mt-0.5" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{subtitle}</p>
+          {isPending && (
+            <VoteProgressBar upvotes={item.votes_up || 0} threshold={isModerator ? 1 : VOTE_THRESHOLD} />
+          )}
+          {isPending && isModerator && (
+            <p className="text-[10px] text-primary mt-1" style={{ fontFamily: 'Barlow Condensed' }}>
+              VOTRE VOTE VALIDE INSTANTANÉMENT
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+          {isPending && !hasVoted && canVote && (
+            <div className="flex gap-1">
+              <button
+                onClick={onVoteUp}
+                className="p-2 border border-border hover:border-primary hover:text-primary transition-colors"
+                title="Voter pour"
+              >
+                <ThumbsUp className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onVoteDown}
+                className="p-2 border border-border hover:border-destructive hover:text-destructive transition-colors"
+                title="Voter contre"
+              >
+                <ThumbsDown className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {hasVoted && (
+            <Badge variant="secondary" className="rounded-none text-[10px]">Voté</Badge>
+          )}
+          {!canVote && isPending && !hasVoted && (
+            <span className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Pas éligible</span>
+          )}
+          <button onClick={onToggle} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+      {expanded && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+// ─── VoteRow (alias for backward compat) ─────────────────────────────────────
+
+export function VoteRow({ item, onVoteUp, onVoteDown, hasVoted, expanded, onToggle, children, title, subtitle, badges }) {
+  return (
+    <div className="border border-border bg-card">
+      <div className="flex items-start justify-between gap-4 p-4 cursor-pointer hover:bg-secondary/20 transition-colors" onClick={onToggle}>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">{badges}</div>
+          <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{title}</h4>
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-center">
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-sm text-primary">{item.votes_up}</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="font-mono text-sm text-destructive">{item.votes_down}</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">votes</span>
+          </div>
+          {item.status === 'pending' && !hasVoted && (
+            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+              <button onClick={onVoteUp} className="p-2 border border-border hover:border-primary hover:text-primary transition-colors">
+                <ThumbsUp className="w-4 h-4" />
+              </button>
+              <button onClick={onVoteDown} className="p-2 border border-border hover:border-destructive hover:text-destructive transition-colors">
+                <ThumbsDown className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {hasVoted && <Badge variant="secondary" className="rounded-none text-[10px]">Voted</Badge>}
+          {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </div>
+      </div>
+      {expanded && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+// ─── ReportDetail ─────────────────────────────────────────────────────────────
+
+export function ReportDetail({ rep }) {
+  return (
+    <div>
+      <BeforeAfterDiff original={rep.original_data || {}} corrections={rep.corrections || {}} />
       {rep.notes && (
         <div className="mt-3 p-3 bg-secondary/30 border border-border">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Reporter Notes</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Notes</p>
           <p className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{rep.notes}</p>
         </div>
       )}
     </div>
   );
 }
+
+// ─── UseExistingKitPanel ──────────────────────────────────────────────────────
 
 const ANY_TYPE   = '__all__';
 const ANY_SEASON = '__any__';
@@ -427,43 +642,6 @@ export function UseExistingKitPanel({ onSelect }) {
           </div>
         )
       )}
-    </div>
-  );
-}
-
-export function VoteRow({ item, onVoteUp, onVoteDown, hasVoted, expanded, onToggle, children, title, subtitle, badges }) {
-  return (
-    <div className="border border-border bg-card">
-      <div className="flex items-start justify-between gap-4 p-4 cursor-pointer hover:bg-secondary/20 transition-colors" onClick={onToggle}>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">{badges}</div>
-          <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{title}</h4>
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-center">
-            <div className="flex items-center gap-1">
-              <span className="font-mono text-sm text-primary">{item.votes_up}</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="font-mono text-sm text-destructive">{item.votes_down}</span>
-            </div>
-            <span className="text-[10px] text-muted-foreground">votes</span>
-          </div>
-          {item.status === 'pending' && !hasVoted && (
-            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-              <button onClick={onVoteUp} className="p-2 border border-border hover:border-primary hover:text-primary transition-colors">
-                <ThumbsUp className="w-4 h-4" />
-              </button>
-              <button onClick={onVoteDown} className="p-2 border border-border hover:border-destructive hover:text-destructive transition-colors">
-                <ThumbsDown className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          {hasVoted && <Badge variant="secondary" className="rounded-none text-[10px]">Voted</Badge>}
-          {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-        </div>
-      </div>
-      {expanded && <div className="px-4 pb-4">{children}</div>}
     </div>
   );
 }
