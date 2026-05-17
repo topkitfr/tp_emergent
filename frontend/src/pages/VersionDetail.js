@@ -396,6 +396,10 @@ export default function VersionDetail() {
               return (
                 <Link to={`/marketplace/${l.listing_id}`} key={l.listing_id}
                   className="flex items-center gap-4 border border-border bg-card px-4 py-3 hover:border-primary/30 transition-colors">
+                  {l.listing_photos?.[0]
+                    ? <img src={l.listing_photos[0]} alt="" className="w-12 h-16 object-cover shrink-0 border border-border" />
+                    : <div className="w-12 h-16 bg-secondary shrink-0 border border-border flex items-center justify-center"><Shirt className="w-5 h-5 text-muted-foreground" /></div>
+                  }
                   <span className={`text-[10px] text-white px-2 py-0.5 font-semibold shrink-0 ${typeCls}`}>{typeLabel}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
