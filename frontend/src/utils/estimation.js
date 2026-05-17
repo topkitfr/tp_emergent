@@ -179,18 +179,6 @@ export function calculateEstimation({
       breakdown.push({ label: `Flocking: ${flockingOrigin}`, coeff: flockingC });
     }
 
-    // ── Player note (Official flocking only) ─────────────────────────────
-    if (flockingOrigin === 'Official' && flockingPlayerNote > 0) {
-      const [profileLabel, profileC] = playerNoteToProfile(flockingPlayerNote);
-      if (profileC > 0) {
-        coeffSum += profileC;
-        breakdown.push({
-          label: `Player profile: ${PLAYER_PROFILE_LABELS[profileLabel]} (note ${Math.round(flockingPlayerNote)}/100)`,
-          coeff: profileC,
-        });
-      }
-    }
-
     // ── Patches (multi) ─────────────────────────────────────────────────────
     // Support nouveau format (array) + legacy (boolean hasPatch)
     const patchList = Array.isArray(patches) && patches.length > 0
@@ -217,6 +205,18 @@ export function calculateEstimation({
         other: `Signed: ${signedOtherText || 'other'}`,
       }[signedType] || 'Signed';
       breakdown.push({ label: signedLabel, coeff: signedC });
+
+      // Note du joueur signataire (player_flocked uniquement)
+      if (signedType === 'player_flocked' && flockingPlayerNote > 0) {
+        const [profileLabel, profileC] = playerNoteToProfile(flockingPlayerNote);
+        if (profileC > 0) {
+          coeffSum += profileC;
+          breakdown.push({
+            label: `Player profile: ${PLAYER_PROFILE_LABELS[profileLabel]} (note ${Math.round(flockingPlayerNote)}/100)`,
+            coeff: profileC,
+          });
+        }
+      }
 
       // Message personnel — dévalorise la signature
       if (signedPersonalMessage) {
