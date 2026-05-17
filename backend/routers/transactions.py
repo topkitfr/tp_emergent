@@ -2,10 +2,14 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
+import logging
 
 from ..database import db
 from ..auth import get_current_user
 from .notifications import create_notification
+from .. import email_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
@@ -144,6 +148,40 @@ async def list_transactions(request: Request, role: Optional[str] = None):
         t["seller"] = seller or {}
         t["buyer"]  = buyer or {}
     return txns
+
+
+@router.get("/unread-messages-count")
+async def unread_messages_count(request: Request):
+    """Returns total unread message count and breakdown by transaction."""
+    user = await get_current_user(request)
+    uid = user["user_id"]
+
+    # Get all transactions where current user is a party
+    txns = await db.transactions.find(
+        {"$or": [{"seller_id": uid}, {"buyer_id": uid}]},
+        {"_id": 0, "transaction_id": 1}
+    ).to_list(200)
+    txn_ids = [t["transaction_id"] for t in txns]
+
+    if not txn_ids:
+        return {"total": 0, "by_transaction": {}}
+
+    # Messages where user is NOT the sender and user NOT in read_by
+    messages = await db.transaction_messages.find(
+        {
+            "transaction_id": {"$in": txn_ids},
+            "sender_id": {"$ne": uid},
+            "read_by": {"$nin": [uid]},
+        },
+        {"_id": 0, "transaction_id": 1}
+    ).to_list(2000)
+
+    by_transaction: dict = {}
+    for msg in messages:
+        tid = msg["transaction_id"]
+        by_transaction[tid] = by_transaction.get(tid, 0) + 1
+
+    return {"total": len(messages), "by_transaction": by_transaction}
 
 
 @router.get("/pending-action")
@@ -398,4 +436,110 @@ async def open_dispute(transaction_id: str, request: Request):
             message=f"Transaction {transaction_id} : {reason[:80]}",
             target_type="transaction", target_id=transaction_id,
         )
+    return {"ok": True}
+
+
+# ─── Messaging ────────────────────────────────────────────────────────────────
+
+@router.post("/{transaction_id}/messages")
+async def send_message(transaction_id: str, request: Request):
+    user = await get_current_user(request)
+    uid = user["user_id"]
+
+    txn = await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if txn["seller_id"] != uid and txn["buyer_id"] != uid:
+        raise HTTPException(status_code=403, detail="Not your transaction")
+    if txn["status"] in ("completed", "disputed"):
+        raise HTTPException(status_code=400, detail="Cannot send messages for completed or disputed transactions")
+
+    body = await request.json()
+    content = (body.get("content") or "").strip()
+    if not content:
+        raise HTTPException(status_code=422, detail="Message content cannot be empty")
+    if len(content) > 1000:
+        raise HTTPException(status_code=422, detail="Message content exceeds 1000 characters")
+
+    msg_id = f"msg_{uuid.uuid4().hex[:12]}"
+    now = _now()
+    doc = {
+        "message_id": msg_id,
+        "transaction_id": transaction_id,
+        "sender_id": uid,
+        "content": content,
+        "created_at": now,
+        "read_by": [uid],
+    }
+    await db.transaction_messages.insert_one(doc)
+
+    # Send email to the other party
+    other_id = txn["buyer_id"] if txn["seller_id"] == uid else txn["seller_id"]
+    other_user = await db.users.find_one({"user_id": other_id}, {"_id": 0, "email": 1, "name": 1, "username": 1})
+    sender_user = await db.users.find_one({"user_id": uid}, {"_id": 0, "username": 1, "name": 1})
+    if other_user and other_user.get("email"):
+        sender_name = sender_user.get("username") or sender_user.get("name") or "Un utilisateur"
+        try:
+            await email_service.send_transaction_message_email(
+                to_email=other_user["email"],
+                sender_name=sender_name,
+                transaction_id=transaction_id,
+                content=content,
+                frontend_url=email_service.FRONTEND_URL,
+            )
+        except Exception as e:
+            logger.error(f"[messaging] email error: {e}")
+
+    doc.pop("_id", None)
+    return doc
+
+
+@router.get("/{transaction_id}/messages")
+async def list_messages(transaction_id: str, request: Request):
+    user = await get_current_user(request)
+    uid = user["user_id"]
+
+    txn = await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if txn["seller_id"] != uid and txn["buyer_id"] != uid:
+        raise HTTPException(status_code=403, detail="Not your transaction")
+
+    messages = await db.transaction_messages.find(
+        {"transaction_id": transaction_id},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(1000)
+
+    # Auto-mark messages from the other party as read
+    await db.transaction_messages.update_many(
+        {
+            "transaction_id": transaction_id,
+            "sender_id": {"$ne": uid},
+            "read_by": {"$nin": [uid]},
+        },
+        {"$addToSet": {"read_by": uid}}
+    )
+
+    return messages
+
+
+@router.post("/{transaction_id}/messages/read")
+async def mark_messages_read(transaction_id: str, request: Request):
+    user = await get_current_user(request)
+    uid = user["user_id"]
+
+    txn = await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if txn["seller_id"] != uid and txn["buyer_id"] != uid:
+        raise HTTPException(status_code=403, detail="Not your transaction")
+
+    await db.transaction_messages.update_many(
+        {
+            "transaction_id": transaction_id,
+            "sender_id": {"$ne": uid},
+            "read_by": {"$nin": [uid]},
+        },
+        {"$addToSet": {"read_by": uid}}
+    )
     return {"ok": True}

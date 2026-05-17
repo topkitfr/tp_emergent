@@ -22,8 +22,10 @@ import {
   getMyTransactions,
   uploadImage,
   getPlayer,
+  getUnreadMessagesCount,
 } from '@/lib/api';
 import TransactionCard from '@/components/TransactionCard';
+import TransactionMessaging from '@/components/TransactionMessaging';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -106,6 +108,9 @@ export default function MyCollection() {
   // transactions
   const [transactions,   setTransactions]   = useState([]);
   const [txnTab,         setTxnTab]         = useState("listings");
+  const [unreadCounts,   setUnreadCounts]   = useState({});
+  const [messagingOpen,  setMessagingOpen]  = useState(false);
+  const [messagingTxn,   setMessagingTxn]   = useState(null);
 
   // listing
   const [listingItem,    setListingItem]    = useState(null);
@@ -158,6 +163,7 @@ export default function MyCollection() {
       })
       .catch(() => {});
     getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {});
+    getUnreadMessagesCount().then(r => setUnreadCounts(r.data?.by_transaction || {})).catch(() => {});
   }, [fetchCollection, fetchLists]);
 
   // ─── listes handlers ──────────────────────────────────────────────────────
@@ -523,7 +529,12 @@ export default function MyCollection() {
                           key={txn.transaction_id}
                           txn={txn}
                           currentUserId={uid}
-                          onRefresh={() => getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {})}
+                          onRefresh={() => {
+                            getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {});
+                            getUnreadMessagesCount().then(r => setUnreadCounts(r.data?.by_transaction || {})).catch(() => {});
+                          }}
+                          unreadCount={unreadCounts[txn.transaction_id] || 0}
+                          onOpenMessages={(t) => { setMessagingTxn(t); setMessagingOpen(true); }}
                         />
                       ))}
                     </div>
@@ -911,6 +922,25 @@ export default function MyCollection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ══ TRANSACTION MESSAGING SHEET ══ */}
+      {messagingTxn && (
+        <TransactionMessaging
+          transactionId={messagingTxn.transaction_id}
+          open={messagingOpen}
+          onClose={() => {
+            setMessagingOpen(false);
+            setMessagingTxn(null);
+            getUnreadMessagesCount().then(r => setUnreadCounts(r.data?.by_transaction || {})).catch(() => {});
+          }}
+          currentUserId={user?.user_id}
+          otherPartyName={
+            messagingTxn.seller_id === user?.user_id
+              ? (messagingTxn.buyer?.username || messagingTxn.buyer?.name || "?")
+              : (messagingTxn.seller?.username || messagingTxn.seller?.name || "?")
+          }
+        />
+      )}
 
       {/* Add to list mini-panel */}
       {addToListItem && (

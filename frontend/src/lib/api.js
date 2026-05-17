@@ -225,4 +225,10 @@ export const confirmReceipt = (id) => api.post(`/transactions/${id}/confirm-rece
 export const approveTransaction = (id) => api.post(`/transactions/${id}/approve`, {});
 export const openDispute = (id, reason) => api.post(`/transactions/${id}/dispute`, { reason });
 
+// Transaction Messaging
+export const getTransactionMessages = (txnId) => api.get(`/transactions/${txnId}/messages`);
+export const sendTransactionMessage = (txnId, content) => api.post(`/transactions/${txnId}/messages`, { content });
+export const markMessagesRead = (txnId) => api.post(`/transactions/${txnId}/messages/read`);
+export const getUnreadMessagesCount = () => api.get('/transactions/unread-messages-count');
+
 export default api;
