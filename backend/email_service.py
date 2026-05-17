@@ -319,3 +319,26 @@ async def send_account_banned(to: str, name: str) -> None:
          en répondant à cet email.</p>
     """)
     await send_email(to, "Topkit — Ton compte a été suspendu", html)
+
+
+async def send_transaction_message_email(
+    to_email: str,
+    sender_name: str,
+    transaction_id: str,
+    content: str,
+    frontend_url: str,
+) -> None:
+    """Notification email pour un nouveau message de transaction."""
+    preview = content[:200] + ("…" if len(content) > 200 else "")
+    txn_short = transaction_id[:8]
+    collection_url = f"{frontend_url}/collection"
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">💬 Nouveau message</h2>
+      <p><strong>{sender_name}</strong> vous a envoyé un message concernant la transaction
+         <span style="font-family:monospace;color:#6366f1;">#{txn_short}</span>.</p>
+      <blockquote style="border-left:3px solid #6366f1;margin:16px 0;padding:8px 16px;color:#aaa;font-style:italic;">
+        {preview}
+      </blockquote>
+      <a href="{collection_url}" style="{_BTN_STYLE}">Voir la transaction</a>
+    """)
+    await send_email(to_email, f"💬 Nouveau message — Transaction #{txn_short}", html)

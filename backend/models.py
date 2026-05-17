@@ -527,6 +527,16 @@ class TransactionOut(BaseModel):
     completed_at: Optional[str] = None
 
 
+class MessageOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    message_id: str
+    transaction_id: str
+    sender_id: str
+    content: str
+    created_at: str
+    read_by: list[str] = []
+
+
 class PlayerScoringOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     player_id: str

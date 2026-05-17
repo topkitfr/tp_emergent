@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { markShipped, confirmReceipt, approveTransaction, openDispute, proxyImageUrl } from "@/lib/api";
-import { Package, Truck, CheckCircle, XCircle, AlertTriangle, ArrowRight, Clock } from "lucide-react";
+import { Package, Truck, CheckCircle, XCircle, AlertTriangle, ArrowRight, Clock, MessageCircle } from "lucide-react";
 
 const STATUS_LABELS = {
   awaiting_shipment: { label: "En attente d'envoi", color: "bg-amber-100 text-amber-800" },
@@ -44,7 +44,7 @@ function StepBar({ txn, isTrade }) {
   );
 }
 
-export default function TransactionCard({ txn, currentUserId, onRefresh }) {
+export default function TransactionCard({ txn, currentUserId, onRefresh, unreadCount = 0, onOpenMessages }) {
   const [loading, setLoading] = useState(false);
   const [tracking, setTracking] = useState("");
   const [showDispute, setShowDispute] = useState(false);
@@ -132,6 +132,22 @@ export default function TransactionCard({ txn, currentUserId, onRefresh }) {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-2 pt-1">
+        {onOpenMessages && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onOpenMessages(txn)}
+            className="rounded-none relative"
+          >
+            <MessageCircle className="w-3 h-3 mr-1" />
+            Messages
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[9px] font-bold min-w-[16px] h-4 flex items-center justify-center rounded-full px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Button>
+        )}
         {canShip && (
           <div className="flex gap-2 w-full">
             <Input
