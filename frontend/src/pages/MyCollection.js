@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   getMyCollection,
   getCollectionCategories,
@@ -80,6 +80,7 @@ function normalizeDetail(detail) {
 // ─── composant ──────────────────────────────────────────────────────────────
 export default function MyCollection() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // collection
   const [items,          setItems]          = useState([]);
@@ -646,7 +647,7 @@ export default function MyCollection() {
                     <button onClick={e => { e.preventDefault(); e.stopPropagation(); setAddToListItem(item.collection_id); }} className="p-1.5 bg-card/90 border border-border text-muted-foreground hover:text-primary" title="Ajouter à une liste" data-testid={`add-to-list-${item.collection_id}`}><BookMarked className="w-3 h-3" /></button>
                   )}
                   {!myListedIds.has(item.collection_id) && (
-                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); setListingItem(item); }} className="p-1.5 bg-black/60 text-white hover:bg-primary/80 rounded" title="Mettre en vente" data-testid={`list-item-${item.collection_id}`}><Tag className="w-3 h-3" /></button>
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); item.estimated_price ? setListingItem(item) : navigate(`/collection/${item.collection_id}?estimate=1`); }} className="p-1.5 bg-black/60 text-white hover:bg-primary/80 rounded" title="Mettre en vente" data-testid={`list-item-${item.collection_id}`}><Tag className="w-3 h-3" /></button>
                   )}
                   <button onClick={e => { e.preventDefault(); e.stopPropagation(); handleRemove(item.collection_id); }} className="p-1.5 bg-destructive/90 text-destructive-foreground" data-testid={`remove-collection-${item.collection_id}`}><Trash2 className="w-3 h-3" /></button>
                 </div>
@@ -676,7 +677,7 @@ export default function MyCollection() {
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0" style={{ transition: 'opacity 0.2s ease' }}>
                   <button onClick={() => openDetail(item)} className="p-1.5 text-muted-foreground hover:text-foreground" data-testid={`edit-list-${item.collection_id}`}><Edit2 className="w-4 h-4" /></button>
                   {!myListedIds.has(item.collection_id) && (
-                    <button onClick={() => setListingItem(item)} className="p-1.5 text-muted-foreground hover:text-primary" title="Mettre en vente" data-testid={`list-item-list-${item.collection_id}`}><Tag className="w-4 h-4" /></button>
+                    <button onClick={() => item.estimated_price ? setListingItem(item) : navigate(`/collection/${item.collection_id}?estimate=1`)} className="p-1.5 text-muted-foreground hover:text-primary" title="Mettre en vente" data-testid={`list-item-list-${item.collection_id}`}><Tag className="w-4 h-4" /></button>
                   )}
                   <button onClick={() => handleRemove(item.collection_id)} className="p-1.5 text-muted-foreground hover:text-destructive" style={{ transition: 'color 0.2s ease' }} data-testid={`remove-list-${item.collection_id}`}><Trash2 className="w-4 h-4" /></button>
                 </div>
