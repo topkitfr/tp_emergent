@@ -647,7 +647,7 @@ export default function MyCollection() {
                     <button onClick={e => { e.preventDefault(); e.stopPropagation(); setAddToListItem(item.collection_id); }} className="p-1.5 bg-card/90 border border-border text-muted-foreground hover:text-primary" title="Ajouter à une liste" data-testid={`add-to-list-${item.collection_id}`}><BookMarked className="w-3 h-3" /></button>
                   )}
                   {!myListedIds.has(item.collection_id) && (
-                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); item.estimated_price ? setListingItem(item) : navigate(`/collection/${item.collection_id}?estimate=1`); }} className="p-1.5 bg-black/60 text-white hover:bg-primary/80 rounded" title="Mettre en vente" data-testid={`list-item-${item.collection_id}`}><Tag className="w-3 h-3" /></button>
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); setListingItem(item); }} className="p-1.5 bg-black/60 text-white hover:bg-primary/80 rounded" title="Mettre en vente" data-testid={`list-item-${item.collection_id}`}><Tag className="w-3 h-3" /></button>
                   )}
                   <button onClick={e => { e.preventDefault(); e.stopPropagation(); handleRemove(item.collection_id); }} className="p-1.5 bg-destructive/90 text-destructive-foreground" data-testid={`remove-collection-${item.collection_id}`}><Trash2 className="w-3 h-3" /></button>
                 </div>
@@ -677,7 +677,7 @@ export default function MyCollection() {
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0" style={{ transition: 'opacity 0.2s ease' }}>
                   <button onClick={() => openDetail(item)} className="p-1.5 text-muted-foreground hover:text-foreground" data-testid={`edit-list-${item.collection_id}`}><Edit2 className="w-4 h-4" /></button>
                   {!myListedIds.has(item.collection_id) && (
-                    <button onClick={() => item.estimated_price ? setListingItem(item) : navigate(`/collection/${item.collection_id}?estimate=1`)} className="p-1.5 text-muted-foreground hover:text-primary" title="Mettre en vente" data-testid={`list-item-list-${item.collection_id}`}><Tag className="w-4 h-4" /></button>
+                    <button onClick={() => setListingItem(item)} className="p-1.5 text-muted-foreground hover:text-primary" title="Mettre en vente" data-testid={`list-item-list-${item.collection_id}`}><Tag className="w-4 h-4" /></button>
                   )}
                   <button onClick={() => handleRemove(item.collection_id)} className="p-1.5 text-muted-foreground hover:text-destructive" style={{ transition: 'color 0.2s ease' }} data-testid={`remove-list-${item.collection_id}`}><Trash2 className="w-4 h-4" /></button>
                 </div>
@@ -789,15 +789,26 @@ export default function MyCollection() {
                     <div className="space-y-2">
                       <Label>Prix de vente</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => topkitPrice && setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
-                          disabled={!topkitPrice}
-                          className={`border p-3 text-left transition-colors ${!topkitPrice ? 'opacity-40 cursor-not-allowed' : ''} ${listingForm.use_topkit_price && topkitPrice ? 'border-primary bg-primary/5' : 'border-border'}`}
-                        >
-                          <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Prix Topkit</div>
-                          <div className="font-mono text-lg font-bold">{topkitPrice ? `${topkitPrice} €` : '—'}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">{topkitPrice ? 'Estimation automatique' : 'Non estimé'}</div>
-                        </button>
+                        {topkitPrice ? (
+                          <button
+                            onClick={() => setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
+                            className={`border p-3 text-left transition-colors ${listingForm.use_topkit_price ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+                          >
+                            <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Prix Topkit</div>
+                            <div className="font-mono text-lg font-bold">{topkitPrice} €</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">Estimation automatique</div>
+                          </button>
+                        ) : (
+                          <Link
+                            to={`/collection/${listingItem?.collection_id}?estimate=1`}
+                            onClick={resetListingDialog}
+                            className="border border-dashed border-border p-3 text-left flex flex-col hover:border-primary/40 transition-colors"
+                          >
+                            <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Prix Topkit</div>
+                            <div className="text-xs text-primary font-medium mt-1">Estimez votre maillot →</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">Pour débloquer l'estimation</div>
+                          </Link>
+                        )}
                         <button
                           onClick={() => setListingForm(f => ({ ...f, use_topkit_price: false, asking_price: '' }))}
                           className={`border p-3 text-left transition-colors ${!listingForm.use_topkit_price || !topkitPrice ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
