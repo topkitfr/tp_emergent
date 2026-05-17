@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { markShipped, confirmReceipt, approveTransaction, openDispute, proxyImageUrl } from "@/lib/api";
-import { Package, Truck, CheckCircle, XCircle, AlertTriangle, ArrowRight, Clock, MessageCircle } from "lucide-react";
+import { Package, Truck, CheckCircle, XCircle, AlertTriangle, ArrowRight, Clock, MessageCircle, Star } from "lucide-react";
 
 const STATUS_LABELS = {
   awaiting_shipment: { label: "En attente d'envoi", color: "bg-amber-100 text-amber-800" },
@@ -44,7 +44,7 @@ function StepBar({ txn, isTrade }) {
   );
 }
 
-export default function TransactionCard({ txn, currentUserId, onRefresh, unreadCount = 0, onOpenMessages }) {
+export default function TransactionCard({ txn, currentUserId, onRefresh, unreadCount = 0, onOpenMessages, hasReviewed = false, onOpenReview }) {
   const [loading, setLoading] = useState(false);
   const [tracking, setTracking] = useState("");
   const [showDispute, setShowDispute] = useState(false);
@@ -210,9 +210,21 @@ export default function TransactionCard({ txn, currentUserId, onRefresh, unreadC
 
       {/* Completed */}
       {txn.status === "completed" && (
-        <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 p-2">
-          <CheckCircle className="w-4 h-4 shrink-0" />
-          Transaction finalisée — le maillot a été transféré.
+        <div className="flex items-center justify-between gap-2 text-xs text-green-700 bg-green-50 border border-green-200 p-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 shrink-0" />
+            Transaction finalisée — le maillot a été transféré.
+          </div>
+          {!hasReviewed && onOpenReview && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onOpenReview(txn)}
+              className="rounded-none shrink-0 h-6 px-2 text-[10px] text-green-800 border-green-400 bg-white hover:bg-green-50"
+            >
+              <Star className="w-3 h-3 mr-1" /> Laisser un avis
+            </Button>
+          )}
         </div>
       )}
     </div>

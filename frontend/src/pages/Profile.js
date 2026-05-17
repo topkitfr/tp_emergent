@@ -7,6 +7,7 @@ import {
   getUserPublicCollection, getUserPublicSubmissions, getUserPublicFollows,
   getUserListings, deleteAccount,
 } from '@/lib/api';
+import ReviewsList from '@/components/ReviewsList';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -498,6 +499,13 @@ export default function Profile() {
 
           <Separator className="bg-border mb-8" />
 
+          {/* Réputation — propre profil */}
+          {isOwnProfile && displayUser?.user_id && (
+            <div className="mb-8">
+              <ReviewsList userId={displayUser.user_id} />
+            </div>
+          )}
+
           {/* Collection propre profil */}
           {isOwnProfile && (
             <div>
@@ -543,6 +551,14 @@ export default function Profile() {
           {/* Section profil tiers */}
           {!isOwnProfile && (
             <div className="space-y-10">
+
+              {/* Réputation — profil tiers */}
+              {profileUser?.user_id && (
+                <div>
+                  <h2 className="text-xl tracking-tight mb-4">RÉPUTATION</h2>
+                  <ReviewsList userId={profileUser.user_id} />
+                </div>
+              )}
 
               <div>
                 <h2 className="text-xl tracking-tight mb-6">COLLECTION</h2>

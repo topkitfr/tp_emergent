@@ -231,4 +231,10 @@ export const sendTransactionMessage = (txnId, content) => api.post(`/transaction
 export const markMessagesRead = (txnId) => api.post(`/transactions/${txnId}/messages/read`);
 export const getUnreadMessagesCount = () => api.get('/transactions/unread-messages-count');
 
+// Transaction Reviews (buyer/seller)
+export const submitReview = (transactionId, data) => api.post(`/transactions/${transactionId}/review`, data);
+export const getUserReviews = (userId) => api.get(`/users/${userId}/reviews`);
+export const getUserReviewsSummary = (userId) => api.get(`/users/${userId}/reviews/summary`);
+export const getMyReviewedTransactions = () => api.get('/transactions/reviewed-by-me');
+
 export default api;

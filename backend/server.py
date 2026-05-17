@@ -48,6 +48,7 @@ from .routers.players_scoring import router as players_scoring_router
 from .routers.awards import router as awards_router
 from .routers.marketplace import router as marketplace_router
 from .routers.transactions import router as transactions_router
+from .routers.transaction_reviews import router as transaction_reviews_router
 from .middleware import maintenance_middleware
 
 
@@ -227,6 +228,7 @@ app.include_router(players_scoring_router)
 app.include_router(awards_router)
 app.include_router(marketplace_router)
 app.include_router(transactions_router)
+app.include_router(transaction_reviews_router)
 
 
 async def _purge_rate_limit_store():

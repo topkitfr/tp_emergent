@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Loader2, ShoppingBag, RefreshCw, Check, X } from "lucide-react";
 import OfferDialog from "@/components/OfferDialog";
+import ReviewsList from "@/components/ReviewsList";
 import { proxyImageUrl as getImageUrl } from "@/lib/api";
 
 const TYPE_LABEL = { sale: "Vente", trade: "Échange", both: "Vente ou échange" };
@@ -152,14 +153,21 @@ export default function MarketplaceDetail() {
           <Separator />
 
           {/* Vendeur */}
-          <div className="flex items-center gap-3">
-            <Avatar className="w-9 h-9">
-              <AvatarFallback>{(listing.seller?.name || "?")[0].toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">{listing.seller?.name || listing.seller?.username || "Vendeur"}</p>
-              <p className="text-xs text-muted-foreground">Vendeur</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-9 h-9">
+                <AvatarFallback>{(listing.seller?.name || "?")[0].toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">{listing.seller?.name || listing.seller?.username || "Vendeur"}</p>
+                <p className="text-xs text-muted-foreground">Vendeur</p>
+              </div>
             </div>
+            {listing.user_id && (
+              <div className="pl-12">
+                <ReviewsList userId={listing.user_id} compact />
+              </div>
+            )}
           </div>
 
           {/* Actions */}
