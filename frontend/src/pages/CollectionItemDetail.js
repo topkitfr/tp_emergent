@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useContext } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import {
   getCollectionItem,
   removeFromCollection,
@@ -68,6 +68,7 @@ function Section({ title, icon: Icon, children }) {
 export default function CollectionItemDetail() {
   const { collection_id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   const [item, setItem] = useState(null);
@@ -100,6 +101,16 @@ export default function CollectionItemDetail() {
   }, [collection_id, navigate]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto-ouvre le sheet d'édition si ?estimate=1 (redirigé depuis MyCollection)
+  useEffect(() => {
+    if (item && searchParams.get("estimate") === "1" && !editOpen) {
+      setEditForm(formFromItem(item));
+      setEditMode("advanced");
+      setEditOpen(true);
+      toast("Estimez votre maillot pour le mettre en vente", { description: "Remplissez les champs état et flocage puis sauvegardez." });
+    }
+  }, [item, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openEdit = () => {
     if (!item) return;
@@ -276,8 +287,12 @@ export default function CollectionItemDetail() {
                   <Tag className="w-4 h-4" /> Annuler l'annonce
                 </Button>
               </>
-            ) : (
+            ) : item.estimated_price ? (
               <Button onClick={() => setListingOpen(true)} variant="outline" className="w-full rounded-none justify-start gap-2">
+                <Tag className="w-4 h-4" /> Mettre en vente
+              </Button>
+            ) : (
+              <Button onClick={() => { setEditForm(formFromItem(item)); setEditMode("advanced"); setEditOpen(true); toast("Estimez votre maillot pour le mettre en vente", { description: "Remplissez les champs état et flocage puis sauvegardez." }); }} variant="outline" className="w-full rounded-none justify-start gap-2">
                 <Tag className="w-4 h-4" /> Mettre en vente
               </Button>
             )}
