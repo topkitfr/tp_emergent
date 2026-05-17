@@ -537,6 +537,24 @@ class MessageOut(BaseModel):
     read_by: list[str] = []
 
 
+class TransactionReviewCreate(BaseModel):
+    score: int          # 1–5
+    comment: Optional[str] = ""
+
+
+class TransactionReviewOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    review_id: str
+    transaction_id: str
+    reviewer_id: str
+    reviewer_username: str
+    reviewee_id: str
+    role: str           # "buyer" | "seller"  (role of the REVIEWER)
+    score: int
+    comment: Optional[str] = ""
+    created_at: str
+
+
 class PlayerScoringOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     player_id: str

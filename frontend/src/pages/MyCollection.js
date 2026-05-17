@@ -23,8 +23,10 @@ import {
   uploadImage,
   getPlayer,
   getUnreadMessagesCount,
+  getMyReviewedTransactions,
 } from '@/lib/api';
 import TransactionCard from '@/components/TransactionCard';
+import ReviewDialog from '@/components/ReviewDialog';
 import TransactionMessaging from '@/components/TransactionMessaging';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -112,6 +114,11 @@ export default function MyCollection() {
   const [messagingOpen,  setMessagingOpen]  = useState(false);
   const [messagingTxn,   setMessagingTxn]   = useState(null);
 
+  // reviews
+  const [reviewTxn,      setReviewTxn]      = useState(null);
+  const [reviewOpen,     setReviewOpen]     = useState(false);
+  const [reviewedTxnIds, setReviewedTxnIds] = useState(new Set());
+
   // listing
   const [listingItem,    setListingItem]    = useState(null);
   const [listingForm,    setListingForm]    = useState({ listing_type: 'sale', asking_price: '', trade_for: '', use_topkit_price: false });
@@ -164,6 +171,7 @@ export default function MyCollection() {
       .catch(() => {});
     getMyTransactions().then(r => setTransactions(r.data || [])).catch(() => {});
     getUnreadMessagesCount().then(r => setUnreadCounts(r.data?.by_transaction || {})).catch(() => {});
+    getMyReviewedTransactions().then(r => setReviewedTxnIds(new Set(r.data?.transaction_ids || []))).catch(() => {});
   }, [fetchCollection, fetchLists]);
 
   // ─── listes handlers ──────────────────────────────────────────────────────
@@ -535,6 +543,8 @@ export default function MyCollection() {
                           }}
                           unreadCount={unreadCounts[txn.transaction_id] || 0}
                           onOpenMessages={(t) => { setMessagingTxn(t); setMessagingOpen(true); }}
+                          hasReviewed={reviewedTxnIds.has(txn.transaction_id)}
+                          onOpenReview={(t) => { setReviewTxn(t); setReviewOpen(true); }}
                         />
                       ))}
                     </div>
@@ -939,6 +949,24 @@ export default function MyCollection() {
               ? (messagingTxn.buyer?.username || messagingTxn.buyer?.name || "?")
               : (messagingTxn.seller?.username || messagingTxn.seller?.name || "?")
           }
+        />
+      )}
+
+      {/* ══ REVIEW DIALOG ══ */}
+      {reviewTxn && (
+        <ReviewDialog
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          transactionId={reviewTxn.transaction_id}
+          otherPartyName={
+            reviewTxn.seller_id === user?.user_id
+              ? (reviewTxn.buyer?.username || reviewTxn.buyer?.name || "?")
+              : (reviewTxn.seller?.username || reviewTxn.seller?.name || "?")
+          }
+          onSuccess={() => {
+            setReviewedTxnIds(prev => new Set([...prev, reviewTxn.transaction_id]));
+            setReviewOpen(false);
+          }}
         />
       )}
 

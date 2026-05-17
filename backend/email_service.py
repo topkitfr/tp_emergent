@@ -321,6 +321,33 @@ async def send_account_banned(to: str, name: str) -> None:
     await send_email(to, "Topkit — Ton compte a été suspendu", html)
 
 
+async def send_review_notification_email(
+    to_email: str,
+    reviewer_username: str,
+    score: int,
+    comment: str,
+    frontend_url: str,
+) -> None:
+    """Notification email when a buyer/seller review is received."""
+    stars_filled = "⭐" * score
+    stars_empty = "☆" * (5 - score)
+    stars_display = stars_filled + stars_empty
+    comment_block = (
+        f'<blockquote style="border-left:3px solid #6366f1;margin:16px 0;padding:8px 16px;color:#aaa;font-style:italic;">'
+        f'{comment[:300]}'
+        f'</blockquote>'
+    ) if comment else ""
+    profile_url = f"{frontend_url}/profile"
+    html = _wrap(f"""
+      <h2 style="margin-top:0;">⭐ Vous avez reçu un avis — {score}/5</h2>
+      <p><strong>@{reviewer_username}</strong> vous a laissé un avis.</p>
+      <p style="font-size:24px;letter-spacing:2px;">{stars_display}</p>
+      {comment_block}
+      <a href="{profile_url}" style="{_BTN_STYLE}">Voir mon profil</a>
+    """)
+    await send_email(to_email, f"⭐ Vous avez reçu un avis — {score}/5", html)
+
+
 async def send_transaction_message_email(
     to_email: str,
     sender_name: str,
