@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   getCollectionItem,
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   ArrowLeft, Edit2, Trash2, Tag, ExternalLink,
@@ -67,6 +68,7 @@ function Section({ title, icon: Icon, children }) {
 export default function CollectionItemDetail() {
   const { collection_id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -153,7 +155,8 @@ export default function CollectionItemDetail() {
     if (!file) return;
     setPhotoUploading(p => ({ ...p, [side]: true }));
     try {
-      const res = await uploadImage(file, "listing", collection_id, side);
+      const entityId = `${collection_id}_${user?.user_id}`;
+      const res = await uploadImage(file, "listing", entityId, side);
       const url = res.data?.url || res.data?.image_url || res.data?.path;
       setListingPhotos(p => ({ ...p, [side]: url }));
     } catch {
@@ -435,30 +438,31 @@ export default function CollectionItemDetail() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {showPrice && topkitPrice && (
+                  {showPrice && (
                     <div className="space-y-2">
                       <Label>Prix de vente</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
-                          onClick={() => setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
-                          className={`border p-3 text-left transition-colors ${listingForm.use_topkit_price ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                          onClick={() => topkitPrice && setListingForm(f => ({ ...f, use_topkit_price: true, asking_price: String(topkitPrice) }))}
+                          disabled={!topkitPrice}
+                          className={`border p-3 text-left transition-colors ${!topkitPrice ? "opacity-40 cursor-not-allowed" : ""} ${listingForm.use_topkit_price && topkitPrice ? "border-primary bg-primary/5" : "border-border"}`}
                         >
                           <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix Topkit</div>
-                          <div className="font-mono text-lg font-bold">{topkitPrice} €</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">Estimation automatique</div>
+                          <div className="font-mono text-lg font-bold">{topkitPrice ? `${topkitPrice} €` : "—"}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{topkitPrice ? "Estimation automatique" : "Non estimé"}</div>
                         </button>
                         <button
                           onClick={() => setListingForm(f => ({ ...f, use_topkit_price: false, asking_price: "" }))}
-                          className={`border p-3 text-left transition-colors ${!listingForm.use_topkit_price ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                          className={`border p-3 text-left transition-colors ${!listingForm.use_topkit_price || !topkitPrice ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
                         >
                           <div className="text-[10px] text-muted-foreground uppercase font-semibold mb-1" style={{ fontFamily: "Barlow Condensed" }}>Prix personnalisé</div>
                           <div className="text-[11px] text-muted-foreground mt-1">Définir mon prix</div>
                         </button>
                       </div>
-                      {!listingForm.use_topkit_price && (
+                      {(!listingForm.use_topkit_price || !topkitPrice) && (
                         <div className="space-y-1">
                           <Input
-                            type="number" min={0} step={1} placeholder={`Ex: ${topkitPrice}`}
+                            type="number" min={0} step={1} placeholder={topkitPrice ? `Ex: ${topkitPrice}` : "Ex: 80"}
                             value={listingForm.asking_price}
                             onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))}
                             className="font-mono"
@@ -470,14 +474,6 @@ export default function CollectionItemDetail() {
                           )}
                         </div>
                       )}
-                    </div>
-                  )}
-                  {showPrice && !topkitPrice && (
-                    <div className="space-y-1">
-                      <Label>Prix demandé (€)</Label>
-                      <Input type="number" min={0} step={1} placeholder="Ex: 80"
-                        value={listingForm.asking_price}
-                        onChange={e => setListingForm(f => ({ ...f, asking_price: e.target.value }))} />
                     </div>
                   )}
                   {(listingForm.listing_type === "trade" || listingForm.listing_type === "both") && (
