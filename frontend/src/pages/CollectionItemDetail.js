@@ -121,24 +121,69 @@ export default function CollectionItemDetail() {
   const saveEdit = async () => {
     setSaving(true);
     try {
-      const estimation = calculateEstimation(editForm, item.version, parseSeasonYear(item.master_kit?.season));
-      let payload = formToPayload(editForm, estimation);
+      const seasonYear = parseSeasonYear(item.master_kit?.season);
 
-      // resolve pending players
-      if (editForm.flocking_origin !== "none" && editForm.flocking_detail && !editForm.flocking_player_id) {
-        const parts = editForm.flocking_detail.split(" ");
-        const number = parts[parts.length - 1];
-        const name = parts.slice(0, -1).join(" ");
-        if (name) {
-          const r = await createPlayerPending({ full_name: name, jersey_number: number || "" });
-          payload.flocking_player_id = r.data.player_id;
-        }
+      // Resolve pending flocking player
+      let resolvedFlockingPlayerId = editForm.flocking_player_id;
+      if (editForm.flocking_origin === "Official" && editForm.flocking_detail && !resolvedFlockingPlayerId) {
+        try {
+          const r = await createPlayerPending({ full_name: editForm.flocking_detail });
+          resolvedFlockingPlayerId = r.data?.player_id;
+        } catch {}
       }
-      if (editForm.signed && editForm.signed_type === "handsigned" && editForm.signed_player_id === "" && editForm.signed_other_text === "") {
-        if (editForm.flocking_player_id || payload.flocking_player_id) {
-          payload.signed_by_player_id = editForm.flocking_player_id || payload.flocking_player_id;
-        }
+
+      // Resolve pending signed player (other type)
+      let resolvedSignedPlayerId = editForm.signed_player_id;
+      if (editForm.signed && editForm.signed_type === "other" && editForm.signed_other_text && !resolvedSignedPlayerId) {
+        try {
+          const r = await createPlayerPending({ full_name: editForm.signed_other_text });
+          resolvedSignedPlayerId = r.data?.player_id;
+        } catch {}
       }
+
+      const localEst = calculateEstimation({
+        mode:             editMode,
+        modelType:        item.version?.model       || "Replica",
+        competition:      item.version?.competition || "",
+        conditionOrigin:  editForm.condition_origin,
+        physicalState:    editForm.physical_state,
+        flockingOrigin:   editForm.flocking_origin === "none" ? "None" : editForm.flocking_origin,
+        patches:          editForm.patches,
+        patchOtherText:   editForm.patch_other_text,
+        signed:           editForm.signed,
+        signedType:       editForm.signed_type,
+        signedOtherText:  editForm.signed_other_text,
+        playerProfile:    editForm.player_profile,
+        signedProofLevel: editForm.signed_proof_level,
+        isRare:           editForm.is_rare,
+        rareReason:       editForm.rare_reason,
+        seasonYear,
+      });
+
+      const estRes = await estimatePrice({
+        model_type:          item.version?.model || "Replica",
+        competition:         item.version?.competition || "",
+        condition_origin:    editForm.condition_origin || "",
+        physical_state:      editForm.physical_state || "",
+        flocking_origin:     editForm.flocking_origin === "none" ? "None" : (editForm.flocking_origin || ""),
+        flocking_player_id:  resolvedFlockingPlayerId || "",
+        signed:              editForm.signed || false,
+        signed_type:         editForm.signed_type || "",
+        signed_other_detail: editForm.signed_other_text || "",
+        signed_proof:        editForm.signed_proof_level || "none",
+        season_year:         seasonYear,
+        patch:               (editForm.patches?.length > 0) || !!editForm.patch_other_text,
+        is_rare:             editForm.is_rare || false,
+        rare_reason:         editForm.rare_reason || "",
+        mode:                editMode,
+      }).catch(() => ({ data: localEst }));
+
+      const estimation = estRes.data || localEst;
+
+      const payload = formToPayload(
+        { ...editForm, flocking_player_id: resolvedFlockingPlayerId, signed_player_id: resolvedSignedPlayerId },
+        estimation,
+      );
 
       await updateCollectionItem(collection_id, payload);
       toast.success("Modifications enregistrées");

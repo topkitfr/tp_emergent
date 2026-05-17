@@ -52,18 +52,31 @@ export const SIGNED_TYPE_COEFF = {
   'printed_sign': 0.15,     // Signature imprimée (marketing)
 };
 
-// Signature — profil joueur (uniquement si signed_type = player_flocked)
+// Profil joueur déduit depuis note /100 (Official flocking)
+// 0–25 → good_player (+0.10), 25–50 → club_star (+0.20), 50–75 → world_star (+0.30), 75–100 → football_legend (+0.50)
 export const PLAYER_PROFILE_COEFF = {
-  'legend': 0.75,   // Football Legend (Ronaldo, Zidane, Maldini...)
-  'star': 0.25,     // Club Star (joueur majeur du club)
-  'none': 0.0,      // Standard / autre
+  'football_legend': 0.50,
+  'world_star': 0.30,
+  'club_star': 0.20,
+  'good_player': 0.10,
+  'none': 0.0,
 };
 
 export const PLAYER_PROFILE_LABELS = {
-  'legend': 'Football Legend',
-  'star': 'Club Star',
+  'football_legend': 'Football Legend',
+  'world_star': 'World Star',
+  'club_star': 'Club Star',
+  'good_player': 'Good Player',
   'none': 'Standard player',
 };
+
+export function playerNoteToProfile(note) {
+  if (note >= 75) return ['football_legend', 0.50];
+  if (note >= 50) return ['world_star', 0.30];
+  if (note >= 25) return ['club_star', 0.20];
+  if (note > 0)   return ['good_player', 0.10];
+  return ['none', 0.0];
+}
 
 // Signature — qualité de la preuve
 export const SIGNED_PROOF_COEFF = {
@@ -105,6 +118,7 @@ export const AGE_MAX = 1.0;
  * @param {string}  params.rareReason         — advanced only, text
  * @param {string}  params.otherInfo          — advanced only, text libre
  * @param {number}  params.seasonYear         — 0 if unknown
+ * @param {number}  params.flockingPlayerNote — note /100 du joueur flocqué (Official only)
  */
 export function calculateEstimation({
   mode = 'basic',
@@ -128,6 +142,7 @@ export function calculateEstimation({
   rareReason = '',
   otherInfo = '',
   seasonYear = 0,
+  flockingPlayerNote = 0,
   // legacy auraLevel kept for backward compat with MyCollection old items
   auraLevel = 0,
 }) {
@@ -164,6 +179,18 @@ export function calculateEstimation({
       breakdown.push({ label: `Flocking: ${flockingOrigin}`, coeff: flockingC });
     }
 
+    // ── Player note (Official flocking only) ─────────────────────────────
+    if (flockingOrigin === 'Official' && flockingPlayerNote > 0) {
+      const [profileLabel, profileC] = playerNoteToProfile(flockingPlayerNote);
+      if (profileC > 0) {
+        coeffSum += profileC;
+        breakdown.push({
+          label: `Player profile: ${PLAYER_PROFILE_LABELS[profileLabel]} (note ${Math.round(flockingPlayerNote)}/100)`,
+          coeff: profileC,
+        });
+      }
+    }
+
     // ── Patches (multi) ─────────────────────────────────────────────────────
     // Support nouveau format (array) + legacy (boolean hasPatch)
     const patchList = Array.isArray(patches) && patches.length > 0
@@ -190,24 +217,6 @@ export function calculateEstimation({
         other: `Signed: ${signedOtherText || 'other'}`,
       }[signedType] || 'Signed';
       breakdown.push({ label: signedLabel, coeff: signedC });
-
-      // Player profile — uniquement si signed_type = player_flocked
-      if (signedType === 'player_flocked') {
-        let profileKey = playerProfile && playerProfile !== 'none' ? playerProfile : null;
-        if (!profileKey && auraLevel >= 4) profileKey = 'legend';
-        else if (!profileKey && auraLevel >= 2) profileKey = 'star';
-
-        if (profileKey) {
-          const profileC = PLAYER_PROFILE_COEFF[profileKey] ?? 0;
-          if (profileC > 0) {
-            coeffSum += profileC;
-            breakdown.push({
-              label: `Player profile: ${PLAYER_PROFILE_LABELS[profileKey]}`,
-              coeff: profileC,
-            });
-          }
-        }
-      }
 
       // Message personnel — dévalorise la signature
       if (signedPersonalMessage) {
