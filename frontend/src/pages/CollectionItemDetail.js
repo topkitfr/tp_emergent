@@ -10,6 +10,7 @@ import {
   createPlayerPending,
   estimatePrice,
   uploadImage,
+  getPlayer,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,8 @@ export default function CollectionItemDetail() {
   const [editMode, setEditMode] = useState("basic");
   const [saving, setSaving] = useState(false);
 
+  const [flockingPlayerNote, setFlockingPlayerNote] = useState(0);
+
   // listing dialog
   const [listingOpen, setListingOpen] = useState(false);
   const [listingForm, setListingForm] = useState({ listing_type: "sale", asking_price: "", trade_for: "", use_topkit_price: false });
@@ -101,6 +104,16 @@ export default function CollectionItemDetail() {
   }, [collection_id, navigate]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (item?.flocking_player_id) {
+      getPlayer(item.flocking_player_id)
+        .then(r => setFlockingPlayerNote(parseFloat(r.data?.note) || 0))
+        .catch(() => {});
+    } else {
+      setFlockingPlayerNote(0);
+    }
+  }, [item?.flocking_player_id]);
 
   // Auto-ouvre le sheet d'édition si ?estimate=1 (redirigé depuis MyCollection)
   useEffect(() => {
@@ -451,6 +464,7 @@ export default function CollectionItemDetail() {
             version={version}
             seasonYear={parseSeasonYear(kit.season)}
             showEstimation
+            flockingPlayerNote={flockingPlayerNote}
           />
 
           <div className="flex gap-2 mt-6">
