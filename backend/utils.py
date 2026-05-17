@@ -210,15 +210,17 @@ ESTIMATION_AGE_MAX = 1.0
 #   note 80–89  → "world_star"       → +0.75  (star mondiale, sélection régulière)
 #   note 90–100 → "football_legend"  → +1.00  (légende absolue du football)
 def _player_note_to_profile(note: float) -> tuple[str, float]:
-    """Convertit une note /100 en (label, coeff) pour l'estimation."""
-    if note >= 90:
-        return "football_legend", 1.00
-    elif note >= 80:
-        return "world_star", 0.75
-    elif note >= 65:
-        return "club_star", 0.50
-    elif note >= 40:
-        return "good_player", 0.25
+    """Convertit une note /100 en (label, coeff) pour l'estimation.
+    Barème : 0-25 → 0.10 | 25-50 → 0.20 | 50-75 → 0.30 | 75-100 → 0.50
+    """
+    if note >= 75:
+        return "football_legend", 0.50
+    elif note >= 50:
+        return "world_star", 0.30
+    elif note >= 25:
+        return "club_star", 0.20
+    elif note > 0:
+        return "good_player", 0.10
     else:
         return "none", 0.0
 
@@ -290,6 +292,22 @@ def calculate_estimation(
         if flocking_origin and flocking_origin != "None":
             breakdown.append({"label": f"Flocking: {flocking_origin}", "coeff": flocking_c})
 
+        # ── Profil joueur — note /100 du joueur flocqué (Official uniquement) ──
+        if flocking_origin == "Official" and flocking_player_note > 0:
+            profile_label, profile_c = _player_note_to_profile(flocking_player_note)
+            if profile_c > 0:
+                coeff_sum += profile_c
+                profile_display = {
+                    "football_legend": f"Player profile: Football legend (note {flocking_player_note:.0f}/100)",
+                    "world_star":      f"Player profile: World star (note {flocking_player_note:.0f}/100)",
+                    "club_star":       f"Player profile: Club star (note {flocking_player_note:.0f}/100)",
+                    "good_player":     f"Player profile: Good player (note {flocking_player_note:.0f}/100)",
+                }
+                breakdown.append({
+                    "label": profile_display.get(profile_label, f"Player profile (note {flocking_player_note:.0f}/100)"),
+                    "coeff": profile_c,
+                })
+
         # Patch officiel
         if patch:
             coeff_sum += ESTIMATION_PATCH_COEFF
@@ -321,23 +339,6 @@ def calculate_estimation(
                     "strong": "Certificate (strong proof + COA)",
                 }
                 breakdown.append({"label": proof_labels.get(signed_proof, "Certificate"), "coeff": proof_c})
-
-            # ── Profil joueur — Option A : déduit depuis note DB ──
-            # Actif uniquement si : signed_type == "player_flocked" ET flocking_origin == "Official"
-            if signed_type == "player_flocked" and flocking_origin == "Official":
-                profile_label, profile_c = _player_note_to_profile(flocking_player_note)
-                if profile_c > 0:
-                    coeff_sum += profile_c
-                    profile_display = {
-                        "football_legend": f"Player profile: Football legend (note {flocking_player_note:.0f}/100)",
-                        "world_star":      f"Player profile: World star (note {flocking_player_note:.0f}/100)",
-                        "club_star":       f"Player profile: Club star (note {flocking_player_note:.0f}/100)",
-                        "good_player":     f"Player profile: Good player (note {flocking_player_note:.0f}/100)",
-                    }
-                    breakdown.append({
-                        "label": profile_display.get(profile_label, f"Player profile (note {flocking_player_note:.0f}/100)"),
-                        "coeff": profile_c,
-                    })
 
         # Rareté
         if is_rare:
