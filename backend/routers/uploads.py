@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api", tags=["uploads"])
 FOLDER_KEYS = {
     "master_kit",
     "version",
+    "listing",
     "profile",
     "brand",
     "team",
